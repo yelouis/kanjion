@@ -1,7 +1,11 @@
 import React, { useReducer, useMemo, useState, useRef, useEffect } from 'react';
 import { gameReducer, createInitialGameState } from './engine/game_reducer';
 import { OfflineSimulationEngine } from './engine/offline_simulator';
-import { CloudVisionConnector, MockVisionLLMTransport } from './engine/cloud_connector';
+import {
+  CloudVisionConnector,
+  HttpVisionLLMTransport,
+  MockVisionLLMTransport,
+} from './engine/cloud_connector';
 import { calculateEfficiencyMultiplier } from './engine/scoring';
 import {
   CASE_042_MACRO_VIEWS,
@@ -40,11 +44,14 @@ export const App: React.FC = () => {
   );
 
   const cloudEngine = useMemo(() => {
-    const mockTransport = new MockVisionLLMTransport();
+    const transport =
+      process.env.NODE_ENV === 'test'
+        ? new MockVisionLLMTransport()
+        : new HttpVisionLLMTransport({ endpointUrl: '/api/decision' });
     return new CloudVisionConnector({
       puzzleId: 'case_042',
       macroViews: CASE_042_MACRO_VIEWS,
-      transport: mockTransport,
+      transport,
       fallbackEngine: offlineEngine,
     });
   }, [offlineEngine]);

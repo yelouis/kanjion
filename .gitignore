@@ -1,5 +1,8 @@
 node_modules/
 dist/
+functions/node_modules/
+functions/lib/
+.firebase/
 .agents/
 .DS_Store
 *.local
