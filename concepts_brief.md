@@ -1,11 +1,11 @@
-# Instruct: Daily AI Browser-Instruction Puzzle Game
+# Kanjion: Daily AI Browser-Instruction Puzzle Game
 
 * **Author:** yelouis
 * **Date:** 2026-11-05
 
 ## Overview
 
-**Instruct** is a daily browser-based puzzle game built in TypeScript and React where players watch an in-engine **Ghost Replay** of a task performed on a simplified, sandboxed clone of a recognizable website and guide an AI agent to replicate the result using as few short text instructions as possible. Levels scale from standard English layouts to dense Japanese websites (such as train reservation matrices or shopping portals) where copy-paste is disabled, forcing players to describe visual layout, grid coordinates, colors, icons, numerals, and symbol shapes rather than copying foreign text.
+**Kanjion** is a daily browser-based puzzle game built in TypeScript and React where players watch an in-engine **Ghost Replay** of a task performed on a simplified, sandboxed clone of a recognizable website and guide an AI agent to replicate the result using as few short text instructions as possible. Levels scale from standard English layouts to dense Japanese websites (such as train reservation matrices or shopping portals) where copy-paste is disabled, forcing players to describe visual layout, grid coordinates, colors, icons, numerals, and symbol shapes rather than copying foreign text.
 
 The game uses **"The Redacted Dossier"** visual and spatial interface: an archival newsprint broadsheet framing a coordinate-ruled (`COL A–D`, `ROW 1–4`) microfiche sandbox stage above a **6-Line Western Union Telegram Dispatch Pad** (where all 6 instruction rows are visible at once, similar to *Wordle*). Each line is capped at 60 characters. After the player dispatches a line, a low-cost cloud vision LLM inspects a pre-cached Set-of-Mark (SoM) image of the current **Macro-View** (one of 8–12 discrete screen/modal states per puzzle) paired with compact JSON **Micro-State**—where 30 to 50 interactive elements (the winning path plus decoys like fake banner ads, newsletter popups, and adjacent cancel buttons, while out-of-scope links are inert) are tagged with bounded IDs—and returns a structured action. The browser animates a field-agent cursor with a pinned yellow field note across the stage in real time so the player can see what the agent clicked and use subsequent lines to recover from mistakes.
 

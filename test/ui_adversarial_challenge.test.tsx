@@ -623,9 +623,9 @@ describe('Adversarial Challenge 5: Exhibit Stamp Rotation Mathematics & Scoring 
     // Verify shareable clipping lines
     const lines = report.shareableClipping.split('\n');
     expect(lines).toHaveLength(3);
-    expect(lines[0]).toMatch(/^THE INSTRUCT DOSSIER #042 🇯🇵 — \d+% × \d\.\dx = \d+ PTS$/);
+    expect(lines[0]).toMatch(/^KANJION #042 🇯🇵 — \d+% × \d\.\dx = \d+ PTS$/);
     expect(lines[1]).toMatch(/^[🟩🟥⬜]{5} \(3\/6 Telegrams Sent\)$/u);
-    expect(lines[2]).toBe('https://instruct.game/c/042');
+    expect(lines[2]).toBe('https://kanjion.game/c/042');
 
     render(
       <ExhibitsPanel

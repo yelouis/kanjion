@@ -194,7 +194,7 @@ export const App: React.FC = () => {
         <aside className="max-w-6xl mx-auto bg-dossier-ink text-dossier-paper border-2 border-dossier-ink p-3 flex flex-wrap items-center justify-between gap-2 shadow-ink">
           <div className="flex items-center gap-2 text-xs">
             <span className="px-2 py-0.5 bg-dossier-accent text-dossier-ink font-black uppercase">
-              FORENSIC DISPATCH ENGINE
+              KANJION DISPATCH ENGINE
             </span>
             <span>Tokyo–Osaka Shinkansen (Active Play & Unsealed Exhibits)</span>
           </div>
@@ -233,7 +233,7 @@ export const App: React.FC = () => {
       header={
         <MastheadHeader
           caseNumber={state.caseNumber}
-          caseTitle="THE INSTRUCT DOSSIER"
+          caseTitle="KANJION"
           difficultyBadge="🇯🇵 HARD MODE: TOKYO–OSAKA SHINKANSEN"
           ghostReplayActive={state.ghostReplayActive}
           onToggleGhostReplay={handleToggleGhost}

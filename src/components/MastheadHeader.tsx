@@ -12,7 +12,7 @@ export interface ExtendedMastheadProps extends MastheadProps {
 
 export const MastheadHeader: React.FC<ExtendedMastheadProps> = ({
   caseNumber = '#042',
-  caseTitle = 'THE INSTRUCT DOSSIER',
+  caseTitle = 'KANJION',
   difficultyBadge = '🇯🇵 HARD MODE: TOKYO–OSAKA SHINKANSEN',
   ghostReplayActive,
   onToggleGhostReplay,
@@ -31,6 +31,8 @@ export const MastheadHeader: React.FC<ExtendedMastheadProps> = ({
       {/* Left Masthead Branding & Forensic Kicker */}
       <div>
         <div className="font-mono-clean text-xs uppercase tracking-widest text-dossier-muted font-bold flex flex-wrap items-center gap-2">
+          <span>THE REDACTED DOSSIER</span>
+          <span>•</span>
           <span>DAILY FORENSIC BRIEFING</span>
           <span>•</span>
           <span>CASE FILE {caseNumber}</span>
@@ -44,9 +46,12 @@ export const MastheadHeader: React.FC<ExtendedMastheadProps> = ({
           <span className="text-red-700 font-black">COPY-PASTE DISABLED</span>
         </div>
 
-        <h1 className="font-gazette font-black text-2xl md:text-3xl tracking-tight text-dossier-ink mt-0.5">
-          {caseTitle}
-          <span className="text-xs font-mono-clean font-bold bg-dossier-ink text-dossier-paper px-2.5 py-1 ml-2.5 align-middle inline-block shadow-ink-sm">
+        <h1 className="font-gazette font-black text-2xl md:text-3xl tracking-tight text-dossier-ink mt-0.5 flex flex-wrap items-center gap-2.5">
+          <span className="inline-flex items-center justify-center px-1.5 py-0.5 border-2 border-red-800 text-red-800 font-mono-clean font-black text-xs tracking-normal leading-none select-none shadow-[1px_1px_0px_#991b1b]">
+            漢字音
+          </span>
+          <span>{caseTitle}</span>
+          <span className="text-xs font-mono-clean font-bold bg-dossier-ink text-dossier-paper px-2.5 py-1 align-middle inline-block shadow-ink-sm">
             {difficultyBadge}
           </span>
         </h1>

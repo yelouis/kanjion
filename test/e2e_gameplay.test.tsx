@@ -53,7 +53,7 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       expect(main).toHaveClass('bg-dossier-paper', 'border-dossier-ink', 'shadow-ink-lg');
 
       // Header Branding & Metadata
-      expect(screen.getByText('THE INSTRUCT DOSSIER')).toBeInTheDocument();
+      expect(screen.getByText('KANJION')).toBeInTheDocument();
       expect(screen.getByText(/CASE FILE #042/i)).toBeInTheDocument();
       expect(screen.getByText(/🇯🇵 HARD MODE: TOKYO–OSAKA SHINKANSEN/i)).toBeInTheDocument();
       expect(screen.getByText(/COPY-PASTE DISABLED/i)).toBeInTheDocument();
@@ -220,7 +220,7 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
 
       expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1);
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-        expect.stringContaining('THE INSTRUCT DOSSIER #042 🇯🇵 — 100% × 1.4x = 140 PTS\n🟩🟩🟩🟩🟩 (4/6 Telegrams Sent)')
+        expect.stringContaining('KANJION #042 🇯🇵 — 100% × 1.4x = 140 PTS\n🟩🟩🟩🟩🟩 (4/6 Telegrams Sent)')
       );
       expect(screen.getByText(/✓ DISPATCH CLIPPING COPIED!/i)).toBeInTheDocument();
 

@@ -595,7 +595,7 @@ describe('9. ExhibitsPanel Component', () => {
       { id: 'exhibit_e', code: 'E', title: 'Final Blue Confirm', weight: 20, status: 'MISSED', stampText: '[MISSED ✗ +0%]', rotationDeg: -4 },
     ],
     emojiRow: '🟩🟩🟩🟩⬜',
-    shareableClipping: 'THE INSTRUCT DOSSIER #042 🇯🇵 — 80% × 1.6x = 128 PTS\n🟩🟩🟩🟩⬜ (3/6 Telegrams Sent)',
+    shareableClipping: 'KANJION #042 🇯🇵 — 80% × 1.6x = 128 PTS\n🟩🟩🟩🟩⬜ (3/6 Telegrams Sent)',
   };
 
   it('renders sealed preview during active play', () => {

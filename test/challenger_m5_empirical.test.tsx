@@ -460,14 +460,14 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       const lines = copiedPayload.split('\n');
       expect(lines.length).toBe(3);
 
-      // Line 1: THE INSTRUCT DOSSIER #042 🇯🇵 — Closeness% × Mult = Score PTS
-      expect(lines[0]).toMatch(/^THE INSTRUCT DOSSIER #042 🇯🇵 — \d+% × \d+\.\d+x = \d+ PTS$/);
+      // Line 1: KANJION #042 🇯🇵 — Closeness% × Mult = Score PTS
+      expect(lines[0]).toMatch(/^KANJION #042 🇯🇵 — \d+% × \d+\.\d+x = \d+ PTS$/);
 
       // Line 2: 5-symbol emoji matrix + (X/6 Telegrams Sent)
       expect(lines[1]).toMatch(/^[🟩🟥⬜]{5} \(\d\/6 Telegrams Sent\)$/u);
 
       // Line 3: Canonical forensic URL
-      expect(lines[2]).toBe('https://instruct.game/c/042');
+      expect(lines[2]).toBe('https://kanjion.game/c/042');
 
       // 3. Feedback reverts after 2500ms
       act(() => {

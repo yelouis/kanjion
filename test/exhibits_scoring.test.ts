@@ -221,7 +221,7 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
       });
 
       expect(clipping).toBe(
-        'THE INSTRUCT DOSSIER #042 🇯🇵 — 100% × 1.4x = 140 PTS\n🟩🟩🟩🟩🟩 (4/6 Telegrams Sent)\nhttps://instruct.game/c/042'
+        'KANJION #042 🇯🇵 — 100% × 1.4x = 140 PTS\n🟩🟩🟩🟩🟩 (4/6 Telegrams Sent)\nhttps://kanjion.game/c/042'
       );
     });
   });

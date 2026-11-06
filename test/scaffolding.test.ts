@@ -37,7 +37,7 @@ import type { StampStatus } from '../src/types/game';
 describe('1. Broadsheet App Shell & Scaffolding', () => {
   it('mounts the broadsheet layout with masthead header and metadata', () => {
     render(React.createElement(App));
-    expect(screen.getByText(/THE INSTRUCT DOSSIER/i)).toBeInTheDocument();
+    expect(screen.getByText('KANJION')).toBeInTheDocument();
     expect(screen.getByText(/CASE FILE #042/i)).toBeInTheDocument();
     expect(screen.getByText(/6-LINE WESTERN UNION DISPATCH PAD/i)).toBeInTheDocument();
   });

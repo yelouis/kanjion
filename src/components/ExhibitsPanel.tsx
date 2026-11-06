@@ -134,7 +134,7 @@ export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
       <div className="p-3.5 bg-dossier-paper border-2 border-dossier-ink flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono-clean text-xs">
         <div>
           <div className="font-black text-sm text-dossier-ink">
-            THE INSTRUCT DOSSIER #042 🇯🇵 —{' '}
+            KANJION #042 🇯🇵 —{' '}
             <span id="share-summary-txt">
               {closenessScore}% × {multiplier.toFixed(1)}x = {finalScore} PTS
             </span>

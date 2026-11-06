@@ -147,9 +147,9 @@ export function generateEmojiRow(evaluations: ExhibitEvaluation[]): string {
  * Formats a Wordle-style shareable plaintext clipping ready for clipboard export.
  *
  * Example Output:
- * THE INSTRUCT DOSSIER #042 🇯🇵 — 100% × 1.4x = 140 PTS
+ * KANJION #042 🇯🇵 — 100% × 1.4x = 140 PTS
  * 🟩🟩🟩🟩🟩 (4/6 Telegrams Sent)
- * https://instruct.game/c/042
+ * https://kanjion.game/c/042
  */
 export function generateShareableClipping(params: {
   caseNumber: string;
@@ -169,14 +169,14 @@ export function generateShareableClipping(params: {
     linesUsed,
     evaluations,
     themeFlag = '🇯🇵',
-    baseUrl = 'https://instruct.game/c',
+    baseUrl = 'https://kanjion.game/c',
   } = params;
 
   const emojiRow = generateEmojiRow(evaluations);
   const cleanCaseId = caseNumber.replace(/[^0-9a-zA-Z]/g, '');
 
   return [
-    `THE INSTRUCT DOSSIER ${caseNumber} ${themeFlag} — ${closenessScore}% × ${multiplier.toFixed(1)}x = ${finalScore} PTS`,
+    `KANJION ${caseNumber} ${themeFlag} — ${closenessScore}% × ${multiplier.toFixed(1)}x = ${finalScore} PTS`,
     `${emojiRow} (${linesUsed}/${MAX_TELEGRAM_LINES} Telegrams Sent)`,
     `${baseUrl}/${cleanCaseId}`,
   ].join('\n');
