@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: #E5DEC9;
+    color: #111111;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+}
+
+@layer utilities {
+  .no-select {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .font-gazette {
+    font-family: Georgia, 'Times New Roman', Times, serif;
+  }
+
+  .font-mono-clean {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  .shadow-ink-sm {
+    box-shadow: 2px 2px 0px #111111;
+  }
+
+  .shadow-ink {
+    box-shadow: 3px 3px 0px #111111;
+  }
+
+  .shadow-ink-lg {
+    box-shadow: 6px 6px 0px #111111;
+  }
+
+  .stamp-rotate {
+    transform: rotate(-4deg);
+  }
+
+  .stamp-rotate-alt {
+    transform: rotate(3deg);
+  }
+
+  .cursor-glide {
+    transition: left 0.6s cubic-bezier(0.22, 1, 0.36, 1), top 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .btn-press {
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+  }
+
+  .btn-press:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0px #111111;
+  }
+
+  .shake-anim {
+    animation: shake 0.4s ease-in-out;
+  }
+}
