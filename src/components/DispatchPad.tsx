@@ -41,10 +41,15 @@ export const DispatchPad: React.FC<DispatchPadProps> = ({
       aria-label="6-Line Western Union Telegram Dispatch Pad"
     >
       {/* Ledger Header & Telemetry Bar */}
-      <div className="flex flex-wrap items-center justify-between border-b-2 border-dossier-ink pb-2 mb-2 text-xs">
-        <span className="font-black uppercase tracking-wider text-dossier-ink">
-          📜 6-LINE WESTERN UNION DISPATCH PAD (MAX 60 CHARS PER LINE)
-        </span>
+      <div className="flex flex-wrap items-center justify-between border-b-2 border-dossier-ink pb-2 mb-2 text-xs gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="bg-dossier-ink text-dossier-accent font-black px-2 py-0.5 uppercase">
+            STEP 2 • COMMAND THE AGENT
+          </span>
+          <span className="font-black uppercase tracking-wider text-dossier-ink">
+            📜 6-LINE WESTERN UNION DISPATCH PAD (MAX 60 CHARS PER LINE)
+          </span>
+        </div>
         <div className="flex items-center gap-3">
           <span className="font-bold text-dossier-ink">
             ACTIVE:{' '}

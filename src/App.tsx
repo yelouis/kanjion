@@ -27,6 +27,9 @@ import {
   ExhibitsPanel,
 } from './components';
 
+export type DifficultyLevel = 'easy' | 'medium' | 'hard';
+export type PlayPresetMode = 'daily' | 'fresh';
+
 export const App: React.FC = () => {
   // 1. Centralized Immutable Game State
   const [state, dispatch] = useReducer(
@@ -35,8 +38,11 @@ export const App: React.FC = () => {
     () => createInitialGameState({ caseNumber: '#042', preSeeded: true })
   );
 
-  // 2. Connector Engines (Offline Default & Cloud Vision Option)
+  // 2. Menu Controls: Difficulty, Play Mode, AI Engine, & Dev Tools Drawer
+  const [difficulty, setDifficulty] = useState<DifficultyLevel>('hard');
+  const [playMode, setPlayMode] = useState<PlayPresetMode>('daily');
   const [engineMode, setEngineMode] = useState<'offline' | 'cloud'>('offline');
+  const [showDevTools, setShowDevTools] = useState<boolean>(false);
 
   const offlineEngine = useMemo(
     () => new OfflineSimulationEngine(CASE_042_MACRO_VIEWS),
@@ -61,6 +67,13 @@ export const App: React.FC = () => {
   }, [offlineEngine]);
 
   const activeEngine = engineMode === 'offline' ? offlineEngine : cloudEngine;
+
+  // Difficulty Badge Label
+  const difficultyBadge = useMemo(() => {
+    if (difficulty === 'easy') return '🟢 EASY MODE: ENGLISH FIELD HINTS ENABLED';
+    if (difficulty === 'medium') return '🟡 MEDIUM MODE: VISUAL CLUES & GRID';
+    return '🇯🇵 HARD MODE: TOKYO–OSAKA SHINKANSEN';
+  }, [difficulty]);
 
   // 3. Computed Multiplier for Live Telemetry
   const linesUsed = state.telegrams.filter((t) => t.submitted).length;
@@ -188,6 +201,14 @@ export const App: React.FC = () => {
     dispatch({ type: 'TOGGLE_SOM_OVERLAY' });
   };
 
+  const handleSelectPlayMode = (mode: PlayPresetMode) => {
+    setPlayMode(mode);
+    dispatch({
+      type: 'RESET_GAME',
+      payload: { caseNumber: '#042', preSeeded: mode === 'daily' },
+    });
+  };
+
   // Dev Quick-Sim actions
   const handleDevSim = (type: 'green' | 'trap' | 'confirm') => {
     if (type === 'green') {
@@ -202,50 +223,166 @@ export const App: React.FC = () => {
   return (
     <DossierLayout
       telemetryBar={
-        <aside className="max-w-6xl mx-auto bg-dossier-ink text-dossier-paper border-2 border-dossier-ink p-3 flex flex-wrap items-center justify-between gap-2 shadow-ink">
-          <div className="flex items-center gap-2 text-xs">
-            <span className="px-2 py-0.5 bg-dossier-accent text-dossier-ink font-black uppercase">
-              KANJION DISPATCH ENGINE
-            </span>
-            <span>Tokyo–Osaka Shinkansen (Active Play & Unsealed Exhibits)</span>
+        <nav
+          aria-label="Kanjion Game Menu Bar"
+          className="max-w-6xl mx-auto bg-dossier-ink text-dossier-paper border-2 border-dossier-ink px-3.5 py-2.5 shadow-ink font-mono-clean space-y-2"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+            {/* 1. DIFFICULTY SELECTOR */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-amber-300 font-black uppercase tracking-wider mr-1">
+                🎚️ Difficulty:
+              </span>
+              <button
+                type="button"
+                onClick={() => setDifficulty('easy')}
+                aria-pressed={difficulty === 'easy'}
+                className={`px-2.5 py-1 font-bold border transition-colors ${
+                  difficulty === 'easy'
+                    ? 'bg-emerald-500 text-black border-white font-black'
+                    : 'bg-neutral-800 text-stone-300 border-stone-600 hover:bg-neutral-700'
+                }`}
+              >
+                🟢 Easy (English Hints)
+              </button>
+              <button
+                type="button"
+                onClick={() => setDifficulty('medium')}
+                aria-pressed={difficulty === 'medium'}
+                className={`px-2.5 py-1 font-bold border transition-colors ${
+                  difficulty === 'medium'
+                    ? 'bg-amber-400 text-black border-white font-black'
+                    : 'bg-neutral-800 text-stone-300 border-stone-600 hover:bg-neutral-700'
+                }`}
+              >
+                🟡 Medium (Grid Clues)
+              </button>
+              <button
+                type="button"
+                onClick={() => setDifficulty('hard')}
+                aria-pressed={difficulty === 'hard'}
+                className={`px-2.5 py-1 font-bold border transition-colors ${
+                  difficulty === 'hard'
+                    ? 'bg-red-600 text-white border-white font-black'
+                    : 'bg-neutral-800 text-stone-300 border-stone-600 hover:bg-neutral-700'
+                }`}
+              >
+                🔴 Hard (🇯🇵 Raw Japanese)
+              </button>
+            </div>
+
+            {/* 2. GAME MODE & AI ENGINE SELECTOR */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1">
+                <span className="text-amber-300 font-black uppercase tracking-wider mr-1">
+                  🎮 Mode:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleSelectPlayMode('daily')}
+                  aria-pressed={playMode === 'daily'}
+                  className={`px-2.5 py-1 font-bold border transition-colors ${
+                    playMode === 'daily'
+                      ? 'bg-dossier-accent text-dossier-ink border-white font-black'
+                      : 'bg-neutral-800 text-stone-300 border-stone-600 hover:bg-neutral-700'
+                  }`}
+                  title="Daily Case #042 (Starts at Step 3 with Steps 1-2 pre-completed)"
+                >
+                  📅 Daily Case #042
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSelectPlayMode('fresh')}
+                  aria-pressed={playMode === 'fresh'}
+                  className={`px-2.5 py-1 font-bold border transition-colors ${
+                    playMode === 'fresh'
+                      ? 'bg-dossier-accent text-dossier-ink border-white font-black'
+                      : 'bg-neutral-800 text-stone-300 border-stone-600 hover:bg-neutral-700'
+                  }`}
+                  title="Start from Line 01 with all 6 telegram lines blank"
+                >
+                  ✨ Full 6-Line Run
+                </button>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <span className="text-amber-300 font-black uppercase tracking-wider ml-1 mr-1">
+                  🤖 AI:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setEngineMode(engineMode === 'offline' ? 'cloud' : 'offline')}
+                  className="px-2.5 py-1 bg-neutral-800 hover:bg-neutral-700 text-amber-300 font-bold border border-amber-300"
+                >
+                  {engineMode === 'offline' ? '⚡ Instant Sim' : '🧠 Cloud LLM'}
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowDevTools(!showDevTools)}
+                className="px-2 py-1 bg-neutral-900 hover:bg-neutral-800 text-stone-400 border border-stone-700 text-[11px]"
+                title="Toggle quick-fill sample prompts"
+              >
+                {showDevTools ? '▾ Hide Samples' : '▸ Sample Prompts'}
+              </button>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2 text-xs">
-            <button
-              type="button"
-              onClick={() => handleDevSim('green')}
-              className="px-2 py-0.5 bg-emerald-800 hover:bg-emerald-700 text-white font-bold border border-white"
-            >
-              Sim: 🍀 ¥13,870
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDevSim('trap')}
-              className="px-2 py-0.5 bg-red-800 hover:bg-red-700 text-white font-bold border border-white"
-            >
-              Sim Trap: Red Ad
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDevSim('confirm')}
-              className="px-2 py-0.5 bg-blue-800 hover:bg-blue-700 text-white font-bold border border-white"
-            >
-              Sim: Blue Confirm
-            </button>
-            <button
-              type="button"
-              onClick={() => setEngineMode(engineMode === 'offline' ? 'cloud' : 'offline')}
-              className="px-2 py-0.5 bg-neutral-800 text-amber-300 font-bold border border-amber-300"
-            >
-              Mode: {engineMode === 'offline' ? 'Offline Engine' : 'Cloud LLM'}
-            </button>
-          </div>
-        </aside>
+
+          {/* Contextual Difficulty Helper Banner (Easy / Medium Modes) */}
+          {difficulty === 'easy' && (
+            <div className="bg-emerald-950/90 border border-emerald-400 text-emerald-100 px-3 py-1.5 text-xs flex flex-wrap items-center justify-between gap-2">
+              <span>
+                <strong>🟢 EASY MODE TRANSLATION GUIDE:</strong> Goal is to book the{' '}
+                <strong>2nd train row (Nozomi 24 • 14:30)</strong> →{' '}
+                <strong>Green Car (🍀 ¥13,870 button at Col D, Row 3)</strong>, then click the{' '}
+                <strong>Blue Confirm button (Col D, Row 4)</strong>. Avoid the red ¥2,400 ad banner!
+              </span>
+            </div>
+          )}
+          {difficulty === 'medium' && (
+            <div className="bg-amber-950/90 border border-amber-400 text-amber-100 px-3 py-1.5 text-xs">
+              <strong>🟡 MEDIUM MODE CLUE:</strong> Click{' '}
+              <strong>▶ Target Ghost Replay</strong> below to see the 2 target click waypoints, then
+              describe those buttons by their grid coordinate (e.g. <code>D3</code>, <code>D4</code>),
+              color, or icon!
+            </div>
+          )}
+
+          {/* Optional Sample Prompts Bar */}
+          {showDevTools && (
+            <div className="pt-1.5 border-t border-stone-700 flex flex-wrap items-center gap-2 text-xs">
+              <span className="text-stone-400 font-bold">TRY A SAMPLE COMMAND:</span>
+              <button
+                type="button"
+                onClick={() => handleDevSim('green')}
+                className="px-2 py-0.5 bg-emerald-800 hover:bg-emerald-700 text-white font-bold border border-white"
+              >
+                Fill: &quot;click green clover 13870 button in 2nd row&quot;
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDevSim('confirm')}
+                className="px-2 py-0.5 bg-blue-800 hover:bg-blue-700 text-white font-bold border border-white"
+              >
+                Fill: &quot;click blue confirm button at D4&quot;
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDevSim('trap')}
+                className="px-2 py-0.5 bg-red-800 hover:bg-red-700 text-white font-bold border border-white"
+              >
+                Fill Trap: &quot;click the red button&quot;
+              </button>
+            </div>
+          )}
+        </nav>
       }
       header={
         <MastheadHeader
           caseNumber={state.caseNumber}
           caseTitle="KANJION"
-          difficultyBadge="🇯🇵 HARD MODE: TOKYO–OSAKA SHINKANSEN"
+          difficultyBadge={difficultyBadge}
           ghostReplayActive={state.ghostReplayActive}
           onToggleGhostReplay={handleToggleGhost}
           somOverlayActive={state.somOverlayActive}
