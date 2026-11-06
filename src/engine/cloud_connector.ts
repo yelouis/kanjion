@@ -521,6 +521,7 @@ export class HttpVisionLLMTransport implements VisionLLMTransport {
       try {
         const reqHeaders: Record<string, string> = {
           'Content-Type': 'application/json',
+          'X-Kanjion-Client': 'kanjion-web-v1',
           ...this.headers,
         };
         if (this.apiKey) {

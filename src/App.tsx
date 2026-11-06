@@ -47,7 +47,11 @@ export const App: React.FC = () => {
     const transport =
       process.env.NODE_ENV === 'test'
         ? new MockVisionLLMTransport()
-        : new HttpVisionLLMTransport({ endpointUrl: '/api/decision' });
+        : new HttpVisionLLMTransport({
+            endpointUrl: '/api/decision',
+            maxRetries: 0, // Never retry-storm the cloud endpoint; fall back immediately to offline engine
+            timeoutMs: 6000,
+          });
     return new CloudVisionConnector({
       puzzleId: 'case_042',
       macroViews: CASE_042_MACRO_VIEWS,
