@@ -393,8 +393,8 @@ describe('6. AgentCursor Component', () => {
     );
 
     const note = screen.getByTestId('agent-note');
-    expect(note).toHaveClass('bg-red-700', 'text-white');
-    expect(screen.getByText(/\[⚠️ TRAP DETECTED\]/i)).toBeInTheDocument();
+    expect(note).toHaveTextContent(/\[ACTION EXECUTED\]/i);
+    expect(note).not.toHaveTextContent(/TRAP DETECTED/i);
 
     const container = screen.getByTestId('agent-cursor').firstChild;
     expect(container).toHaveClass('shake-anim');
@@ -411,8 +411,7 @@ describe('6. AgentCursor Component', () => {
     );
 
     const note = screen.getByTestId('agent-note');
-    expect(note).toHaveClass('bg-stone-600', 'text-white');
-    expect(screen.getByText(/\[❓ UNGROUNDED\]/i)).toBeInTheDocument();
+    expect(note).toHaveTextContent(/\[💭 AGENT THOUGHT\]/i);
   });
 });
 

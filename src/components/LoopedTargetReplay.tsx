@@ -6,6 +6,10 @@ import type { ShinkansenMicroState } from '../types/engine';
 export interface LoopedTargetReplayProps {
   /** Optional className override */
   className?: string;
+  /** Whether the replay panel is currently expanded */
+  isExpanded?: boolean;
+  /** Callback to toggle expanded/compact replay size */
+  onToggleExpand?: () => void;
 }
 
 interface ReplayTargets {
@@ -37,7 +41,11 @@ const PASSENGER_NAME = 'TANAKA';
  * - Page 04 / 12 (MV-04): Draws a handwritten signature inside the Digital Signature Pad (#signature-canvas) and clicks the blue Confirm button (#target-confirm-btn)
  * - Page 05 / 12 (MV-05): Displays the completed Shinkansen e-Ticket Issuance screen
  */
-export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({ className = '' }) => {
+export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({
+  className = '',
+  isExpanded = false,
+  onToggleExpand,
+}) => {
   const [phase, setPhase] = useState<number>(0); // 0 to 100
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [scale, setScale] = useState<number>(1);
@@ -46,7 +54,7 @@ export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({ classNam
   const outerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
 
-  // Measure outer container width for responsive scaling
+  // Measure outer container width for responsive scaling (updates immediately on expand/shrink)
   useEffect(() => {
     const updateScale = () => {
       if (outerRef.current) {
@@ -58,15 +66,25 @@ export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({ classNam
     };
     updateScale();
     window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
-  }, []);
 
-  // Continuous 100-tick loop (85ms per tick = 8.5s full 5-page multi-modal cycle)
+    let observer: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && outerRef.current) {
+      observer = new ResizeObserver(() => updateScale());
+      observer.observe(outerRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', updateScale);
+      observer?.disconnect();
+    };
+  }, [isExpanded]);
+
+  // Continuous 100-tick loop (115ms per tick = 11.5s unhurried 5-page multi-modal cycle)
   useEffect(() => {
     if (isPaused || process.env.NODE_ENV === 'test') return;
     const interval = setInterval(() => {
       setPhase((prev) => (prev + 1) % 100);
-    }, 85);
+    }, 115);
     return () => clearInterval(interval);
   }, [isPaused]);
 
@@ -270,8 +288,8 @@ export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({ classNam
       data-testid="looped-target-replay"
       className={`border-2 border-dossier-ink bg-dossier-card shadow-ink flex flex-col ${className}`}
     >
-      {/* Minimal Top Bar: Only Pause / Start Replay */}
-      <div className="bg-dossier-ink text-dossier-paper px-3 py-2 flex items-center justify-between border-b-2 border-dossier-ink">
+      {/* Minimal Top Bar: Pause / Start Replay + Click to Expand / Shrink */}
+      <div className="bg-dossier-ink text-dossier-paper px-3 py-2 flex items-center justify-between gap-2 border-b-2 border-dossier-ink">
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-red-600 text-white font-mono-clean font-black text-xs uppercase tracking-wider">
             <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
@@ -279,22 +297,63 @@ export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({ classNam
           </span>
         </div>
 
-        <button
-          type="button"
-          id="btn-replay-pause"
-          onClick={() => setIsPaused(!isPaused)}
-          className="px-3 py-1 bg-stone-800 hover:bg-stone-700 text-white border border-stone-500 font-mono-clean font-bold text-xs uppercase cursor-pointer"
-        >
-          {isPaused ? '▶ Start Replay' : '⏸ Pause Replay'}
-        </button>
+        <div className="flex items-center gap-1.5">
+          {onToggleExpand && (
+            <button
+              type="button"
+              id="btn-replay-expand"
+              data-testid="btn-replay-expand"
+              onClick={onToggleExpand}
+              className="px-2.5 py-1 bg-amber-300 hover:bg-amber-200 text-stone-950 border border-stone-900 font-mono-clean font-black text-xs uppercase cursor-pointer"
+              title={isExpanded ? 'Shrink demo replay back to compact size' : 'Expand demo replay for a closer look'}
+            >
+              {isExpanded ? '↙ Shrink' : '🔍 Expand'}
+            </button>
+          )}
+          <button
+            type="button"
+            id="btn-replay-pause"
+            onClick={() => setIsPaused(!isPaused)}
+            className="px-2.5 py-1 bg-stone-800 hover:bg-stone-700 text-white border border-stone-500 font-mono-clean font-bold text-xs uppercase cursor-pointer"
+          >
+            {isPaused ? '▶ Start Replay' : '⏸ Pause Replay'}
+          </button>
+        </div>
       </div>
 
-      {/* 1:1 Unredacted Multi-Page Site with Mouse, Typing, Timed Click & Signature Drawing */}
+      {/* 1:1 Unredacted Multi-Page Site with Mouse, Typing, Timed Click & Signature Drawing (Click to Expand/Shrink) */}
       <div
         ref={outerRef}
-        className="w-full overflow-hidden bg-stone-900 relative"
+        onClick={onToggleExpand}
+        role={onToggleExpand ? 'button' : undefined}
+        tabIndex={onToggleExpand ? 0 : undefined}
+        onKeyDown={
+          onToggleExpand
+            ? (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onToggleExpand();
+                }
+              }
+            : undefined
+        }
+        title={
+          onToggleExpand
+            ? isExpanded
+              ? 'Click to shrink demo replay'
+              : 'Click to expand demo replay'
+            : undefined
+        }
+        className={`w-full overflow-hidden bg-stone-900 relative group ${
+          onToggleExpand ? 'cursor-zoom-in' : ''
+        }`}
         style={{ height: `${scaledHeight}px` }}
       >
+        {onToggleExpand && (
+          <div className="absolute bottom-2 right-2 z-40 px-2 py-0.5 bg-stone-900/85 text-amber-300 border border-amber-400/70 font-mono-clean font-bold text-[10px] uppercase tracking-wider pointer-events-none shadow-sm">
+            {isExpanded ? '↙ Click Replay to Shrink' : '🔍 Click Replay to Expand'}
+          </div>
+        )}
         <div
           ref={stageRef}
           style={{

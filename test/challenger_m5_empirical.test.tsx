@@ -233,10 +233,10 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       const stageCore = container.querySelector('#sandbox-core');
       expect(stageCore).toHaveClass('shake-anim');
 
-      // 2. Yellow thought note receives red trap warning styling
+      // 2. Yellow thought note executes without spoiling "trap detected"
       const agentNote = container.querySelector('#agent-note');
-      expect(agentNote).toHaveTextContent(/\[⚠️ TRAP DETECTED\]/i);
-      expect(agentNote).toHaveClass('bg-red-700', 'text-white');
+      expect(agentNote).toHaveTextContent(/\[ACTION EXECUTED\]/i);
+      expect(agentNote).not.toHaveTextContent(/TRAP DETECTED/i);
 
       // 3. Shake automatically expires after 400ms timeout
       act(() => {

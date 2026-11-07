@@ -71,6 +71,19 @@ export const App: React.FC<AppProps> = ({
     process.env.NODE_ENV === 'test' ? 'offline' : 'cloud'
   );
   const [mobilePage, setMobilePage] = useState<MobileActivePage>('agent');
+  const [isReplayExpanded, setIsReplayExpanded] = useState<boolean>(false);
+
+  // Live pre-commit choreography states so mouse movement, typing, and drawing feel unhurried & player-controlled
+  const [previewCursor, setPreviewCursor] = useState<{
+    xPercent: number;
+    yPercent: number;
+    thought: string;
+    targetElementId: string | null;
+  } | null>(null);
+  const [previewTypedText, setPreviewTypedText] = useState<string | null>(null);
+  const [previewSignatureProgress, setPreviewSignatureProgress] = useState<number | undefined>(
+    undefined
+  );
 
   const offlineEngine = useMemo(
     () => new OfflineSimulationEngine(CASE_042_MACRO_VIEWS),
@@ -107,6 +120,49 @@ export const App: React.FC<AppProps> = ({
     }
   }, [state.caseStatus]);
 
+  // Helper to resolve visual cursor coordinates on the current page before flipping pages
+  const getTargetCoordinates = (
+    targetId?: string,
+    targetCoordinate?: { x: number; y: number }
+  ): { xPercent: number; yPercent: number } => {
+    const pageCoordMap: Record<number, { xPercent: number; yPercent: number }> = {
+      1: { xPercent: 26, yPercent: 38 },
+      2: { xPercent: 73, yPercent: 38 },
+      3: { xPercent: 26, yPercent: 68 },
+      4: { xPercent: 73, yPercent: 68 },
+      11: { xPercent: 93, yPercent: 8 },
+      12: { xPercent: 88, yPercent: 15 },
+      14: { xPercent: 13, yPercent: 32 },
+      16: { xPercent: 45, yPercent: 28 },
+      17: { xPercent: 47, yPercent: 51 },
+      21: { xPercent: 55, yPercent: 41 },
+      22: { xPercent: 68, yPercent: 41 },
+      23: { xPercent: 55, yPercent: 51 },
+      24: { xPercent: 68, yPercent: 51 },
+      25: { xPercent: 85.5, yPercent: 51 },
+      27: { xPercent: 50, yPercent: 53 },
+      28: { xPercent: 18, yPercent: 92 },
+      29: { xPercent: 69, yPercent: 92 },
+      30: { xPercent: 87, yPercent: 90 },
+    };
+    if (targetId) {
+      const numId = parseInt(targetId.replace(/^#/, ''), 10);
+      if (pageCoordMap[numId]) {
+        return pageCoordMap[numId];
+      }
+    }
+    if (targetCoordinate) {
+      return {
+        xPercent: Number(((targetCoordinate.x / 1024) * 100).toFixed(1)),
+        yPercent: Number(((targetCoordinate.y / 768) * 100).toFixed(1)),
+      };
+    }
+    return {
+      xPercent: state.agentCursor.xPercent,
+      yPercent: state.agentCursor.yPercent,
+    };
+  };
+
   // 5. Instruction Dispatch Pipeline (PROMPT-ONLY)
   const handleDispatchLine = async () => {
     if (state.caseStatus === 'closed' || state.isExecuting) return;
@@ -123,9 +179,63 @@ export const App: React.FC<AppProps> = ({
         instruction
       );
 
-      const latency = process.env.NODE_ENV === 'test' ? 0 : 350;
-      if (latency > 0) {
-        await new Promise((resolve) => setTimeout(resolve, latency));
+      // In live browser gameplay, choreograph the mouse glide + character-by-character typing / signature drawing
+      // on the current screen BEFORE committing the page transition so the player feels in direct control!
+      if (process.env.NODE_ENV !== 'test') {
+        const isAutomatedBrowser =
+          typeof navigator !== 'undefined' && Boolean(navigator.webdriver);
+        const speedFactor = isAutomatedBrowser ? 0.08 : 1;
+        const sleep = (ms: number) =>
+          new Promise((resolve) => setTimeout(resolve, Math.max(10, Math.round(ms * speedFactor))));
+
+        const coords = getTargetCoordinates(action.targetId, action.targetCoordinate);
+
+        // Phase 1: Smoothly glide the mouse cursor across the current page to the target element (~1.15s)
+        setPreviewCursor({
+          xPercent: coords.xPercent,
+          yPercent: coords.yPercent,
+          thought: action.thought,
+          targetElementId: null,
+        });
+        await sleep(1150);
+
+        // Lock target highlight ring onto the element
+        setPreviewCursor({
+          xPercent: coords.xPercent,
+          yPercent: coords.yPercent,
+          thought: action.thought,
+          targetElementId: action.targetId ?? null,
+        });
+
+        // Phase 2: Perform visible typing, signature drawing, or button click hold on the current page
+        if (action.action === 'TYPE') {
+          const textToType = (action.textValue || 'TANAKA').toUpperCase();
+          for (let i = 1; i <= textToType.length; i++) {
+            setPreviewTypedText(textToType.slice(0, i));
+            await sleep(220);
+          }
+          await sleep(650);
+        } else if (action.action === 'DRAW') {
+          const steps = 6;
+          for (let i = 1; i <= steps; i++) {
+            const p = i / steps;
+            setPreviewSignatureProgress(p);
+            setPreviewCursor({
+              xPercent: Number((22 + p * 56).toFixed(1)),
+              yPercent: coords.yPercent,
+              thought: action.thought,
+              targetElementId: action.targetId ?? null,
+            });
+            await sleep(180);
+          }
+          await sleep(500);
+        } else {
+          await sleep(700);
+        }
+
+        setPreviewCursor(null);
+        setPreviewTypedText(null);
+        setPreviewSignatureProgress(undefined);
       }
 
       dispatch({
@@ -141,6 +251,9 @@ export const App: React.FC<AppProps> = ({
         setTimeout(() => dispatch({ type: 'CLEAR_STAGE_SHAKE' }), 400);
       }
     } catch {
+      setPreviewCursor(null);
+      setPreviewTypedText(null);
+      setPreviewSignatureProgress(undefined);
       dispatch({
         type: 'APPLY_AGENT_ACTION',
         payload: {
@@ -195,7 +308,20 @@ export const App: React.FC<AppProps> = ({
 
   const stepHistory = state.microState.stepHistory || [];
   const lastTargetElementId =
-    stepHistory.length > 0 ? stepHistory[stepHistory.length - 1]?.targetId ?? null : null;
+    previewCursor !== null
+      ? previewCursor.targetElementId
+      : stepHistory.length > 0
+      ? stepHistory[stepHistory.length - 1]?.targetId ?? null
+      : null;
+
+  const displayedMicroState =
+    previewTypedText !== null
+      ? { ...state.microState, passengerName: previewTypedText }
+      : state.microState;
+
+  const displayedCursorX = previewCursor ? previewCursor.xPercent : state.agentCursor.xPercent;
+  const displayedCursorY = previewCursor ? previewCursor.yPercent : state.agentCursor.yPercent;
+  const displayedCursorThought = previewCursor ? previewCursor.thought : state.agentCursor.thought;
 
   return (
     <div className="min-h-screen bg-dossier-bg text-dossier-ink p-2 sm:p-4 md:p-5 antialiased font-mono-clean relative">
@@ -371,14 +497,16 @@ export const App: React.FC<AppProps> = ({
                 OPEN TWO-PAGE NEWSPAPER SPREAD:
                 Left Page = Agent Screen ONLY | Right Page = Replay Screen ONLY
                =============================================================== */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-0 relative items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-0 relative items-start transition-all duration-300">
               {/* -------------------------------------------------------------
-                  LEFT NEWSPAPER PAGE (Cols 1-6):
+                  LEFT NEWSPAPER PAGE (Default Cols 1-8 to focus on the game):
                   Your Agent's Live Webpage Screen ONLY
                  ------------------------------------------------------------- */}
               <div
                 data-testid="newspaper-left-page"
-                className={`lg:col-span-6 lg:pr-5 lg:border-r-4 lg:border-double lg:border-dossier-ink space-y-3 ${
+                className={`${
+                  isReplayExpanded ? 'lg:col-span-5' : 'lg:col-span-8'
+                } lg:pr-5 lg:border-r-4 lg:border-double lg:border-dossier-ink space-y-3 transition-all duration-300 ${
                   mobilePage === 'replay' ? 'hidden lg:block' : 'block'
                 }`}
               >
@@ -394,16 +522,17 @@ export const App: React.FC<AppProps> = ({
                 <section>
                   <SandboxStage
                     macroViewId={state.macroViewId}
-                    microState={state.microState}
+                    microState={displayedMicroState}
                     agentCursor={state.agentCursor}
                     ghostReplayActive={state.ghostReplayActive}
                     somOverlayActive={state.somOverlayActive}
                     stageShake={state.stageShake}
                   >
                     <ShinkansenSandbox
-                      microState={state.microState}
+                      microState={displayedMicroState}
                       somOverlayActive={state.somOverlayActive}
                       onBlockedManualClick={handleBlockedManualClick}
+                      signatureProgress={previewSignatureProgress}
                       multiPageMode={process.env.NODE_ENV !== 'test'}
                     />
 
@@ -414,10 +543,10 @@ export const App: React.FC<AppProps> = ({
                     />
 
                     <AgentCursor
-                      xPercent={state.agentCursor.xPercent}
-                      yPercent={state.agentCursor.yPercent}
+                      xPercent={displayedCursorX}
+                      yPercent={displayedCursorY}
                       targetElementId={lastTargetElementId}
-                      thoughtText={state.agentCursor.thought}
+                      thoughtText={displayedCursorThought}
                       variant={state.agentCursor.variant}
                       isTrap={state.agentCursor.variant === 'trap'}
                       isShaking={state.agentCursor.isShaking}
@@ -427,12 +556,14 @@ export const App: React.FC<AppProps> = ({
               </div>
 
               {/* -------------------------------------------------------------
-                  RIGHT NEWSPAPER PAGE (Cols 7-12):
+                  RIGHT NEWSPAPER PAGE (Default Compact Cols 9-12; Click to Expand):
                   Target Replay Screen ONLY
                  ------------------------------------------------------------- */}
               <div
                 data-testid="newspaper-right-page"
-                className={`lg:col-span-6 lg:pl-5 space-y-3 ${
+                className={`${
+                  isReplayExpanded ? 'lg:col-span-7' : 'lg:col-span-4'
+                } lg:pl-5 space-y-3 transition-all duration-300 ${
                   mobilePage === 'agent' ? 'hidden lg:block' : 'block'
                 }`}
               >
@@ -442,13 +573,16 @@ export const App: React.FC<AppProps> = ({
                     <span className="px-1.5 py-0.5 bg-dossier-accent text-dossier-ink border border-dossier-ink">
                       RIGHT PAGE
                     </span>
-                    <span>TARGET REPLAY (COPY THIS)</span>
+                    <span>TARGET REPLAY (CLICK TO {isReplayExpanded ? 'SHRINK' : 'EXPAND'})</span>
                   </span>
                 </div>
 
                 {/* Continuous Looped Target Video (1:1 Unredacted Copy of the Site) */}
                 <section>
-                  <LoopedTargetReplay />
+                  <LoopedTargetReplay
+                    isExpanded={isReplayExpanded}
+                    onToggleExpand={() => setIsReplayExpanded((prev) => !prev)}
+                  />
                 </section>
               </div>
             </div>

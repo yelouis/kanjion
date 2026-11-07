@@ -300,10 +300,10 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       const stageCore = container.querySelector('#sandbox-core');
       expect(stageCore).toHaveClass('shake-anim');
 
-      // Agent cursor receives trap styling
+      // Agent cursor executes without spoiling "trap detected"
       const agentNote = container.querySelector('#agent-note');
-      expect(agentNote).toHaveTextContent(/\[⚠️ TRAP DETECTED\]/i);
-      expect(agentNote).toHaveClass('bg-red-700', 'text-white');
+      expect(agentNote).toHaveTextContent(/\[ACTION EXECUTED\]/i);
+      expect(agentNote).not.toHaveTextContent(/TRAP DETECTED/i);
 
       // Auto-clear shake after 400ms
       act(() => {

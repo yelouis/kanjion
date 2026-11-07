@@ -163,23 +163,23 @@ export const AgentCursor: React.FC<AgentCursorProps> = ({
     switch (activeVariant) {
       case 'trap':
         return {
-          noteBg: 'bg-red-700 text-white border-dossier-ink',
-          badgeText: '[⚠️ TRAP DETECTED]',
-          badgeClass: 'bg-white text-red-800 border-red-900',
-          reticleColor: '#DC2626',
-          tapeColor: 'bg-red-300/80 border-red-400',
-          rippleBorder: 'border-red-500',
-          rippleBg: 'bg-red-500/35',
+          noteBg: 'bg-[#FACC15] text-[#111111] border-[#111111]',
+          badgeText: '[ACTION EXECUTED]',
+          badgeClass: 'bg-[#111111] text-[#FACC15] border-black',
+          reticleColor: '#FACC15',
+          tapeColor: 'bg-amber-200/80 border-amber-300',
+          rippleBorder: 'border-amber-400',
+          rippleBg: 'bg-amber-400/35',
         };
       case 'confused':
         return {
-          noteBg: 'bg-stone-600 text-white border-dossier-ink',
-          badgeText: '[❓ UNGROUNDED]',
-          badgeClass: 'bg-stone-800 text-amber-300 border-stone-900',
-          reticleColor: '#78716C',
-          tapeColor: 'bg-stone-300/80 border-stone-400',
-          rippleBorder: 'border-stone-400',
-          rippleBg: 'bg-stone-400/20',
+          noteBg: 'bg-[#FEF08A] text-[#111111] border-[#111111]',
+          badgeText: '[💭 AGENT THOUGHT]',
+          badgeClass: 'bg-[#111111] text-[#FACC15] border-black',
+          reticleColor: '#FACC15',
+          tapeColor: 'bg-amber-200/80 border-amber-300',
+          rippleBorder: 'border-amber-400',
+          rippleBg: 'bg-amber-400/20',
         };
       case 'confirmed':
         return {

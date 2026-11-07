@@ -428,6 +428,22 @@ export const CASE_042_EXHIBITS: ExhibitDefinition[] = [
     weight: 15,
     criteria: 'Signed the JR Digital Signature Verification Pad (自署・サイン欄) to authorize ticket issuance.',
     evaluate: (state: ShinkansenMicroState) => {
+      // If the player explicitly drew/signed the Digital Authorization Pad, Exhibit D is verified!
+      if (state.signatureStroke) {
+        return {
+          status: 'VERIFIED',
+          awardedPoints: 15,
+          stampText: '[VERIFIED ✓ +15%]',
+        };
+      }
+      // In multi-page browser mode, if the signature pad was not signed, it is simply MISSED (never confusingly CONTAMINATED).
+      if (state.signatureSigned === false) {
+        return {
+          status: 'MISSED',
+          awardedPoints: 0,
+          stampText: '[MISSED ✗ +0%]',
+        };
+      }
       const contaminated = Boolean(state.insuranceTrapHit || state.insuranceCheckboxChecked);
       if (contaminated) {
         return {
@@ -436,11 +452,10 @@ export const CASE_042_EXHIBITS: ExhibitDefinition[] = [
           stampText: '[CONTAMINATED ✗ +0%]',
         };
       }
-      const signed = state.signatureSigned !== false;
       return {
-        status: signed ? 'CLEAN' : 'MISSED',
-        awardedPoints: signed ? 15 : 0,
-        stampText: signed ? '[CLEAN ✓ +15%]' : '[MISSED ✗ +0%]',
+        status: 'CLEAN',
+        awardedPoints: 15,
+        stampText: '[CLEAN ✓ +15%]',
       };
     },
   },
