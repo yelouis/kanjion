@@ -653,22 +653,23 @@ describe('9. ExhibitsPanel Component', () => {
 });
 
 describe('10. App Top-Level Integration Gameplay Loop', () => {
-  it('executes full dispatch workflow, updates agent cursor, and closes case file', async () => {
+  it('executes full dispatch workflow starting at Line 01, updates agent cursor, and closes case file', async () => {
     render(<App />);
 
-    // Initial state: Line 03 active with pre-seeded text
-    expect(screen.getByText(/LINE 03 \/ 06/i)).toBeInTheDocument();
-    const input = screen.getByDisplayValue(/click green clover 13870 button in 2nd row/i);
-    expect(input).toBeInTheDocument();
+    // Initial state: Every game starts at Line 01 with all 6 instructions available
+    expect(screen.getByText(/LINE 01 \/ 06/i)).toBeInTheDocument();
+    const input = screen.getByRole('textbox');
+    expect(input).toHaveValue('');
 
-    // Dispatch Line 03
-    const dispatchBtn = screen.getByRole('button', { name: /DISPATCH LINE 03/i });
+    // Type and Dispatch Line 01
+    fireEvent.change(input, { target: { value: 'click green clover 13870 button in 2nd row' } });
+    const dispatchBtn = screen.getByRole('button', { name: /DISPATCH LINE 01/i });
     await act(async () => {
       fireEvent.click(dispatchBtn);
     });
 
-    // Check that line was submitted and active line moved to Line 04
-    expect(screen.getByText(/LINE 04 \/ 06/i)).toBeInTheDocument();
+    // Check that line was submitted and active line moved to Line 02
+    expect(screen.getByText(/LINE 02 \/ 06/i)).toBeInTheDocument();
 
     // Close case file
     const closeBtn = screen.getByRole('button', { name: /CLOSE CASE FILE/i });
@@ -688,7 +689,7 @@ describe('10. App Top-Level Integration Gameplay Loop', () => {
     });
 
     expect(screen.queryByText(/FORENSIC AUDIT REPORT/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/LINE 04 \/ 06/i)).toBeInTheDocument();
+    expect(screen.getByText(/LINE 02 \/ 06/i)).toBeInTheDocument();
   });
 
   it('starts on the Krillion-style Newspaper Front Cover, unfolds into a two-page spread, and supports top-left menu & mobile flip tabs', async () => {
@@ -698,14 +699,14 @@ describe('10. App Top-Level Integration Gameplay Loop', () => {
     expect(screen.getByTestId('newspaper-front-cover')).toBeInTheDocument();
     expect(screen.getByText(/THE DAILY DOSSIER/i)).toBeInTheDocument();
 
-    // 2. Top-Left Menu button opens the Mode & Difficulty drawer
+    // 2. Top-Left Menu button opens the menu drawer
     const menuBtn = screen.getByRole('button', { name: /Open Game Menu/i });
     fireEvent.click(menuBtn);
     expect(screen.getByTestId('top-left-menu-drawer')).toBeInTheDocument();
-    expect(screen.getByText(/Daily Puzzle #042 \(Default\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Daily Puzzle #042/i)).toBeInTheDocument();
 
-    // Select Easy difficulty from top-left menu
-    fireEvent.click(screen.getByRole('button', { name: /Easy \(English Translation Hints\)/i }));
+    // Close menu drawer
+    fireEvent.click(menuBtn);
     expect(screen.queryByTestId('top-left-menu-drawer')).not.toBeInTheDocument();
 
     // 3. Click "OPEN TODAY'S NEWSPAPER" to unfold into the Two-Page Spread
@@ -716,7 +717,6 @@ describe('10. App Top-Level Integration Gameplay Loop', () => {
     expect(screen.getByTestId('newspaper-left-page')).toBeInTheDocument();
     expect(screen.getByTestId('newspaper-right-page')).toBeInTheDocument();
     expect(screen.getByTestId('looped-target-replay')).toBeInTheDocument();
-    expect(screen.getByText(/EASY MODE TRANSLATION GUIDE/i)).toBeInTheDocument();
 
     // 4. Mobile Page Switcher toggles active mobile page
     const mobileSwitcher = screen.getByTestId('mobile-page-switcher');

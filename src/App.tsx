@@ -15,7 +15,6 @@ import {
 
 import {
   MastheadHeader,
-  CoordinateRulers,
   SandboxStage,
   ShinkansenSandbox,
   AgentCursor,
@@ -26,8 +25,6 @@ import {
   ExhibitsPanel,
 } from './components';
 
-export type DifficultyLevel = 'easy' | 'medium' | 'hard';
-export type PlayPresetMode = 'daily' | 'fresh';
 export type MobileActivePage = 'agent' | 'replay';
 
 export interface AppProps {
@@ -41,18 +38,16 @@ export interface AppProps {
 export const App: React.FC<AppProps> = ({
   initialNewspaperOpen = process.env.NODE_ENV === 'test',
 }) => {
-  // 1. Centralized Immutable Game State (Default = Daily Puzzle #042)
+  // 1. Every game starts on Line 01 (preSeeded: false) with all 6 instruction slots available!
   const [state, dispatch] = useReducer(
     gameReducer,
     undefined,
-    () => createInitialGameState({ caseNumber: '#042', preSeeded: true })
+    () => createInitialGameState({ caseNumber: '#042', preSeeded: false })
   );
 
-  // 2. Newspaper Fold State, Top-Left Menu Drawer, Difficulty, Mode, & Mobile Page Tab
+  // 2. Newspaper Fold State, Top-Left Menu Drawer, & Mobile Page Tab
   const [isNewspaperOpen, setIsNewspaperOpen] = useState<boolean>(initialNewspaperOpen);
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
-  const [difficulty, setDifficulty] = useState<DifficultyLevel>('hard');
-  const [playMode, setPlayMode] = useState<PlayPresetMode>('daily');
   const [engineMode, setEngineMode] = useState<'offline' | 'cloud'>('offline');
   const [mobilePage, setMobilePage] = useState<MobileActivePage>('agent');
   const [manualClickWarning, setManualClickWarning] = useState<boolean>(false);
@@ -80,13 +75,6 @@ export const App: React.FC<AppProps> = ({
   }, [offlineEngine]);
 
   const activeEngine = engineMode === 'offline' ? offlineEngine : cloudEngine;
-
-  // Difficulty Badge Label
-  const difficultyBadge = useMemo(() => {
-    if (difficulty === 'easy') return '🟢 EASY MODE: ENGLISH FIELD HINTS ENABLED';
-    if (difficulty === 'medium') return '🟡 MEDIUM MODE: VISUAL CLUES & GRID';
-    return '🇯🇵 HARD MODE: TOKYO–OSAKA SHINKANSEN';
-  }, [difficulty]);
 
   // 3. Computed Multiplier for Live Telemetry
   const linesUsed = state.telegrams.filter((t) => t.submitted).length;
@@ -178,18 +166,18 @@ export const App: React.FC<AppProps> = ({
     dispatch({ type: 'TOGGLE_SOM_OVERLAY' });
   };
 
-  const handleSelectPlayMode = (mode: PlayPresetMode) => {
-    setPlayMode(mode);
+  const handleResetDailyPuzzle = () => {
     dispatch({
       type: 'RESET_GAME',
-      payload: { caseNumber: '#042', preSeeded: mode === 'daily' },
+      payload: { caseNumber: '#042', preSeeded: false },
     });
+    setMenuOpen(false);
   };
 
   return (
     <div className="min-h-screen bg-dossier-bg text-dossier-ink p-2 sm:p-4 md:p-5 antialiased font-mono-clean relative">
       {/* =====================================================================
-          1. KRILLION-STYLE TOP-LEFT HAMBURGER MENU BUTTON + POPOVER DRAWER
+          1. KRILLION-STYLE TOP-LEFT HAMBURGER MENU BUTTON + SIMPLE DRAWER
          ===================================================================== */}
       <div className="max-w-[1640px] mx-auto mb-3 flex items-center justify-between gap-2 relative z-40">
         <div className="flex items-center gap-2">
@@ -198,28 +186,15 @@ export const App: React.FC<AppProps> = ({
             type="button"
             onClick={() => setMenuOpen(!menuOpen)}
             aria-expanded={menuOpen}
-            aria-label="Open Game Menu (Mode & Difficulty)"
+            aria-label="Open Game Menu"
             className="btn-press flex items-center gap-2 px-3 py-1.5 bg-dossier-ink text-dossier-paper border-2 border-dossier-ink shadow-ink font-mono-clean font-black text-xs uppercase hover:bg-neutral-800"
           >
             <span className="text-base leading-none">{menuOpen ? '✕' : '☰'}</span>
             <span>MENU</span>
           </button>
-
-          {/* Compact Current Mode & Difficulty Pill */}
-          <span className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 bg-dossier-card border border-dossier-ink text-[11px] font-bold text-dossier-ink">
-            <span>{playMode === 'daily' ? '📅 Daily Puzzle #042' : '✨ Full 6-Line Run'}</span>
-            <span>•</span>
-            <span>
-              {difficulty === 'easy'
-                ? '🟢 Easy'
-                : difficulty === 'medium'
-                ? '🟡 Medium'
-                : '🔴 Hard (🇯🇵)'}
-            </span>
-          </span>
         </div>
 
-        {/* Right Quick Action: Fold / Unfold Newspaper Cover */}
+        {/* Right Quick Action: Fold Back to Front Page */}
         {isNewspaperOpen && (
           <button
             id="btn-fold-front-page"
@@ -227,7 +202,7 @@ export const App: React.FC<AppProps> = ({
             onClick={() => setIsNewspaperOpen(false)}
             className="btn-press px-2.5 py-1 bg-dossier-card border-2 border-dossier-ink shadow-ink-sm text-xs font-bold hover:bg-amber-50"
           >
-            📰 Front Page Cover
+            📰 Front Page
           </button>
         )}
 
@@ -235,11 +210,11 @@ export const App: React.FC<AppProps> = ({
         {menuOpen && (
           <div
             data-testid="top-left-menu-drawer"
-            className="absolute top-full left-0 mt-2 w-80 sm:w-96 bg-dossier-paper border-2 border-dossier-ink shadow-ink-lg p-4 space-y-4 z-50 text-xs"
+            className="absolute top-full left-0 mt-2 w-72 bg-dossier-paper border-2 border-dossier-ink shadow-ink-lg p-4 space-y-3 z-50 text-xs"
           >
             <div className="flex items-center justify-between border-b-2 border-dossier-ink pb-2">
               <span className="font-black uppercase tracking-wider text-sm">
-                漢字音 KANJION • GAME MENU
+                漢字音 KANJION
               </span>
               <button
                 type="button"
@@ -250,128 +225,29 @@ export const App: React.FC<AppProps> = ({
               </button>
             </div>
 
-            {/* A. Puzzle Mode Selector (Default = Daily Puzzle) */}
-            <div className="space-y-1.5">
-              <div className="font-black uppercase text-dossier-muted tracking-wider">
-                1. SELECT GAME MODE
-              </div>
-              <div className="grid grid-cols-1 gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleSelectPlayMode('daily');
-                    setMenuOpen(false);
-                  }}
-                  className={`p-2 text-left border-2 font-bold flex items-center justify-between ${
-                    playMode === 'daily'
-                      ? 'bg-dossier-accent text-dossier-ink border-dossier-ink font-black shadow-ink-sm'
-                      : 'bg-dossier-card text-dossier-ink border-stone-400 hover:bg-stone-100'
-                  }`}
-                >
-                  <span>📅 Daily Puzzle #042 (Default)</span>
-                  {playMode === 'daily' && <span>✓ ACTIVE</span>}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleSelectPlayMode('fresh');
-                    setMenuOpen(false);
-                  }}
-                  className={`p-2 text-left border-2 font-bold flex items-center justify-between ${
-                    playMode === 'fresh'
-                      ? 'bg-dossier-accent text-dossier-ink border-dossier-ink font-black shadow-ink-sm'
-                      : 'bg-dossier-card text-dossier-ink border-stone-400 hover:bg-stone-100'
-                  }`}
-                >
-                  <span>✨ Full 6-Line Run (Start at Line 01)</span>
-                  {playMode === 'fresh' && <span>✓ ACTIVE</span>}
-                </button>
-              </div>
-            </div>
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsNewspaperOpen(true);
+                  handleResetDailyPuzzle();
+                }}
+                className="w-full p-2.5 text-left border-2 border-dossier-ink bg-dossier-accent text-dossier-ink font-black shadow-ink-sm flex items-center justify-between"
+              >
+                <span>📅 Daily Puzzle #042 (Restart)</span>
+                <span>↺</span>
+              </button>
 
-            {/* B. Difficulty Selector */}
-            <div className="space-y-1.5">
-              <div className="font-black uppercase text-dossier-muted tracking-wider">
-                2. SELECT DIFFICULTY
-              </div>
-              <div className="grid grid-cols-1 gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDifficulty('easy');
-                    setMenuOpen(false);
-                  }}
-                  className={`p-2 text-left border-2 font-bold flex items-center justify-between ${
-                    difficulty === 'easy'
-                      ? 'bg-emerald-200 text-dossier-ink border-dossier-ink font-black shadow-ink-sm'
-                      : 'bg-dossier-card text-dossier-ink border-stone-400 hover:bg-stone-100'
-                  }`}
-                >
-                  <span>🟢 Easy (English Translation Hints)</span>
-                  {difficulty === 'easy' && <span>✓</span>}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDifficulty('medium');
-                    setMenuOpen(false);
-                  }}
-                  className={`p-2 text-left border-2 font-bold flex items-center justify-between ${
-                    difficulty === 'medium'
-                      ? 'bg-amber-200 text-dossier-ink border-dossier-ink font-black shadow-ink-sm'
-                      : 'bg-dossier-card text-dossier-ink border-stone-400 hover:bg-stone-100'
-                  }`}
-                >
-                  <span>🟡 Medium (Grid Coordinate Clues)</span>
-                  {difficulty === 'medium' && <span>✓</span>}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDifficulty('hard');
-                    setMenuOpen(false);
-                  }}
-                  className={`p-2 text-left border-2 font-bold flex items-center justify-between ${
-                    difficulty === 'hard'
-                      ? 'bg-red-200 text-dossier-ink border-dossier-ink font-black shadow-ink-sm'
-                      : 'bg-dossier-card text-dossier-ink border-stone-400 hover:bg-stone-100'
-                  }`}
-                >
-                  <span>🔴 Hard (🇯🇵 Raw Japanese Portal)</span>
-                  {difficulty === 'hard' && <span>✓</span>}
-                </button>
-              </div>
-            </div>
-
-            {/* C. AI Engine Selector */}
-            <div className="space-y-1.5 pt-1 border-t border-stone-300">
-              <div className="font-black uppercase text-dossier-muted tracking-wider">
-                3. AI EXECUTION ENGINE
-              </div>
-              <div className="grid grid-cols-2 gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setEngineMode('offline')}
-                  className={`p-1.5 border font-bold ${
-                    engineMode === 'offline'
-                      ? 'bg-dossier-ink text-dossier-accent border-dossier-ink font-black'
-                      : 'bg-dossier-card border-stone-400'
-                  }`}
-                >
-                  ⚡ Offline Sim
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEngineMode('cloud')}
-                  className={`p-1.5 border font-bold ${
-                    engineMode === 'cloud'
-                      ? 'bg-dossier-ink text-dossier-accent border-dossier-ink font-black'
-                      : 'bg-dossier-card border-stone-400'
-                  }`}
-                >
-                  🧠 Cloud LLM
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsNewspaperOpen(false);
+                  setMenuOpen(false);
+                }}
+                className="w-full p-2.5 text-left border-2 border-dossier-ink bg-dossier-card text-dossier-ink font-bold hover:bg-stone-100"
+              >
+                📰 Return to Front Page Cover
+              </button>
             </div>
           </div>
         )}
@@ -385,20 +261,16 @@ export const App: React.FC<AppProps> = ({
           /* --- INITIAL STATE: FRONT PAGE OF THE NEWSPAPER (Krillion Style) --- */
           <NewspaperFrontCover
             caseNumber={state.caseNumber}
-            difficulty={difficulty}
-            playMode={playMode}
-            onSelectDifficulty={setDifficulty}
-            onSelectPlayMode={handleSelectPlayMode}
             onOpenNewspaper={() => setIsNewspaperOpen(true)}
           />
         ) : (
           /* --- UNFOLDED STATE: TWO-PAGE OPEN NEWSPAPER SPREAD (Desktop) & FLIP-PAD (Mobile) --- */
           <div className="newspaper-unfold-anim space-y-4">
-            {/* Broadsheet Masthead Header */}
+            {/* Clean Broadsheet Masthead Header (No SoM IDs, No Mode: Offline, No Difficulty clutter) */}
             <MastheadHeader
               caseNumber={state.caseNumber}
               caseTitle="KANJION"
-              difficultyBadge={difficultyBadge}
+              difficultyBadge="🇯🇵 HARD MODE: TOKYO–OSAKA SHINKANSEN"
               ghostReplayActive={state.ghostReplayActive}
               onToggleGhostReplay={handleToggleGhost}
               somOverlayActive={state.somOverlayActive}
@@ -409,33 +281,15 @@ export const App: React.FC<AppProps> = ({
               onToggleBackendMode={() =>
                 setEngineMode(engineMode === 'offline' ? 'cloud' : 'offline')
               }
+              minimalCleanHeader={true}
             />
-
-            {/* Contextual Difficulty Helper Banner (Easy / Medium Modes) */}
-            {difficulty === 'easy' && (
-              <div className="bg-emerald-950 text-emerald-100 border-2 border-dossier-ink px-3.5 py-2 text-xs shadow-ink-sm">
-                <strong>🟢 EASY MODE TRANSLATION GUIDE:</strong> Watch the right page: first click
-                is the <strong>Green Clover 🍀 button in the 2nd train row (Col D, Row 3)</strong>,
-                second click is the <strong>Blue Confirm button (Col D, Row 4)</strong>. Avoid the
-                red ¥2,400 trap banner!
-              </div>
-            )}
-            {difficulty === 'medium' && (
-              <div className="bg-amber-950 text-amber-100 border-2 border-dossier-ink px-3.5 py-2 text-xs shadow-ink-sm">
-                <strong>🟡 MEDIUM MODE CLUE:</strong> Compare the coordinates on the right-page
-                video loop (<code>COL D, ROW 3</code> → <code>COL D, ROW 4</code>) and instruct your
-                agent on the left page using English descriptions.
-              </div>
-            )}
 
             {/* ===============================================================
                 DEDICATED MOBILE VIEW SWITCHER (< 1024px)
-                Allows thumb-switching between the Left Page (Agent + Prompts)
-                and Right Page (Looped Target Video) without cramping!
                =============================================================== */}
             <div
               data-testid="mobile-page-switcher"
-              className="lg:hidden bg-dossier-card border-2 border-dossier-ink p-1.5 shadow-ink-sm space-y-1.5"
+              className="lg:hidden bg-dossier-card border-2 border-dossier-ink p-1.5 shadow-ink-sm"
             >
               <div className="grid grid-cols-2 gap-1.5 text-xs">
                 <button
@@ -461,22 +315,6 @@ export const App: React.FC<AppProps> = ({
                   🤖 Left Page: Agent &amp; Pad
                 </button>
               </div>
-
-              {/* Compact Picture-in-Picture Target Reminder when on Mobile Agent Tab */}
-              {mobilePage === 'agent' && (
-                <div className="bg-stone-900 text-amber-300 px-2.5 py-1.5 text-[11px] flex items-center justify-between gap-2">
-                  <span>
-                    <strong>🎯 Target Loop:</strong> Click 1 = Green 🍀 (D3) → Click 2 = Blue ▶ (D4)
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setMobilePage('replay')}
-                    className="px-2 py-0.5 bg-dossier-accent text-dossier-ink font-black uppercase shrink-0"
-                  >
-                    👁️ Watch Loop
-                  </button>
-                </div>
-              )}
             </div>
 
             {/* ===============================================================
@@ -485,7 +323,7 @@ export const App: React.FC<AppProps> = ({
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-0 relative items-start">
               {/* -------------------------------------------------------------
                   LEFT NEWSPAPER PAGE (Cols 1-6):
-                  Live Webpage (Prompt-Only, Manual Clicks Disabled) + Dispatch Pad
+                  Live Webpage (Prompt-Only, Manual Clicks Disabled) + 6-Line Pad
                  ------------------------------------------------------------- */}
               <div
                 data-testid="newspaper-left-page"
@@ -493,11 +331,11 @@ export const App: React.FC<AppProps> = ({
                   mobilePage === 'replay' ? 'hidden lg:block' : 'block'
                 }`}
               >
-                {/* Left Page Folio Header */}
+                {/* Left Page Header */}
                 <div className="flex flex-wrap items-center justify-between border-b-2 border-dossier-ink pb-1.5 text-xs">
                   <span className="font-black uppercase tracking-wider text-dossier-ink flex items-center gap-1.5">
-                    <span className="px-1.5 py-0.5 bg-dossier-ink text-dossier-paper">PAGE 01</span>
-                    <span>YOUR AGENT&apos;S LIVE WEBPAGE</span>
+                    <span className="px-1.5 py-0.5 bg-dossier-ink text-dossier-paper">LEFT PAGE</span>
+                    <span>YOUR AGENT&apos;S WEBPAGE</span>
                   </span>
                   <span className="text-red-800 font-black text-[11px] uppercase">
                     🔒 PROMPT-ONLY (MANUAL CLICKS DISABLED)
@@ -512,48 +350,46 @@ export const App: React.FC<AppProps> = ({
                     className="bg-red-800 text-white border-2 border-dossier-ink px-3 py-1.5 text-xs font-bold shadow-ink-sm flex items-center justify-between"
                   >
                     <span>
-                      🔒 Manual clicking on the webpage is disabled! Type an English prompt in the
-                      Dispatch Pad below to command your AI agent.
+                      🔒 Manual clicking on the webpage is disabled! Type an English instruction in
+                      Line 01–06 below to move your agent.
                     </span>
                   </div>
                 )}
 
-                {/* Live Sandbox Webpage (Manual Clicks Disabled: onElementClick is omitted!) */}
+                {/* Live Sandbox Webpage (No CoordinateRulers clutter; Manual Clicks Disabled) */}
                 <section>
-                  <CoordinateRulers>
-                    <SandboxStage
-                      macroViewId={state.macroViewId}
+                  <SandboxStage
+                    macroViewId={state.macroViewId}
+                    microState={state.microState}
+                    agentCursor={state.agentCursor}
+                    ghostReplayActive={state.ghostReplayActive}
+                    somOverlayActive={state.somOverlayActive}
+                    stageShake={state.stageShake}
+                  >
+                    <ShinkansenSandbox
                       microState={state.microState}
-                      agentCursor={state.agentCursor}
-                      ghostReplayActive={state.ghostReplayActive}
                       somOverlayActive={state.somOverlayActive}
-                      stageShake={state.stageShake}
-                    >
-                      <ShinkansenSandbox
-                        microState={state.microState}
-                        somOverlayActive={state.somOverlayActive}
-                        onBlockedManualClick={handleBlockedManualClick}
-                      />
+                      onBlockedManualClick={handleBlockedManualClick}
+                    />
 
-                      <GhostReplay
-                        active={state.ghostReplayActive}
-                        onToggle={handleToggleGhost}
-                        trajectory={CASE_042_GHOST_REPLAY}
-                      />
+                    <GhostReplay
+                      active={state.ghostReplayActive}
+                      onToggle={handleToggleGhost}
+                      trajectory={CASE_042_GHOST_REPLAY}
+                    />
 
-                      <AgentCursor
-                        xPercent={state.agentCursor.xPercent}
-                        yPercent={state.agentCursor.yPercent}
-                        thoughtText={state.agentCursor.thought}
-                        variant={state.agentCursor.variant}
-                        isTrap={state.agentCursor.variant === 'trap'}
-                        isShaking={state.agentCursor.isShaking}
-                      />
-                    </SandboxStage>
-                  </CoordinateRulers>
+                    <AgentCursor
+                      xPercent={state.agentCursor.xPercent}
+                      yPercent={state.agentCursor.yPercent}
+                      thoughtText={state.agentCursor.thought}
+                      variant={state.agentCursor.variant}
+                      isTrap={state.agentCursor.variant === 'trap'}
+                      isShaking={state.agentCursor.isShaking}
+                    />
+                  </SandboxStage>
                 </section>
 
-                {/* 6-Line Telegram Dispatch Pad directly beneath Left Page Webpage */}
+                {/* 6-Line Instruction Pad directly beneath Left Page Webpage */}
                 <section>
                   <DispatchPad
                     telegrams={state.telegrams}
@@ -571,7 +407,7 @@ export const App: React.FC<AppProps> = ({
 
               {/* -------------------------------------------------------------
                   RIGHT NEWSPAPER PAGE (Cols 7-12):
-                  Continuous Looped Target Replay Video + 5 Sealed/Unsealed Exhibits
+                  Continuous Unredacted Target Replay Video + 5 Sealed/Unsealed Exhibits
                  ------------------------------------------------------------- */}
               <div
                 data-testid="newspaper-right-page"
@@ -579,20 +415,17 @@ export const App: React.FC<AppProps> = ({
                   mobilePage === 'agent' ? 'hidden lg:block' : 'block'
                 }`}
               >
-                {/* Right Page Folio Header */}
+                {/* Right Page Header */}
                 <div className="flex flex-wrap items-center justify-between border-b-2 border-dossier-ink pb-1.5 text-xs">
                   <span className="font-black uppercase tracking-wider text-dossier-ink flex items-center gap-1.5">
                     <span className="px-1.5 py-0.5 bg-dossier-accent text-dossier-ink border border-dossier-ink">
-                      PAGE 02
+                      RIGHT PAGE
                     </span>
-                    <span>TARGET REPLAY LOOP (COPY THIS)</span>
-                  </span>
-                  <span className="text-dossier-muted font-bold text-[11px] uppercase">
-                    CONTINUOUS LOOP • 2 TARGET CLICKS
+                    <span>TARGET REPLAY (COPY THIS)</span>
                   </span>
                 </div>
 
-                {/* Continuous Looped Target Video */}
+                {/* Continuous Looped Target Video (1:1 Unredacted Copy of the Site) */}
                 <section>
                   <LoopedTargetReplay />
                 </section>
@@ -604,7 +437,7 @@ export const App: React.FC<AppProps> = ({
                     onClick={() => setMobilePage('agent')}
                     className="btn-press w-full py-2.5 bg-dossier-ink text-dossier-accent border-2 border-dossier-ink font-black uppercase text-xs shadow-ink"
                   >
-                    👈 Flip to Left Page: Type Your English Prompt ⏎
+                    👈 Flip to Left Page: Type Your English Instruction ⏎
                   </button>
                 </div>
 

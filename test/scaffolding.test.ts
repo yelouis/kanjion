@@ -42,22 +42,18 @@ describe('1. Broadsheet App Shell & Scaffolding', () => {
     expect(screen.getByText(/6-LINE WESTERN UNION DISPATCH PAD/i)).toBeInTheDocument();
   });
 
-  it('renders the 1024x768 coordinate rulers framing the stage', () => {
+  it('mounts the two-page newspaper spread with left agent page and right target replay', () => {
     render(React.createElement(App));
-    expect(screen.getByText(/COL A \(LEFT: 0–256\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/COL B \(CENTER-LEFT: 256–512\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/COL C \(CENTER-RIGHT: 512–768\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/COL D \(RIGHT: 768–1024\)/i)).toBeInTheDocument();
-    expect(screen.getByText('ROW 1')).toBeInTheDocument();
-    expect(screen.getByText('ROW 4')).toBeInTheDocument();
+    expect(screen.getByTestId('newspaper-left-page')).toBeInTheDocument();
+    expect(screen.getByTestId('newspaper-right-page')).toBeInTheDocument();
+    expect(screen.getByTestId('looped-target-replay')).toBeInTheDocument();
   });
 
-  it('renders initial telegram ledger lines and displays active line input', () => {
+  it('starts every game on Line 01 with all 6 instruction slots available', () => {
     render(React.createElement(App));
-    expect(screen.getByText(/select tokyo to shin-osaka tab/i)).toBeInTheDocument();
-    expect(screen.getByText(/set departure dropdown to 14:30/i)).toBeInTheDocument();
-    expect(screen.getByDisplayValue(/click green clover 13870 button in 2nd row/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/KEEP BLANK FOR \+20% EFFICIENCY MULTIPLIER/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/LINE 01 \/ 06/i)).toBeInTheDocument();
+    expect(screen.getByRole('textbox')).toHaveValue('');
+    expect(screen.getAllByText(/KEEP BLANK FOR \+20% EFFICIENCY MULTIPLIER/i).length).toBe(5);
   });
 
   it('unseals the 5 declassified exhibits with rubber ink stamps upon closing the case file', () => {

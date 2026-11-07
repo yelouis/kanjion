@@ -37,37 +37,43 @@ export const DispatchPad: React.FC<DispatchPadProps> = ({
   return (
     <section
       id="telegram-ledger"
-      className="bg-dossier-card border-2 border-dossier-ink shadow-ink p-4 font-mono-clean"
+      className="bg-dossier-card border-4 border-dossier-ink shadow-ink-lg p-4 sm:p-5 font-mono-clean"
       aria-label="6-Line Western Union Telegram Dispatch Pad"
     >
-      {/* Ledger Header & Telemetry Bar */}
-      <div className="flex flex-wrap items-center justify-between border-b-2 border-dossier-ink pb-2 mb-2 text-xs gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="bg-dossier-ink text-dossier-accent font-black px-2 py-0.5 uppercase">
-            STEP 2 • COMMAND THE AGENT
-          </span>
-          <span className="font-black uppercase tracking-wider text-dossier-ink">
-            📜 6-LINE WESTERN UNION DISPATCH PAD (MAX 60 CHARS PER LINE)
-          </span>
+      {/* Prominent Direct Instruction Header */}
+      <div className="flex flex-wrap items-center justify-between border-b-2 border-dossier-ink pb-3 mb-3 gap-2">
+        <div>
+          <h2 className="font-black uppercase tracking-wider text-sm sm:text-base text-dossier-ink flex items-center gap-2">
+            <span className="px-2 py-0.5 bg-dossier-ink text-dossier-accent text-xs">
+              HOW TO PLAY
+            </span>
+            <span>FILL OUT UP TO 6 INSTRUCTIONS BELOW TO CONTROL THE AGENT</span>
+          </h2>
+          <p className="text-xs text-dossier-muted mt-0.5">
+            Each line sends 1 English command (max 60 chars) to your AI agent above. Unused lines
+            give a +20% score bonus.
+          </p>
+          <span className="sr-only">6-LINE WESTERN UNION DISPATCH PAD</span>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="font-bold text-dossier-ink">
+
+        <div className="flex items-center gap-3 text-xs">
+          <span className="font-bold text-dossier-ink bg-stone-200 px-2.5 py-1 border border-dossier-ink">
             ACTIVE:{' '}
-            <span id="active-line-label">
+            <span id="active-line-label" className="font-black">
               {caseStatus === 'closed'
                 ? 'CASE CLOSED'
                 : `LINE ${String(activeLineIndex + 1).padStart(2, '0')} / 06`}
             </span>
           </span>
-          <span className="px-2 py-0.5 bg-dossier-ink text-dossier-accent font-bold">
+          <span className="px-2.5 py-1 bg-dossier-ink text-dossier-accent font-bold">
             CURRENT MULTIPLIER IF CLOSED NOW:{' '}
             <span id="live-mult-label">{currentMultiplier.toFixed(1)}x</span>
           </span>
         </div>
       </div>
 
-      {/* 6 Simultaneous Ledger Rows */}
-      <div className="divide-y divide-stone-300 text-xs">
+      {/* 6 Large, Direct Instruction Slots */}
+      <div className="space-y-2.5">
         {Array.from({ length: 6 }).map((_, index) => {
           const lineNumber = index + 1;
           const lineStr = String(lineNumber).padStart(2, '0');
@@ -78,93 +84,101 @@ export const DispatchPad: React.FC<DispatchPadProps> = ({
             return (
               <div
                 key={lineNumber}
-                className="py-2 flex flex-col sm:flex-row sm:items-center justify-between text-dossier-muted gap-1 transition-colors hover:bg-stone-50 px-1"
+                className="py-2.5 px-3.5 bg-stone-100 border-2 border-stone-400 flex flex-col sm:flex-row sm:items-center justify-between text-xs sm:text-sm gap-1"
               >
-                <span>
-                  <strong className="text-dossier-ink">LINE {lineStr}:</strong> "{lineData.text}"
+                <span className="text-dossier-ink">
+                  <strong className="font-black mr-1.5">LINE {lineStr}:</strong> &quot;{lineData.text}&quot;
                 </span>
-                <span className="text-dossier-ink font-bold">
+                <span className="text-emerald-900 font-bold text-xs">
                   → {lineData.actionSummary || 'Agent executed action'} (Exhibit Status: ██ REDACTED ██)
                 </span>
               </div>
             );
           }
 
-          // 2. ACTIVE INPUT ROW (When case is active and this is the active index)
+          // 2. ACTIVE INPUT ROW (Large, high-contrast, impossible to miss)
           if (index === activeLineIndex && caseStatus === 'active') {
             return (
               <div
                 key={lineNumber}
-                className={`py-2.5 bg-dossier-accent/35 px-2.5 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 border-l-4 border-dossier-ink my-1 ${
+                className={`p-3 sm:p-3.5 bg-amber-100/90 border-2 border-dossier-ink shadow-ink flex flex-col gap-2.5 ${
                   inputShake ? 'shake-anim border-red-600 bg-red-100/50' : ''
                 }`}
               >
-                <span className="font-black text-dossier-ink shrink-0 select-none">
-                  LINE {lineStr} ▸
-                </span>
-                <div className="relative flex-1">
-                  <input
-                    id="telegram-input"
-                    type="text"
-                    maxLength={60}
-                    value={currentInput}
-                    disabled={isSubmitting}
-                    onChange={(e) => onInputChange(e.target.value.slice(0, 60))}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Write instruction (max 60 chars)..."
-                    className="w-full bg-dossier-card border-2 border-dossier-ink px-2.5 py-1.5 pr-16 font-mono-clean font-bold text-sm text-dossier-ink focus:outline-none focus:ring-1 focus:ring-dossier-ink disabled:bg-stone-100 disabled:cursor-not-allowed"
-                    autoFocus
-                  />
-                  {/* Live Character Countdown Ruler */}
-                  <span
-                    id="char-counter"
-                    className={`absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold font-mono-clean ${
-                      currentInput.length >= 60 ? 'text-red-700 font-black' : 'text-dossier-muted'
-                    }`}
-                  >
-                    {currentInput.length}/60
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                  <span className="font-black text-sm sm:text-base text-dossier-ink bg-dossier-accent px-2.5 py-2 border-2 border-dossier-ink shrink-0 select-none text-center">
+                    LINE {lineStr} ▸
                   </span>
+
+                  <div className="relative flex-1">
+                    <input
+                      id="telegram-input"
+                      type="text"
+                      maxLength={60}
+                      value={currentInput}
+                      disabled={isSubmitting}
+                      onChange={(e) => onInputChange(e.target.value.slice(0, 60))}
+                      onKeyDown={handleKeyDown}
+                      placeholder={`Type instruction #${lineNumber} in English (e.g. "click the green button in row 2")...`}
+                      className="w-full bg-white border-2 border-dossier-ink px-3.5 py-2.5 pr-16 font-mono-clean font-bold text-sm sm:text-base text-dossier-ink placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-dossier-ink disabled:bg-stone-100 disabled:cursor-not-allowed"
+                      autoFocus
+                    />
+                    <span
+                      id="char-counter"
+                      className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold font-mono-clean ${
+                        currentInput.length >= 60 ? 'text-red-700 font-black' : 'text-dossier-muted'
+                      }`}
+                    >
+                      {currentInput.length}/60
+                    </span>
+                  </div>
+
+                  {/* Send Instruction Button */}
+                  <button
+                    type="button"
+                    id="btn-dispatch-line"
+                    disabled={isSubmitting}
+                    onClick={handleDispatch}
+                    className="btn-press px-5 py-2.5 bg-dossier-ink text-dossier-accent border-2 border-dossier-ink font-black text-sm uppercase shadow-ink-sm shrink-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <span>SENDING...</span>
+                        <span className="animate-pulse">⚡</span>
+                      </>
+                    ) : (
+                      `DISPATCH LINE ${lineStr} ⏎`
+                    )}
+                  </button>
                 </div>
 
-                {/* Mechanical Telegraph Transmit Button */}
-                <button
-                  type="button"
-                  id="btn-dispatch-line"
-                  disabled={isSubmitting}
-                  onClick={handleDispatch}
-                  className="btn-press px-4 py-1.5 bg-dossier-ink text-dossier-paper font-bold uppercase shadow-ink-sm shrink-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <span>TRANSMITTING...</span>
-                      <span className="animate-pulse">⚡</span>
-                    </>
-                  ) : (
-                    `DISPATCH LINE ${lineStr} ⏎`
-                  )}
-                </button>
-
-                {/* Early Case Closure Button */}
-                <button
-                  type="button"
-                  id="btn-close-case"
-                  disabled={isSubmitting}
-                  onClick={onCloseCase}
-                  className="btn-press px-3.5 py-1.5 bg-dossier-accent text-dossier-ink border-2 border-dossier-ink font-black uppercase shadow-ink-sm shrink-0 disabled:opacity-50"
-                  title="Close the case file now and lock in your unused line efficiency multiplier"
-                >
-                  🔒 CLOSE CASE FILE (UNSEAL EXHIBITS)
-                </button>
+                {/* Done / Submit Final Score Bar */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-amber-300/80 text-xs">
+                  <span className="text-dossier-ink font-bold">
+                    💡 Press <strong>Enter</strong> to send this line, or click{' '}
+                    <strong>Close Case File</strong> when your agent has finished copying the replay.
+                  </span>
+                  <button
+                    type="button"
+                    id="btn-close-case"
+                    disabled={isSubmitting}
+                    onClick={onCloseCase}
+                    className="btn-press px-3.5 py-1.5 bg-dossier-accent text-dossier-ink border-2 border-dossier-ink font-black uppercase shadow-ink-sm shrink-0 disabled:opacity-50 hover:bg-amber-300"
+                    title="Close the case file now and score your result"
+                  >
+                    🔒 CLOSE CASE FILE (UNSEAL EXHIBITS)
+                  </button>
+                </div>
               </div>
             );
           }
 
-          // 3. CASE CLOSED LOCKOUT ROW (If active line was not submitted and case is closed)
+          // 3. CASE CLOSED LOCKOUT ROW
           if (index === activeLineIndex && caseStatus === 'closed') {
             return (
               <div
                 key={lineNumber}
-                className="py-2 px-3 bg-stone-200 border-l-4 border-stone-500 text-dossier-muted flex items-center justify-between font-bold"
+                className="py-2.5 px-3.5 bg-stone-200 border-2 border-stone-500 text-dossier-muted flex items-center justify-between font-bold text-xs sm:text-sm"
               >
                 <span>LINE {lineStr}: [CASE CLOSED — DISPATCH PAD LOCKED]</span>
                 <span className="text-stone-600 font-mono-clean uppercase">🔒 LOCKOUT ACTIVE</span>
@@ -172,21 +186,24 @@ export const DispatchPad: React.FC<DispatchPadProps> = ({
             );
           }
 
-          // 4. FUTURE BONUS WATERMARK ROW
+          // 4. FUTURE INSTRUCTION SLOT ROW
           const isFinalLine = lineNumber === 6;
           return (
             <div
               key={lineNumber}
-              className="py-2 flex items-center justify-between text-stone-400 italic px-1 select-none"
+              className="py-2.5 px-3.5 bg-stone-50 border border-dashed border-stone-300 flex flex-wrap items-center justify-between text-stone-500 text-xs sm:text-sm select-none gap-1"
             >
-              <span>
-                LINE {lineStr}: [
-                {isFinalLine
-                  ? 'FINAL TELEGRAM LINE — AUTO-UNSEALS DOSSIER AFTER LINE 06'
-                  : 'UNSENT TELEGRAM LINE'}
-                ]
+              <span className="font-bold">
+                LINE {lineStr}:{' '}
+                <span className="font-normal italic">
+                  [
+                  {isFinalLine
+                    ? 'FINAL TELEGRAM LINE — AUTO-UNSEALS DOSSIER AFTER LINE 06'
+                    : 'EMPTY INSTRUCTION SLOT'}
+                  ]
+                </span>
               </span>
-              <span className="font-bold text-dossier-stampGreen not-italic">
+              <span className="font-bold text-dossier-stampGreen text-xs">
                 KEEP BLANK FOR +20% EFFICIENCY MULTIPLIER
               </span>
             </div>

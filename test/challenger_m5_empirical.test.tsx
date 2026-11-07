@@ -183,35 +183,35 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩🟩⬜ (3/6 Telegrams Sent)');
     });
 
-    it('empirically verifies golden path progression in top-level <App />', async () => {
+    it('empirically verifies golden path progression in top-level <App /> starting at Line 01', async () => {
       const { container } = render(<App />);
 
-      // Starts at Line 03 in pre-seeded mode
+      // Starts at Line 01 with all 6 instructions available
+      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 01 / 06');
+
+      // Send Line 01: Green car
+      const input1 = container.querySelector('#telegram-input') as HTMLInputElement;
+      fireEvent.change(input1, { target: { value: 'select nozomi green car' } });
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 01/i }));
+      });
+      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 02 / 06');
+
+      // Send Line 02: Confirm booking (query input fresh)
+      const input2 = container.querySelector('#telegram-input') as HTMLInputElement;
+      fireEvent.change(input2, { target: { value: 'confirm booking' } });
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 02/i }));
+      });
       expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 03 / 06');
 
-      // Send Line 03: Green car
-      const input3 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input3, { target: { value: 'select nozomi green car' } });
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 03/i }));
-      });
-      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 04 / 06');
-
-      // Send Line 04: Confirm booking (query input fresh)
-      const input4 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input4, { target: { value: 'confirm booking' } });
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 04/i }));
-      });
-      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 05 / 06');
-
-      // Close Case: 4 lines used, 2 unused -> 100% x 1.4x = 140 PTS
+      // Close Case: 2 lines used, 4 unused -> 100% x 1.8x = 180 PTS
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /CLOSE CASE FILE/i }));
       });
 
-      expect(container.querySelector('#final-score-banner')).toHaveTextContent('100% × 1.4x = 140 PTS');
-      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩🟩🟩 (4/6 Telegrams Sent)');
+      expect(container.querySelector('#final-score-banner')).toHaveTextContent('100% × 1.8x = 180 PTS');
+      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩🟩🟩 (2/6 Telegrams Sent)');
     });
   });
 
@@ -226,7 +226,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       fireEvent.change(input, { target: { value: 'click the red button' } });
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 03/i }));
+        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 01/i }));
       });
 
       // 1. Stage Shake error class applied to virtual stage core
@@ -288,24 +288,24 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       const { container } = render(<App />);
 
       // Turn 1: Hit trap
-      const input3 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input3, { target: { value: 'click the red button' } });
+      const input1 = container.querySelector('#telegram-input') as HTMLInputElement;
+      fireEvent.change(input1, { target: { value: 'click the red button' } });
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 03/i }));
+        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 01/i }));
       });
 
       // Turn 2: Pick correct green car (query input fresh)
-      const input4 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input4, { target: { value: 'select nozomi green car' } });
+      const input2 = container.querySelector('#telegram-input') as HTMLInputElement;
+      fireEvent.change(input2, { target: { value: 'select nozomi green car' } });
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 04/i }));
+        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 02/i }));
       });
 
       // Turn 3: Confirm booking (query input fresh)
-      const input5 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input5, { target: { value: 'confirm booking' } });
+      const input3 = container.querySelector('#telegram-input') as HTMLInputElement;
+      fireEvent.change(input3, { target: { value: 'confirm booking' } });
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 05/i }));
+        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 03/i }));
       });
 
       // Close case
@@ -318,9 +318,9 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       expect(container.querySelector('#exhibit-e-stamp')).toHaveTextContent('[VERIFIED ✓ +20%]');
       expect(container.querySelector('#exhibit-d-stamp')).toHaveTextContent('[CONTAMINATED ✗ +0%]');
       // Closeness is 25 (A) + 20 (B) + 20 (C) + 0 (D contaminated) + 20 (E) = 85%
-      // 5 lines used, 1 unused -> 1.2x multiplier -> round(85 * 1.2) = 102 PTS
-      expect(container.querySelector('#final-score-banner')).toHaveTextContent('85% × 1.2x = 102 PTS');
-      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩🟥🟩 (5/6 Telegrams Sent)');
+      // 3 lines used, 3 unused -> 1.6x multiplier -> round(85 * 1.6) = 136 PTS
+      expect(container.querySelector('#final-score-banner')).toHaveTextContent('85% × 1.6x = 136 PTS');
+      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩🟥🟩 (3/6 Telegrams Sent)');
     });
   });
 
@@ -357,17 +357,17 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       // 3. Status pill is restored to sealed
       expect(container.querySelector('#sealed-status-pill')).toHaveTextContent(/██ SEALED UNTIL CASE CLOSED ██/i);
 
-      // 4. Dispatch pad input is restored and operational
+      // 4. Dispatch pad input is restored and operational at Line 01
       const restoredInput = container.querySelector('#telegram-input') as HTMLInputElement;
       expect(restoredInput).toBeInTheDocument();
-      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 03 / 06');
+      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 01 / 06');
 
       // 5. Player can continue typing and dispatching in practice mode
       fireEvent.change(restoredInput, { target: { value: 'select nozomi green car' } });
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 03/i }));
+        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 01/i }));
       });
-      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 04 / 06');
+      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 02 / 06');
 
       // 6. Case can be closed again with updated state
       await act(async () => {
@@ -385,35 +385,22 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
     it('empirically triggers automatic case closure on 6th telegram dispatch with 1.0x multiplier', async () => {
       const { container } = render(<App />);
 
-      // Line 3
-      const input3 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input3, { target: { value: 'select nozomi green car' } });
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 03/i }));
-      });
+      const prompts = [
+        'select tokyo to shin-osaka',
+        'set departure 14:30',
+        'select nozomi green car',
+        'confirm booking',
+        'inspect fare details',
+        'final dispatch confirmation',
+      ];
 
-      // Line 4 (query input fresh)
-      const input4 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input4, { target: { value: 'confirm booking' } });
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 04/i }));
-      });
-
-      // Line 5 (query input fresh)
-      const input5 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input5, { target: { value: 'inspect fare details' } });
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 05/i }));
-      });
-      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 06 / 06');
-      expect(container.querySelector('#live-mult-label')).toHaveTextContent('1.2x'); // 5 lines used -> 1 unused -> 1.0 + 1*0.2 = 1.2x
-
-      // Line 6 (Final Telegram line, query input fresh)
-      const input6 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input6, { target: { value: 'final dispatch confirmation' } });
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 06/i }));
-      });
+      for (let i = 0; i < 6; i++) {
+        const inputEl = container.querySelector('#telegram-input') as HTMLInputElement;
+        fireEvent.change(inputEl, { target: { value: prompts[i] } });
+        await act(async () => {
+          fireEvent.click(screen.getByRole('button', { name: new RegExp(`DISPATCH LINE 0${i + 1}`, 'i') }));
+        });
+      }
 
       // Verification: Case automatically closed WITHOUT clicking "Close Case File"
       expect(container.querySelector('#sealed-status-pill')).toHaveTextContent(/🔓 UNSEALED \(CASE CLOSED\)/i);
