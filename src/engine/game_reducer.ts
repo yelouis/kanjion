@@ -80,12 +80,38 @@ export function reduceShinkansenMicroState(
   const numId = parseInt(rawId, 10);
 
   switch (numId) {
-    case 25: // Green Car Nozomi 24 (Target Exhibit C)
+    case 1: // Tokaido-Sanyo Shinkansen Route (Page 1 -> Page 2, Exhibit A)
+      nextState.selectedRoute = 'tokyo_osaka';
+      nextMacroViewId = 'MV-02';
+      summary = 'Agent clicked [東海道新幹線 東京⇒新大阪]';
+      break;
+
+    case 2: // Tohoku Shinkansen Wrong Route (Page 1 -> Page 10)
+      nextState.selectedRoute = 'tohoku_hayabusa';
+      nextMacroViewId = 'MV-10';
+      summary = 'Agent clicked [東北・北海道新幹線]';
+      break;
+
+    case 17: // Passenger Name Input Field (Page 2 -> Page 3, Exhibit B TYPE Task)
+      nextState.passengerName = (action.textValue || 'TANAKA').toUpperCase();
+      nextState.departureTime = '14:30';
+      nextMacroViewId = 'MV-03';
+      summary = `Agent typed [${nextState.passengerName}] into [搭乗者名]`;
+      break;
+
+    case 25: // Green Car Nozomi 24 (Page 3 -> Page 4, Exhibit C Timed Flash Seat)
       nextState.trainName = 'Nozomi 24';
       nextState.seatClass = 'green_car';
       nextState.fare = 13870;
       nextState.greenCarSelected = true;
+      nextState.timedWindowHit = true;
       summary = 'Agent clicked [🍀 ◯ ¥13,870]';
+      break;
+
+    case 27: // Digital Signature Authorization Pad (Page 4, Exhibit D DRAW Task)
+      nextState.signatureSigned = true;
+      nextState.signatureStroke = action.textValue || 'T. Tanaka';
+      summary = 'Agent signed [自署・サイン欄]';
       break;
 
     case 12: // Red Promo Insurance Banner (Decoy Trap Contamination)

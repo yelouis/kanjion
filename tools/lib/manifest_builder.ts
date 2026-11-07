@@ -180,3 +180,49 @@ export function buildDeclarativeManifest(manifest: PuzzleManifest): Record<strin
     ghostReplay: manifest.ghostReplay,
   };
 }
+
+export interface SiteDifficultyProfile {
+  siteUrl: string;
+  pageCount: number;
+  hasTypeTask: boolean;
+  hasDrawTask: boolean;
+  hasTimedClickTask: boolean;
+  positiveExhibitsOnly: boolean;
+  solvableByGeminiFlashLite: boolean;
+}
+
+/**
+ * Validates that every exhibit in a puzzle manifest is a positive performed action
+ * (never "Avoid X" or "Do not click Y").
+ */
+export function validatePositiveExhibitsOnly(
+  exhibits: Array<{ title: string; criteria?: string }>
+): { valid: boolean; offendingTitles: string[] } {
+  const offendingTitles: string[] = [];
+  for (const ex of exhibits) {
+    if (/\b(?:avoid|do not|don't|never)\b/i.test(ex.title)) {
+      offendingTitles.push(ex.title);
+    }
+  }
+  return {
+    valid: offendingTitles.length === 0,
+    offendingTitles,
+  };
+}
+
+/**
+ * Daily pipeline difficulty scorer that biases candidate real websites toward:
+ * - 12-page multi-page traversal depth (+30)
+ * - Multi-modal tasks beyond clicking: TYPE text input (+25), DRAW signature/canvas (+25), TIMED_CLICK moving UI (+20)
+ * - Strictly positive exhibits and verified solvability by gemini-2.5-flash-lite.
+ */
+export function scoreCandidateSiteDifficulty(profile: SiteDifficultyProfile): number {
+  if (!profile.positiveExhibitsOnly || !profile.solvableByGeminiFlashLite) {
+    return 0;
+  }
+  let score = Math.min(30, Math.round((profile.pageCount / 12) * 30));
+  if (profile.hasTypeTask) score += 25;
+  if (profile.hasDrawTask) score += 25;
+  if (profile.hasTimedClickTask) score += 20;
+  return score;
+}

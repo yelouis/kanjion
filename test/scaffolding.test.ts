@@ -72,7 +72,7 @@ describe('1. Broadsheet App Shell & Scaffolding', () => {
     expect(screen.getByText(/Route: 東京 ⇒ 新大阪/i)).toBeInTheDocument();
     expect(screen.getByText(/14:30 Departure Slot/i)).toBeInTheDocument();
     expect(screen.getByText(/Row 2: 🍀 ¥13,870 Seat/i)).toBeInTheDocument();
-    expect(screen.getByText(/Avoid ¥2,400 Ins. Ad/i)).toBeInTheDocument();
+    expect(screen.getByText(/Sign Digital Authorization Pad/i)).toBeInTheDocument();
     expect(screen.getByText(/Final Blue Confirm/i)).toBeInTheDocument();
     expect(screen.getByText(/\[VERIFIED ✓ \+25%\]/i)).toBeInTheDocument();
   });
@@ -209,10 +209,23 @@ describe('3. Text Normalizer & Cache Key Generator', () => {
 });
 
 describe('4. Case File #042 Data Integrity & Checkpoint Evaluation', () => {
-  it('contains all 9 discrete macro-views', () => {
-    expect(CASE_042_MACRO_VIEWS).toHaveLength(9);
+  it('contains all 12 discrete macro-views', () => {
+    expect(CASE_042_MACRO_VIEWS).toHaveLength(12);
     const ids = CASE_042_MACRO_VIEWS.map((v) => v.id);
-    expect(ids).toEqual(['MV-01', 'MV-02', 'MV-03', 'MV-04', 'MV-05', 'MV-06', 'MV-07', 'MV-08', 'MV-09']);
+    expect(ids).toEqual([
+      'MV-01',
+      'MV-02',
+      'MV-03',
+      'MV-04',
+      'MV-05',
+      'MV-06',
+      'MV-07',
+      'MV-08',
+      'MV-09',
+      'MV-10',
+      'MV-11',
+      'MV-12',
+    ]);
   });
 
   it('defines exactly 11 interactive elements in Macro-View 3 (seat_matrix)', () => {
@@ -313,7 +326,7 @@ describe('4. Case File #042 Data Integrity & Checkpoint Evaluation', () => {
     expect(CASE_042_MANIFEST.caseNumber).toBe('#042');
     expect(CASE_042_MANIFEST.difficulty).toBe('HARD');
     expect(CASE_042_MANIFEST.initialMacroViewId).toBe('MV-03');
-    expect(CASE_042_MANIFEST.macroViews).toHaveLength(9);
+    expect(CASE_042_MANIFEST.macroViews).toHaveLength(12);
     expect(CASE_042_MANIFEST.exhibits).toHaveLength(5);
   });
 });

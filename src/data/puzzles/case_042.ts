@@ -233,32 +233,39 @@ export const CASE_042_MV03_ELEMENTS: SoMElement[] = [
 ];
 
 /**
- * All 9 discrete Macro-Views for Case File #042.
+ * All 12 discrete Macro-Views for Case File #042 (JR-East Ekinet Multi-Page Portal).
  */
 export const CASE_042_MACRO_VIEWS: MacroView[] = [
   {
     id: 'MV-01',
     name: 'route_select',
-    description: 'Route and direction selection portal',
-    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/route-select (Macro-View 1 of 9)',
+    description: 'JR Ekinet Portal Home — Shinkansen line and route selection',
+    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/route-select (Macro-View 1 of 12)',
     somImagePath: '/som/case_042_mv01.webp',
     elements: [],
-    transitions: [{ targetElementId: 1, destinationMacroViewId: 'MV-02' }],
+    transitions: [
+      { targetElementId: 1, destinationMacroViewId: 'MV-02' },
+      { targetElementId: 2, destinationMacroViewId: 'MV-10' },
+      { targetElementId: 3, destinationMacroViewId: 'MV-11' },
+    ],
   },
   {
     id: 'MV-02',
     name: 'condition_filter',
-    description: 'Departure time and passenger filter form',
-    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/condition-filter (Macro-View 2 of 9)',
+    description: 'Departure time and passenger name (TYPE) filter form',
+    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/condition-filter (Macro-View 2 of 12)',
     somImagePath: '/som/case_042_mv02.webp',
     elements: [],
-    transitions: [{ targetElementId: 2, destinationMacroViewId: 'MV-03' }],
+    transitions: [
+      { targetElementId: 2, destinationMacroViewId: 'MV-03' },
+      { targetElementId: 14, destinationMacroViewId: 'MV-01' },
+    ],
   },
   {
     id: 'MV-03',
     name: 'seat_matrix',
-    description: 'Primary seat availability and class selection matrix',
-    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/seat-matrix (Macro-View 3 of 9)',
+    description: 'Primary seat availability, timed flash discount window, and signature authorization',
+    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/seat-matrix (Macro-View 3 of 12)',
     somImagePath: '/som/case_042_mv03.webp',
     elements: CASE_042_MV03_ELEMENTS,
     transitions: [
@@ -267,25 +274,26 @@ export const CASE_042_MACRO_VIEWS: MacroView[] = [
       { targetElementId: 14, destinationMacroViewId: 'MV-02' },
       { targetElementId: 29, destinationMacroViewId: 'MV-07' },
       { targetElementId: 11, destinationMacroViewId: 'MV-08' },
+      { targetElementId: 21, destinationMacroViewId: 'MV-12' },
     ],
   },
   {
     id: 'MV-04',
-    name: 'insurance_modal',
-    description: 'Insurance upsell pop-up modal',
-    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/insurance-modal (Macro-View 4 of 9)',
+    name: 'signature_and_seat_map',
+    description: 'Car 8 Green Car seat verification and digital signature pad (DRAW)',
+    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/signature-pad (Macro-View 4 of 12)',
     somImagePath: '/som/case_042_mv04.webp',
     elements: [],
     transitions: [
       { targetElementId: 41, destinationMacroViewId: 'MV-03' },
-      { targetElementId: 42, destinationMacroViewId: 'MV-03' },
+      { targetElementId: 42, destinationMacroViewId: 'MV-05' },
     ],
   },
   {
     id: 'MV-05',
     name: 'reservation_confirm',
-    description: 'Final order verification sheet',
-    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/confirm (Macro-View 5 of 9)',
+    description: 'Final order verification sheet and IC card binding',
+    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/confirm (Macro-View 5 of 12)',
     somImagePath: '/som/case_042_mv05.webp',
     elements: [],
     transitions: [
@@ -297,7 +305,7 @@ export const CASE_042_MACRO_VIEWS: MacroView[] = [
     id: 'MV-06',
     name: 'seat_map_modal',
     description: 'Car seating chart layout dialog',
-    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/seat-map (Macro-View 6 of 9)',
+    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/seat-map (Macro-View 6 of 12)',
     somImagePath: '/som/case_042_mv06.webp',
     elements: [],
     transitions: [{ targetElementId: 61, destinationMacroViewId: 'MV-03' }],
@@ -306,7 +314,7 @@ export const CASE_042_MACRO_VIEWS: MacroView[] = [
     id: 'MV-07',
     name: 'cancel_prompt',
     description: 'Booking cancellation confirmation modal',
-    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/cancel (Macro-View 7 of 9)',
+    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/cancel (Macro-View 7 of 12)',
     somImagePath: '/som/case_042_mv07.webp',
     elements: [],
     transitions: [
@@ -317,8 +325,8 @@ export const CASE_042_MACRO_VIEWS: MacroView[] = [
   {
     id: 'MV-08',
     name: 'logout_trap',
-    description: 'Account logout trap view',
-    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/logout (Macro-View 8 of 9)',
+    description: 'Account logout view',
+    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/logout (Macro-View 8 of 12)',
     somImagePath: '/som/case_042_mv08.webp',
     elements: [],
     transitions: [{ targetElementId: 81, destinationMacroViewId: 'MV-03' }],
@@ -326,16 +334,44 @@ export const CASE_042_MACRO_VIEWS: MacroView[] = [
   {
     id: 'MV-09',
     name: 'booking_complete',
-    description: 'Booking confirmation receipt and ticket issue',
-    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/complete (Macro-View 9 of 9)',
+    description: 'Booking confirmation receipt and QR e-ticket issue',
+    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/complete (Macro-View 9 of 12)',
     somImagePath: '/som/case_042_mv09.webp',
     elements: [],
     transitions: [],
+  },
+  {
+    id: 'MV-10',
+    name: 'tohoku_route_branch',
+    description: 'Tohoku-Hokkaido Shinkansen (Hayabusa/Komachi) wrong-route branch page',
+    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/tohoku-line (Macro-View 10 of 12)',
+    somImagePath: '/som/case_042_mv10.webp',
+    elements: [],
+    transitions: [{ targetElementId: 14, destinationMacroViewId: 'MV-01' }],
+  },
+  {
+    id: 'MV-11',
+    name: 'hokuriku_route_branch',
+    description: 'Hokuriku Shinkansen (Kagayaki/Hakutaka) wrong-route branch page',
+    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/hokuriku-line (Macro-View 11 of 12)',
+    somImagePath: '/som/case_042_mv11.webp',
+    elements: [],
+    transitions: [{ targetElementId: 14, destinationMacroViewId: 'MV-01' }],
+  },
+  {
+    id: 'MV-12',
+    name: 'waitlist_sold_out',
+    description: 'Ordinary car seat map and waitlist branch page',
+    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/ordinary-seat-map (Macro-View 12 of 12)',
+    somImagePath: '/som/case_042_mv12.webp',
+    elements: [],
+    transitions: [{ targetElementId: 14, destinationMacroViewId: 'MV-03' }],
   },
 ];
 
 /**
  * The 5 sealed Required Exhibits summing to 100% base closeness.
+ * Every exhibit is a POSITIVE performed action (never "Avoid X").
  */
 export const CASE_042_EXHIBITS: ExhibitDefinition[] = [
   {
@@ -343,7 +379,7 @@ export const CASE_042_EXHIBITS: ExhibitDefinition[] = [
     code: 'A',
     title: 'Route: 東京 ⇒ 新大阪',
     weight: 25,
-    criteria: 'Tokaido Shinkansen route from Tokyo to Shin-Osaka selected.',
+    criteria: 'Selected Tokaido Shinkansen route from Tokyo to Shin-Osaka on Page 1.',
     evaluate: (state: ShinkansenMicroState) => {
       const verified = state.selectedRoute === 'tokyo_osaka' || state.selectedRoute === 'tokyo_shinosaka';
       return {
@@ -358,7 +394,7 @@ export const CASE_042_EXHIBITS: ExhibitDefinition[] = [
     code: 'B',
     title: '14:30 Departure Slot',
     weight: 20,
-    criteria: 'Departure time slot configured to 14:30 departure (Nozomi 24).',
+    criteria: 'Entered passenger name (TANAKA) and configured 14:30 departure slot on Page 2.',
     evaluate: (state: ShinkansenMicroState) => {
       const verified = state.departureTime === '14:30';
       return {
@@ -373,7 +409,7 @@ export const CASE_042_EXHIBITS: ExhibitDefinition[] = [
     code: 'C',
     title: 'Row 2: 🍀 ¥13,870 Seat',
     weight: 20,
-    criteria: 'Selected Green Car seat on Nozomi 24 with special discount (特割) for ¥13,870.',
+    criteria: 'Timed-clicked Green Car seat on Nozomi 24 during active flash discount (特割) for ¥13,870.',
     evaluate: (state: ShinkansenMicroState) => {
       const verified = state.greenCarSelected && (state.trainName === 'Nozomi 24' || state.fare === 13870);
       return {
@@ -386,9 +422,9 @@ export const CASE_042_EXHIBITS: ExhibitDefinition[] = [
   {
     id: 'exhibit_d',
     code: 'D',
-    title: 'Avoid ¥2,400 Ins. Ad',
+    title: 'Sign Digital Authorization Pad',
     weight: 15,
-    criteria: 'Avoided clicking the promo insurance banner and kept insurance checkbox unchecked.',
+    criteria: 'Signed the JR Digital Signature Verification Pad (自署・サイン欄) to authorize ticket issuance.',
     evaluate: (state: ShinkansenMicroState) => {
       const clean = !state.insuranceTrapHit && !state.insuranceCheckboxChecked;
       return {
@@ -403,7 +439,7 @@ export const CASE_042_EXHIBITS: ExhibitDefinition[] = [
     code: 'E',
     title: 'Final Blue Confirm',
     weight: 20,
-    criteria: 'Clicked the final confirmation button [予約内容を確認・確定へ ▶] at D4.',
+    criteria: 'Clicked the final confirmation button [予約内容を確認・確定へ ▶] to issue the Shinkansen e-ticket.',
     evaluate: (state: ShinkansenMicroState) => {
       const verified = state.finalConfirmed === true;
       return {

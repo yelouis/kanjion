@@ -1,155 +1,257 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { STAGE_WIDTH, STAGE_HEIGHT } from '../utils/coordinate_projector';
-import { CASE_042_INITIAL_MICRO_STATE } from '../data/puzzles/case_042';
+import React, { useEffect, useState, useRef } from 'react';
 import { ShinkansenSandbox } from './ShinkansenSandbox';
+import { CASE_042_INITIAL_MICRO_STATE } from '../data/puzzles/case_042';
+import type { ShinkansenMicroState } from '../types/engine';
 
 export interface LoopedTargetReplayProps {
-  /** Optional override for play/pause state */
-  autoPlay?: boolean;
-  /** Optional className */
+  /** Optional className override */
   className?: string;
 }
 
+interface ReplayTargets {
+  routeBtn: { x: number; y: number };
+  nameInput: { x: number; y: number };
+  greenBtn: { x: number; y: number };
+  sigStart: { x: number; y: number };
+  sigEnd: { x: number; y: number };
+  confirmBtn: { x: number; y: number };
+}
+
+const DEFAULT_TARGETS: ReplayTargets = {
+  routeBtn: { x: 310, y: 58 },
+  nameInput: { x: 128, y: 245 },
+  greenBtn: { x: 895, y: 270 },
+  sigStart: { x: 620, y: 375 },
+  sigEnd: { x: 880, y: 375 },
+  confirmBtn: { x: 905, y: 740 },
+};
+
+const PASSENGER_NAME = 'TANAKA';
+
 /**
- * Continuous looping video replay of the target actions on an exact 1:1 unredacted
- * copy of the site. Shows ONLY the mouse movement and a glowing click ripple —
- * no step labels, no text on the cursor, no coordinate rulers, and no redaction bars.
+ * Multi-page, multi-modal continuous looping target replay.
+ * Demonstrates:
+ * 1. Selecting the Tokaido-Sanyo Shinkansen route (#btn-route-tokaido)
+ * 2. Typing "TANAKA" into the Passenger Name field (#input-passenger-name)
+ * 3. Timing a click on the Green Car discount button (#target-green-btn) when the moving flash window lands on it
+ * 4. Drawing a handwritten signature inside the Digital Signature Pad (#signature-canvas)
+ * 5. Clicking the blue Confirm button (#target-confirm-btn)
  */
-export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({
-  autoPlay = true,
-  className = '',
-}) => {
-  // Replay timeline frames:
-  // 0: Initial idle state at center
-  // 1: Mouse glides to the green seat button (#target-green-btn)
-  // 2: Mouse clicks the green seat button (glowing click ripple + button turns selected)
-  // 3: Mouse glides down to the blue confirm button (#target-confirm-btn)
-  // 4: Mouse clicks the blue confirm button (glowing click ripple + button turns confirmed)
-  // 5: Brief pause on completed state before looping back to 0
-  const [frame, setFrame] = useState<number>(0);
-  const [isPlaying, setIsPlaying] = useState<boolean>(autoPlay);
+export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({ className = '' }) => {
+  const [phase, setPhase] = useState<number>(0); // 0 to 100
+  const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [scale, setScale] = useState<number>(1);
+  const [targets, setTargets] = useState<ReplayTargets>(DEFAULT_TARGETS);
 
   const outerRef = useRef<HTMLDivElement>(null);
-  const stageCoreRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState<number>(1);
+  const stageRef = useRef<HTMLDivElement>(null);
 
-  // Dynamically measured button centers inside the 1024x768 coordinate space
-  const [greenPos, setGreenPos] = useState<{ x: number; y: number }>({ x: 895, y: 230 });
-  const [confirmPos, setConfirmPos] = useState<{ x: number; y: number }>({ x: 905, y: 740 });
-
-  // Measure container width to scale 1024x768 replay stage proportionally
-  useLayoutEffect(() => {
-    const updateLayout = () => {
+  // Measure outer container width for responsive scaling
+  useEffect(() => {
+    const updateScale = () => {
       if (outerRef.current) {
         const w = outerRef.current.clientWidth;
         if (w > 0) {
-          setScale(Math.min(w / STAGE_WIDTH, 1));
-        }
-      }
-
-      // Measure actual DOM positions of #target-green-btn and #target-confirm-btn inside stageCoreRef
-      if (stageCoreRef.current) {
-        const coreRect = stageCoreRef.current.getBoundingClientRect();
-        if (coreRect.width > 0 && coreRect.height > 0) {
-          const greenEl = stageCoreRef.current.querySelector('#target-green-btn');
-          const confirmEl = stageCoreRef.current.querySelector('#target-confirm-btn');
-
-          if (greenEl) {
-            const r = greenEl.getBoundingClientRect();
-            const cx = ((r.left + r.width / 2 - coreRect.left) / coreRect.width) * STAGE_WIDTH;
-            const cy = ((r.top + r.height / 2 - coreRect.top) / coreRect.height) * STAGE_HEIGHT;
-            if (cx > 0 && cy > 0) {
-              setGreenPos({ x: Math.round(cx), y: Math.round(cy) });
-            }
-          }
-
-          if (confirmEl) {
-            const r = confirmEl.getBoundingClientRect();
-            const cx = ((r.left + r.width / 2 - coreRect.left) / coreRect.width) * STAGE_WIDTH;
-            const cy = ((r.top + r.height / 2 - coreRect.top) / coreRect.height) * STAGE_HEIGHT;
-            if (cx > 0 && cy > 0) {
-              setConfirmPos({ x: Math.round(cx), y: Math.round(cy) });
-            }
-          }
+          setScale(Math.min(1, w / 1024));
         }
       }
     };
-
-    updateLayout();
-    const timer = setTimeout(updateLayout, 60);
-
-    let observer: ResizeObserver | null = null;
-    if (typeof ResizeObserver !== 'undefined' && outerRef.current) {
-      observer = new ResizeObserver(updateLayout);
-      observer.observe(outerRef.current);
-    }
-    window.addEventListener('resize', updateLayout);
-    return () => {
-      clearTimeout(timer);
-      if (observer) observer.disconnect();
-      window.removeEventListener('resize', updateLayout);
-    };
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
   }, []);
 
-  // Continuous playback loop
+  // Measure exact DOM element centers inside the 1024x768 sandbox
   useEffect(() => {
-    if (!isPlaying || process.env.NODE_ENV === 'test') return;
-    const durations = [900, 1100, 950, 1100, 950, 1100];
-    const timeout = setTimeout(() => {
-      setFrame((prev) => (prev + 1) % 6);
-    }, durations[frame] ?? 1000);
-    return () => clearTimeout(timeout);
-  }, [isPlaying, frame]);
+    const measureTargets = () => {
+      if (!stageRef.current) return;
+      const stageRect = stageRef.current.getBoundingClientRect();
+      if (stageRect.width <= 0 || stageRect.height <= 0) return;
 
-  // Compute cursor position & microState for the current frame
-  let cursorX = 480;
-  let cursorY = 360;
+      const centerOf = (selector: string, fallback: { x: number; y: number }) => {
+        const el = stageRef.current?.querySelector(selector) as HTMLElement | null;
+        if (!el) return fallback;
+        const r = el.getBoundingClientRect();
+        if (r.width <= 0) return fallback;
+        return {
+          x: ((r.left + r.width / 2 - stageRect.left) / stageRect.width) * 1024,
+          y: ((r.top + r.height / 2 - stageRect.top) / stageRect.height) * 768,
+        };
+      };
+
+      const sigEl = stageRef.current.querySelector('#signature-canvas') as HTMLElement | null;
+      let sigStart = DEFAULT_TARGETS.sigStart;
+      let sigEnd = DEFAULT_TARGETS.sigEnd;
+      if (sigEl) {
+        const sr = sigEl.getBoundingClientRect();
+        if (sr.width > 0) {
+          const cy = ((sr.top + sr.height / 2 - stageRect.top) / stageRect.height) * 768;
+          sigStart = {
+            x: ((sr.left + sr.width * 0.18 - stageRect.left) / stageRect.width) * 1024,
+            y: cy,
+          };
+          sigEnd = {
+            x: ((sr.left + sr.width * 0.82 - stageRect.left) / stageRect.width) * 1024,
+            y: cy,
+          };
+        }
+      }
+
+      setTargets({
+        routeBtn: centerOf('#btn-route-tokaido', DEFAULT_TARGETS.routeBtn),
+        nameInput: centerOf('#input-passenger-name', DEFAULT_TARGETS.nameInput),
+        greenBtn: centerOf('#target-green-btn', DEFAULT_TARGETS.greenBtn),
+        sigStart,
+        sigEnd,
+        confirmBtn: centerOf('#target-confirm-btn', DEFAULT_TARGETS.confirmBtn),
+      });
+    };
+
+    const timer = setTimeout(measureTargets, 60);
+    window.addEventListener('resize', measureTargets);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', measureTargets);
+    };
+  }, [scale]);
+
+  // Continuous 100-tick loop (75ms per tick = 7.5s full multi-page/multi-modal cycle)
+  useEffect(() => {
+    if (isPaused || process.env.NODE_ENV === 'test') return;
+    const interval = setInterval(() => {
+      setPhase((prev) => (prev + 1) % 100);
+    }, 75);
+    return () => clearInterval(interval);
+  }, [isPaused]);
+
+  const startPos = { x: 480, y: 120 };
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * Math.max(0, Math.min(1, t));
+
+  // Derive cursor coordinates, click ripple, typed characters, moving flash column, and drawn signature
+  let cursorX = startPos.x;
+  let cursorY = startPos.y;
   let isClicking = false;
+  let typedChars = 0;
+  let activeFlashColumn: 0 | 1 | 2 = 0;
   let greenSelected = false;
-  let blueConfirmed = false;
+  let sigProgress = 0;
+  let finalConfirmed = false;
 
-  if (frame === 1) {
-    cursorX = greenPos.x;
-    cursorY = greenPos.y;
-  } else if (frame === 2) {
-    cursorX = greenPos.x;
-    cursorY = greenPos.y;
+  if (phase < 10) {
+    // 1. Move to Route Tab (#btn-route-tokaido)
+    const t = phase / 10;
+    cursorX = lerp(startPos.x, targets.routeBtn.x, t);
+    cursorY = lerp(startPos.y, targets.routeBtn.y, t);
+    activeFlashColumn = 0;
+  } else if (phase < 16) {
+    // Click Route Tab
+    cursorX = targets.routeBtn.x;
+    cursorY = targets.routeBtn.y;
     isClicking = true;
-    greenSelected = true;
-  } else if (frame === 3) {
-    cursorX = confirmPos.x;
-    cursorY = confirmPos.y;
-    greenSelected = true;
-  } else if (frame === 4) {
-    cursorX = confirmPos.x;
-    cursorY = confirmPos.y;
+    activeFlashColumn = 0;
+  } else if (phase < 24) {
+    // 2. Move to Passenger Name Input (#input-passenger-name)
+    const t = (phase - 16) / 8;
+    cursorX = lerp(targets.routeBtn.x, targets.nameInput.x, t);
+    cursorY = lerp(targets.routeBtn.y, targets.nameInput.y, t);
+    activeFlashColumn = 1;
+  } else if (phase < 38) {
+    // Click & Type "TANAKA" character by character
+    cursorX = targets.nameInput.x;
+    cursorY = targets.nameInput.y;
+    isClicking = phase < 28;
+    typedChars = Math.min(
+      PASSENGER_NAME.length,
+      Math.floor(((phase - 25) / 11) * PASSENGER_NAME.length) + 1
+    );
+    activeFlashColumn = phase < 32 ? 0 : 1;
+  } else if (phase < 46) {
+    // 3. Move to Timed Flash Green Seat Button (#target-green-btn) while flash window cycles
+    const t = (phase - 38) / 8;
+    cursorX = lerp(targets.nameInput.x, targets.greenBtn.x, t);
+    cursorY = lerp(targets.nameInput.y, targets.greenBtn.y, t);
+    typedChars = PASSENGER_NAME.length;
+    activeFlashColumn = phase < 43 ? 1 : 2;
+  } else if (phase < 55) {
+    // Timed Click on #target-green-btn right when activeFlashColumn === 2
+    cursorX = targets.greenBtn.x;
+    cursorY = targets.greenBtn.y;
     isClicking = true;
+    typedChars = PASSENGER_NAME.length;
+    activeFlashColumn = 2;
     greenSelected = true;
-    blueConfirmed = true;
-  } else if (frame === 5) {
-    cursorX = confirmPos.x;
-    cursorY = confirmPos.y;
+  } else if (phase < 63) {
+    // 4. Move to Signature Canvas Start (#signature-canvas)
+    const t = (phase - 55) / 8;
+    cursorX = lerp(targets.greenBtn.x, targets.sigStart.x, t);
+    cursorY = lerp(targets.greenBtn.y, targets.sigStart.y, t);
+    typedChars = PASSENGER_NAME.length;
+    activeFlashColumn = 2;
     greenSelected = true;
-    blueConfirmed = true;
+  } else if (phase < 78) {
+    // Draw Signature across #signature-canvas
+    const t = (phase - 63) / 15;
+    cursorX = lerp(targets.sigStart.x, targets.sigEnd.x, t);
+    cursorY = targets.sigStart.y + Math.sin(t * Math.PI * 4) * 8;
+    isClicking = true;
+    typedChars = PASSENGER_NAME.length;
+    activeFlashColumn = 2;
+    greenSelected = true;
+    sigProgress = Math.min(1, t);
+  } else if (phase < 86) {
+    // 5. Move to Final Blue Confirm Button (#target-confirm-btn)
+    const t = (phase - 78) / 8;
+    cursorX = lerp(targets.sigEnd.x, targets.confirmBtn.x, t);
+    cursorY = lerp(targets.sigEnd.y, targets.confirmBtn.y, t);
+    typedChars = PASSENGER_NAME.length;
+    activeFlashColumn = 2;
+    greenSelected = true;
+    sigProgress = 1;
+  } else if (phase < 95) {
+    // Click Final Blue Confirm Button
+    cursorX = targets.confirmBtn.x;
+    cursorY = targets.confirmBtn.y;
+    isClicking = true;
+    typedChars = PASSENGER_NAME.length;
+    activeFlashColumn = 2;
+    greenSelected = true;
+    sigProgress = 1;
+    finalConfirmed = true;
+  } else {
+    // Hold completed state briefly before looping
+    cursorX = targets.confirmBtn.x;
+    cursorY = targets.confirmBtn.y;
+    typedChars = PASSENGER_NAME.length;
+    activeFlashColumn = 2;
+    greenSelected = true;
+    sigProgress = 1;
+    finalConfirmed = true;
   }
 
-  const replayMicroState = {
+  const replayMicroState: ShinkansenMicroState = {
     ...CASE_042_INITIAL_MICRO_STATE,
+    selectedRoute: phase >= 10 ? 'tokyo_osaka' : 'none',
+    passengerName: typedChars > 0 ? PASSENGER_NAME.slice(0, typedChars) : '',
     greenCarSelected: greenSelected,
-    finalConfirmed: blueConfirmed,
+    trainName: greenSelected ? 'Nozomi 24' : 'none',
+    seatClass: greenSelected ? 'green_car' : 'none',
+    fare: greenSelected ? 13870 : 0,
+    signatureSigned: sigProgress >= 1,
+    finalConfirmed,
   };
 
-  const scaledHeight = Math.round(STAGE_HEIGHT * scale);
+  const scaledHeight = Math.round(768 * scale);
 
   return (
     <div
+      id="looped-target-replay"
       data-testid="looped-target-replay"
-      className={`flex flex-col bg-dossier-card border-2 border-dossier-ink shadow-ink ${className}`}
+      className={`border-2 border-dossier-ink bg-dossier-card shadow-ink flex flex-col ${className}`}
     >
-      {/* Minimal Video Player Bar: Only Title + Start/Pause Replay */}
-      <div className="bg-dossier-ink text-dossier-paper px-3 py-2 flex items-center justify-between gap-2 border-b-2 border-dossier-ink font-mono-clean text-xs">
+      {/* Minimal Top Bar: Only Pause / Start Replay */}
+      <div className="bg-dossier-ink text-dossier-paper px-3 py-2 flex items-center justify-between border-b-2 border-dossier-ink">
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-red-700 text-white font-black uppercase tracking-wider text-[11px]">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-red-600 text-white font-mono-clean font-black text-xs uppercase tracking-wider">
             <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
             TARGET REPLAY
           </span>
@@ -157,91 +259,69 @@ export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({
 
         <button
           type="button"
-          onClick={() => setIsPlaying(!isPlaying)}
-          className="px-3 py-1 bg-dossier-accent text-dossier-ink hover:bg-amber-300 font-black uppercase text-xs border border-black"
+          id="btn-replay-pause"
+          onClick={() => setIsPaused(!isPaused)}
+          className="px-3 py-1 bg-stone-800 hover:bg-stone-700 text-white border border-stone-500 font-mono-clean font-bold text-xs uppercase cursor-pointer"
         >
-          {isPlaying ? '⏸ Pause Replay' : '▶ Start Replay'}
+          {isPaused ? '▶ Start Replay' : '⏸ Pause Replay'}
         </button>
       </div>
 
-      {/* Exact 1:1 Unredacted Copy of the Webpage with Animated Mouse & Click Glow */}
+      {/* 1:1 Unredacted Copy of the Site with Multi-Modal Mouse, Typing, Timed Click & Signature Drawing */}
       <div
         ref={outerRef}
-        className="relative w-full overflow-hidden bg-neutral-100 select-none no-select"
+        className="w-full overflow-hidden bg-stone-900 relative"
         style={{ height: `${scaledHeight}px` }}
-        onCopy={(e) => e.preventDefault()}
-        onCut={(e) => e.preventDefault()}
-        onContextMenu={(e) => e.preventDefault()}
       >
         <div
-          ref={stageCoreRef}
-          className="bg-white text-neutral-900 no-select relative overflow-hidden flex flex-col justify-between pointer-events-none"
+          ref={stageRef}
           style={{
-            width: `${STAGE_WIDTH}px`,
-            height: `${STAGE_HEIGHT}px`,
+            width: '1024px',
+            height: '768px',
             transform: `scale(${scale})`,
             transformOrigin: 'top left',
           }}
+          className="relative pointer-events-none select-none bg-white overflow-hidden"
         >
-          {/* Simulated Browser Chrome Bar */}
-          <div className="bg-neutral-200 border-b border-neutral-400 px-3 py-1 flex items-center justify-between text-xs text-neutral-700 font-mono-clean h-[32px] select-none shrink-0">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 text-neutral-400">
-                <span className="text-xs font-bold px-1 bg-neutral-300 rounded">◀</span>
-                <span className="text-xs font-bold px-1 bg-neutral-300 rounded">▶</span>
-                <span className="text-xs font-bold px-1 bg-neutral-300 rounded text-neutral-700">↻</span>
-              </div>
-              <div className="flex items-center gap-1.5 bg-white border border-neutral-300 px-2 py-0.5 rounded text-neutral-800 text-[11px]">
-                <span className="text-neutral-500">🔒</span>
-                <span className="font-mono-clean truncate max-w-[500px]">
-                  target-replay://ekinet-jr-sim.jp/reserve/seat-matrix
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-1 font-bold text-red-700 text-[11px] uppercase tracking-wider">
-              <span>🔁 DEMO RECORDING</span>
-            </div>
-          </div>
+          {/* Exact 1:1 Unredacted Shinkansen Webpage */}
+          <ShinkansenSandbox
+            microState={replayMicroState}
+            somOverlayActive={false}
+            activeFlashColumn={activeFlashColumn}
+            signatureProgress={sigProgress}
+          />
 
-          {/* Exact Copy of ShinkansenSandbox (Unredacted) */}
-          <div className="relative w-full h-[736px] overflow-hidden flex-1">
-            <ShinkansenSandbox
-              microState={replayMicroState}
-              somOverlayActive={false}
-            />
-          </div>
-
-          {/* Animated Mouse Pointer + Click Glow Only (No Text or Instructions on Cursor) */}
+          {/* Animated Mouse Cursor + Click Glow Only (No Text Callouts) */}
           <div
-            className="absolute z-30 pointer-events-none transition-all duration-700 ease-in-out"
+            data-testid="replay-cursor"
             style={{
-              left: `${(cursorX / STAGE_WIDTH) * 100}%`,
-              top: `${(cursorY / STAGE_HEIGHT) * 100}%`,
+              left: `${(cursorX / 1024) * 100}%`,
+              top: `${(cursorY / 768) * 100}%`,
             }}
+            className="absolute z-30 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-all duration-75 ease-linear"
           >
-            {/* Glowing Click Ring when clicking */}
+            {/* Glowing Click / Draw Ripple */}
             {isClicking && (
               <>
-                <div className="absolute -left-7 -top-7 w-14 h-14 rounded-full bg-amber-400/50 border-4 border-amber-300 animate-ping" />
-                <div className="absolute -left-5 -top-5 w-10 h-10 rounded-full bg-amber-300/60 border-2 border-amber-500 shadow-[0_0_20px_rgba(250,204,21,0.95)]" />
+                <div className="absolute -inset-6 rounded-full border-4 border-amber-400 bg-amber-300/40 animate-ping" />
+                <div className="absolute -inset-4 rounded-full border-2 border-red-600 bg-amber-400/50 shadow-[0_0_24px_rgba(250,204,21,0.95)]" />
               </>
             )}
 
-            {/* Clean High-Contrast Mouse Arrow SVG */}
+            {/* High-Contrast Pointer Arrow */}
             <svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              className={`-ml-1 -mt-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.65)] transition-transform duration-150 ${
+              width="34"
+              height="34"
+              viewBox="0 0 28 28"
+              className={`drop-shadow-[0_3px_6px_rgba(0,0,0,0.65)] transition-transform duration-100 ${
                 isClicking ? 'scale-90' : 'scale-100'
               }`}
             >
               <path
-                d="M4 2 L4 19 L8.5 14.5 L12.5 22 L15.5 20.5 L11.5 13 L18 13 Z"
-                fill="#FACC15"
-                stroke="#111111"
-                strokeWidth="2"
-                strokeLinejoin="round"
+                d="M 5 3 L 22 13 L 14 15 L 18 23 L 14 25 L 10 17 L 5 21 Z"
+                fill={isClicking ? '#FACC15' : '#111111'}
+                stroke="#FFFFFF"
+                strokeWidth="2.2"
               />
             </svg>
           </div>

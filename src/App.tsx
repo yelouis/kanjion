@@ -46,9 +46,12 @@ export const App: React.FC<AppProps> = ({
   );
 
   // 2. Newspaper Fold State, Top-Left Menu Drawer, & Mobile Page Tab
+  // In production/browser gameplay, rely directly on gemini-2.5-flash-lite ('cloud' mode).
   const [isNewspaperOpen, setIsNewspaperOpen] = useState<boolean>(initialNewspaperOpen);
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
-  const [engineMode, setEngineMode] = useState<'offline' | 'cloud'>('offline');
+  const [engineMode, setEngineMode] = useState<'offline' | 'cloud'>(
+    process.env.NODE_ENV === 'test' ? 'offline' : 'cloud'
+  );
   const [mobilePage, setMobilePage] = useState<MobileActivePage>('agent');
   const [manualClickWarning, setManualClickWarning] = useState<boolean>(false);
 

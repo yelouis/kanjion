@@ -43,6 +43,8 @@ import {
 
 import {
   buildDeclarativeManifest,
+  validatePositiveExhibitsOnly,
+  scoreCandidateSiteDifficulty,
 } from '../tools/lib/manifest_builder';
 
 import {
@@ -332,7 +334,34 @@ describe('Milestone 4: Puzzle Compilation Tooling Verification Suite', () => {
     it('verifies that Case File #042 defines bounded Macro-Views (8 to 12)', () => {
       expect(CASE_042_MACRO_VIEWS.length).toBeGreaterThanOrEqual(8);
       expect(CASE_042_MACRO_VIEWS.length).toBeLessThanOrEqual(12);
-      expect(CASE_042_MACRO_VIEWS).toHaveLength(9);
+      expect(CASE_042_MACRO_VIEWS).toHaveLength(12);
+    });
+
+    it('enforces positive-only exhibits and scores candidate sites with multi-modal difficulty bias', () => {
+      const posCheck = validatePositiveExhibitsOnly(CASE_042_EXHIBITS);
+      expect(posCheck.valid).toBe(true);
+      expect(posCheck.offendingTitles).toHaveLength(0);
+
+      const negCheck = validatePositiveExhibitsOnly([
+        ...CASE_042_EXHIBITS,
+        {
+          title: 'Avoid ¥2,400 Ins. Ad',
+          criteria: 'Did not click red trap.',
+        },
+      ]);
+      expect(negCheck.valid).toBe(false);
+      expect(negCheck.offendingTitles).toContain('Avoid ¥2,400 Ins. Ad');
+
+      const score = scoreCandidateSiteDifficulty({
+        siteUrl: 'https://www.eki-net.com',
+        pageCount: CASE_042_MACRO_VIEWS.length,
+        hasTypeTask: true,
+        hasDrawTask: true,
+        hasTimedClickTask: true,
+        positiveExhibitsOnly: posCheck.valid,
+        solvableByGeminiFlashLite: true,
+      });
+      expect(score).toBe(100);
     });
 
     it('verifies all transition destinations resolve to valid macro-view IDs', () => {
@@ -440,7 +469,7 @@ describe('Milestone 4: Puzzle Compilation Tooling Verification Suite', () => {
 
       expect(compiled).toBeDefined();
       expect(compiled.caseNumber).toBe('#042');
-      expect(compiled.macroViews).toHaveLength(9);
+      expect(compiled.macroViews).toHaveLength(12);
       // Ensure target directory was NOT created
       expect(fs.existsSync('/tmp/instruct_test_dry_run_042')).toBe(false);
     });

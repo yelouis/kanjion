@@ -119,6 +119,52 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
       };
     }
 
+    const lower = rawTrimmed.toLowerCase();
+
+    // Multi-modal Action 1: TYPE into Passenger Name field (#17)
+    if (
+      /\btanaka\b/i.test(rawTrimmed) ||
+      (/\b(?:type|enter|input|fill)\b/i.test(lower) &&
+        /\b(?:name|passenger|romaji|搭乗者)\b/i.test(lower))
+    ) {
+      const nameMatch = rawTrimmed.match(/["']([A-Za-z\s.]{2,20})["']/) || rawTrimmed.match(/\b(tanaka)\b/i);
+      const typedValue = (nameMatch ? nameMatch[1].trim() : 'TANAKA').toUpperCase();
+      return {
+        action: 'TYPE',
+        targetId: '#17',
+        gridRef: 'A2',
+        targetCoordinate: { x: 128, y: 210 },
+        textValue: typedValue,
+        thought: `📌 FIELD NOTE: Typed [${typedValue}] into [搭乗者名] at A2`,
+      };
+    }
+
+    // Multi-modal Action 2: DRAW signature in Digital Authorization Pad (#27)
+    if (
+      !lower.includes('sign out') &&
+      /\b(?:draw|sign|signature|autograph|署名|サイン)\b/i.test(lower)
+    ) {
+      return {
+        action: 'DRAW',
+        targetId: '#27',
+        gridRef: 'C4',
+        targetCoordinate: { x: 490, y: 716 },
+        textValue: 'T. Tanaka',
+        thought: '📌 FIELD NOTE: Signed [自署・サイン欄] at C4',
+      };
+    }
+
+    // Multi-page Action 3: Route Selection (Tokaido-Sanyo Tokyo -> Shin-Osaka #1)
+    if (/\b(?:tokaido|tokyo\s*(?:to|->|⇒)\s*(?:shin-?)?osaka|shin-?osaka\s*route|東海道)\b/i.test(lower)) {
+      return {
+        action: 'CLICK',
+        targetId: '#1',
+        gridRef: 'B1',
+        targetCoordinate: { x: 340, y: 42 },
+        thought: '📌 FIELD NOTE: Clicked [東海道新幹線 東京⇒新大阪] at B1',
+      };
+    }
+
     const scores = this.scoreElements(macroView.elements, instruction, microState);
     if (scores.length === 0) {
       return {

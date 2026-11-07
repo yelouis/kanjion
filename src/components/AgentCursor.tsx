@@ -1,12 +1,18 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 const ELEMENT_ID_TO_DOM_SELECTOR: Record<string, string> = {
+  '1': '#btn-route-tokaido',
+  '#1': '#btn-route-tokaido',
+  '2': '#btn-route-tohoku',
+  '#2': '#btn-route-tohoku',
   '11': '#btn-logout',
   '#11': '#btn-logout',
   '12': '#btn-promo-insurance',
   '#12': '#btn-promo-insurance',
   '14': '#btn-back-conditions',
   '#14': '#btn-back-conditions',
+  '17': '#input-passenger-name',
+  '#17': '#input-passenger-name',
   '21': '#btn-hikari-free',
   '#21': '#btn-hikari-free',
   '22': '#btn-hikari-res',
@@ -17,6 +23,8 @@ const ELEMENT_ID_TO_DOM_SELECTOR: Record<string, string> = {
   '#24': '#btn-nozomi-res',
   '25': '#target-green-btn',
   '#25': '#target-green-btn',
+  '27': '#signature-canvas',
+  '#27': '#signature-canvas',
   '28': '#ins-checkbox',
   '#28': '#ins-checkbox',
   '29': '#btn-cancel',

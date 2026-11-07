@@ -10,7 +10,20 @@ const ALLOWED_ORIGINS = [
 ];
 
 const ALLOWED_PUZZLE_IDS = new Set(['case_042']);
-const ALLOWED_MACRO_VIEWS = new Set(['MV-01', 'MV-02', 'MV-03', 'MV-04']);
+const ALLOWED_MACRO_VIEWS = new Set([
+  'MV-01',
+  'MV-02',
+  'MV-03',
+  'MV-04',
+  'MV-05',
+  'MV-06',
+  'MV-07',
+  'MV-08',
+  'MV-09',
+  'MV-10',
+  'MV-11',
+  'MV-12',
+]);
 const REQUIRED_CLIENT_HEADER = 'kanjion-web-v1';
 const MAX_BODY_BYTES = 8192; // 8 KB hard cap to prevent token-stuffing payloads
 const MAX_VISIBLE_MARKS = 30;
@@ -33,7 +46,7 @@ interface DecisionPayload {
 }
 
 interface LLMDecisionResponse {
-  action: 'CLICK' | 'TYPE' | 'SCROLL' | 'CONFUSED';
+  action: 'CLICK' | 'TYPE' | 'DRAW' | 'TIMED_CLICK' | 'SCROLL' | 'CONFUSED';
   target_id: number | null;
   text_value: string | null;
   scroll_direction: 'up' | 'down' | null;
@@ -268,11 +281,16 @@ export const decision = onRequest(
     }
 
     const systemInstruction = [
-      'You are an autonomous web navigation agent operating on a coordinate-framed sandboxed Japanese web application.',
+      'You are an autonomous web navigation agent operating on a 12-page Japanese Shinkansen reservation portal (JR Ekinet).',
       'The application is rendered at 1024x768 resolution, framed by columns A-D (left-to-right) and rows 1-4 (top-to-bottom).',
-      'Interactive elements on screen are listed in visibleMarks with their numeric id, grid region (e.g. D3), and visual/text description.',
+      'Interactive elements on screen include visibleMarks plus multi-modal controls:',
+      '- #1 (B1): Tokaido-Sanyo Shinkansen Route tab (東海道・山陽新幹線 東京⇒新大阪) [action: "CLICK"]',
+      '- #17 (A2): Passenger Name input field (搭乗者名 ローマ字, e.g. TANAKA) [action: "TYPE", text_value: "TANAKA"]',
+      '- #25 (D3): Timed Flash Discount Green Car button (🍀 ◯ ¥13,870 特割) [action: "CLICK" or "TIMED_CLICK"]',
+      '- #27 (C4): Digital Signature Verification Pad (自署・サイン欄) [action: "DRAW", text_value: "T. Tanaka"]',
+      '- #30 (D4): Final Blue Confirm & Issue Ticket button (予約内容を確認・確定へ ▶) [action: "CLICK"]',
       'Follow ONLY the literal user instruction. Never guess a winning goal if the instruction is ambiguous.',
-      'Return strictly valid JSON matching { action: "CLICK"|"TYPE"|"SCROLL"|"CONFUSED", target_id: number|null, text_value: string|null, scroll_direction: "up"|"down"|null, thought: string (<=80 chars) }.',
+      'Return strictly valid JSON matching { action: "CLICK"|"TYPE"|"DRAW"|"TIMED_CLICK"|"SCROLL"|"CONFUSED", target_id: number|null, text_value: string|null, scroll_direction: "up"|"down"|null, thought: string (<=80 chars) }.',
     ].join('\n');
 
     const userText = JSON.stringify({
@@ -316,7 +334,11 @@ export const decision = onRequest(
 
       const decisionResult: LLMDecisionResponse = {
         action:
-          parsed.action === 'CLICK' || parsed.action === 'TYPE' || parsed.action === 'SCROLL'
+          parsed.action === 'CLICK' ||
+          parsed.action === 'TYPE' ||
+          parsed.action === 'DRAW' ||
+          parsed.action === 'TIMED_CLICK' ||
+          parsed.action === 'SCROLL'
             ? parsed.action
             : 'CONFUSED',
         target_id: typeof parsed.target_id === 'number' ? parsed.target_id : null,

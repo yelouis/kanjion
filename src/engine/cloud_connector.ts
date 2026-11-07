@@ -322,7 +322,14 @@ export function validateLLMOutput(rawResponse: unknown): LLMDecisionResponse {
 
   const obj = parsed as Record<string, unknown>;
 
-  const validActions: AgentActionType[] = ['CLICK', 'TYPE', 'SCROLL', 'CONFUSED'];
+  const validActions: AgentActionType[] = [
+    'CLICK',
+    'TYPE',
+    'DRAW',
+    'TIMED_CLICK',
+    'SCROLL',
+    'CONFUSED',
+  ];
   const action: AgentActionType =
     typeof obj.action === 'string' && validActions.includes(obj.action as AgentActionType)
       ? (obj.action as AgentActionType)
@@ -700,6 +707,39 @@ export class CloudVisionConnector implements AgentExecutionConnector {
 
     const matchedElement = macroView.elements.find((e) => e.id === decision.target_id);
     if (!matchedElement) {
+      // Multi-page / multi-modal elements (#1 Tokaido route, #17 Passenger input, #27 Signature canvas)
+      if (decision.target_id === 1) {
+        return {
+          action: 'CLICK',
+          targetId: '#1',
+          targetCoordinate: { x: 340, y: 42 },
+          gridRef: 'B1',
+          thought: decision.thought || '📌 FIELD NOTE: Clicked [東海道新幹線 東京⇒新大阪] at B1',
+        };
+      }
+      if (decision.target_id === 17) {
+        return {
+          action: 'TYPE',
+          targetId: '#17',
+          targetCoordinate: { x: 128, y: 210 },
+          gridRef: 'A2',
+          textValue: decision.text_value || 'TANAKA',
+          thought:
+            decision.thought ||
+            `📌 FIELD NOTE: Typed [${(decision.text_value || 'TANAKA').toUpperCase()}] into [搭乗者名] at A2`,
+        };
+      }
+      if (decision.target_id === 27) {
+        return {
+          action: 'DRAW',
+          targetId: '#27',
+          targetCoordinate: { x: 490, y: 716 },
+          gridRef: 'C4',
+          textValue: decision.text_value || 'T. Tanaka',
+          thought: decision.thought || '📌 FIELD NOTE: Signed [自署・サイン欄] at C4',
+        };
+      }
+
       return {
         action: 'CONFUSED',
         thought: `📌 FIELD NOTE: Mark #${decision.target_id} not found on screen.`,

@@ -34,11 +34,13 @@ export type GridCoordinate = `${GridColumn}${GridRow}`;
 /**
  * Discrete actions supported by the agent runtime schema.
  * - CLICK: Left mouse click at the target element's center coordinates.
- * - TYPE: Text input into an active editable element.
+ * - TYPE: Text input into an active editable element (e.g. passenger name field).
+ * - DRAW: Freehand stroke / signature drawing inside a canvas/signature pad element.
+ * - TIMED_CLICK: Click synchronized with a moving or cycling UI element window.
  * - SCROLL: Viewport or container scroll.
  * - CONFUSED: Fallback when instruction is ambiguous or ungrounded.
  */
-export type AgentActionType = 'CLICK' | 'TYPE' | 'SCROLL' | 'CONFUSED';
+export type AgentActionType = 'CLICK' | 'TYPE' | 'DRAW' | 'TIMED_CLICK' | 'SCROLL' | 'CONFUSED';
 
 /**
  * Exact pixel coordinates in normalized 1024x768 stage coordinate space.
@@ -107,6 +109,16 @@ export interface ShinkansenMicroState {
     adults: number;
     children: number;
   };
+  /** Passenger name typed into the reservation input field (e.g. 'TANAKA'). */
+  passengerName?: string;
+  /** True if the passenger drew/signed the digital authorization signature pad (#27). */
+  signatureSigned?: boolean;
+  /** Signature label or stroke rendered inside the signature pad. */
+  signatureStroke?: string;
+  /** True if the timed flash-sale window was clicked on the green seat button. */
+  timedWindowHit?: boolean;
+  /** Ordered list of Macro-View page IDs visited across the 12-page portal graph. */
+  visitedViews?: string[];
   /** Step history audit log for simulation debugging. */
   stepHistory?: Array<{
     lineIndex: number;
