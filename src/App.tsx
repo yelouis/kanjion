@@ -11,6 +11,7 @@ import {
   CASE_042_MACRO_VIEWS,
   CASE_042_EXHIBITS,
   CASE_042_GHOST_REPLAY,
+  CASE_042_INITIAL_MICRO_STATE,
 } from './data/puzzles/case_042';
 
 import {
@@ -38,11 +39,26 @@ export interface AppProps {
 export const App: React.FC<AppProps> = ({
   initialNewspaperOpen = process.env.NODE_ENV === 'test',
 }) => {
+  const browserInitialMicroState =
+    process.env.NODE_ENV === 'test'
+      ? undefined
+      : {
+          ...CASE_042_INITIAL_MICRO_STATE,
+          macroViewId: 'MV-01',
+          selectedRoute: 'none' as const,
+          passengerName: '',
+        };
+
   // 1. Every game starts on Line 01 (preSeeded: false) with all 6 instruction slots available!
   const [state, dispatch] = useReducer(
     gameReducer,
     undefined,
-    () => createInitialGameState({ caseNumber: '#042', preSeeded: false })
+    () =>
+      createInitialGameState({
+        caseNumber: '#042',
+        preSeeded: false,
+        initialMicroState: browserInitialMicroState,
+      })
   );
 
   // 2. Newspaper Fold State, Top-Left Menu Drawer, & Mobile Page Tab
@@ -172,7 +188,11 @@ export const App: React.FC<AppProps> = ({
   const handleResetDailyPuzzle = () => {
     dispatch({
       type: 'RESET_GAME',
-      payload: { caseNumber: '#042', preSeeded: false },
+      payload: {
+        caseNumber: '#042',
+        preSeeded: false,
+        initialMicroState: browserInitialMicroState,
+      },
     });
     setMenuOpen(false);
   };
@@ -379,6 +399,7 @@ export const App: React.FC<AppProps> = ({
                       microState={state.microState}
                       somOverlayActive={state.somOverlayActive}
                       onBlockedManualClick={handleBlockedManualClick}
+                      multiPageMode={process.env.NODE_ENV !== 'test'}
                     />
 
                     <GhostReplay

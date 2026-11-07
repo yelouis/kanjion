@@ -514,7 +514,9 @@ export class HttpVisionLLMTransport implements VisionLLMTransport {
     this.timeoutMs = config.timeoutMs || 10000;
     this.maxRetries = config.maxRetries ?? 1;
     this.headers = config.headers || {};
-    this.fetchFn = config.customFetch || globalThis.fetch;
+    this.fetchFn =
+      config.customFetch ||
+      (typeof globalThis.fetch === 'function' ? globalThis.fetch.bind(globalThis) : globalThis.fetch);
   }
 
   async requestDecision(request: LLMDecisionRequest): Promise<LLMDecisionResponse> {
@@ -705,38 +707,54 @@ export class CloudVisionConnector implements AgentExecutionConnector {
       };
     }
 
-    const matchedElement = macroView.elements.find((e) => e.id === decision.target_id);
+    const matchedElement =
+      macroView.elements.find((e) => e.id === decision.target_id) ||
+      (macroView.elements.length === 0
+        ? Array.from(this.macroViews.values())
+            .flatMap((v) => v.elements)
+            .find((e) => e.id === decision.target_id)
+        : undefined);
     if (!matchedElement) {
-      // Multi-page / multi-modal elements (#1 Tokaido route, #17 Passenger input, #27 Signature canvas)
+      // Multi-page / multi-modal elements (#1 Tokaido route, #2 Tohoku route, #17 Passenger input, #27 Signature canvas)
       if (decision.target_id === 1) {
         return {
           action: 'CLICK',
           targetId: '#1',
-          targetCoordinate: { x: 340, y: 42 },
-          gridRef: 'B1',
-          thought: decision.thought || '📌 FIELD NOTE: Clicked [東海道新幹線 東京⇒新大阪] at B1',
+          targetCoordinate: { x: 265, y: 290 },
+          gridRef: 'B2',
+          thought: decision.thought || '📌 FIELD NOTE: Clicked [東海道新幹線 東京⇒新大阪] at B2',
+        };
+      }
+      if (decision.target_id === 2) {
+        return {
+          action: 'CLICK',
+          targetId: '#2',
+          targetCoordinate: { x: 750, y: 290 },
+          gridRef: 'C2',
+          thought: decision.thought || '⚠️ FIELD NOTE: Clicked [東北・北海道新幹線] (Wrong Route)',
+          isTrap: true,
         };
       }
       if (decision.target_id === 17) {
         return {
           action: 'TYPE',
           targetId: '#17',
-          targetCoordinate: { x: 128, y: 210 },
-          gridRef: 'A2',
+          targetCoordinate: { x: 480, y: 395 },
+          gridRef: 'B3',
           textValue: decision.text_value || 'TANAKA',
           thought:
             decision.thought ||
-            `📌 FIELD NOTE: Typed [${(decision.text_value || 'TANAKA').toUpperCase()}] into [搭乗者名] at A2`,
+            `📌 FIELD NOTE: Typed [${(decision.text_value || 'TANAKA').toUpperCase()}] into [搭乗者名]`,
         };
       }
       if (decision.target_id === 27) {
         return {
           action: 'DRAW',
           targetId: '#27',
-          targetCoordinate: { x: 490, y: 716 },
-          gridRef: 'C4',
+          targetCoordinate: { x: 512, y: 405 },
+          gridRef: 'C3',
           textValue: decision.text_value || 'T. Tanaka',
-          thought: decision.thought || '📌 FIELD NOTE: Signed [自署・サイン欄] at C4',
+          thought: decision.thought || '📌 FIELD NOTE: Signed [自署・サイン欄]',
         };
       }
 

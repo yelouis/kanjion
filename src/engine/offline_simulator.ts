@@ -112,7 +112,7 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
     }
 
     const macroView = this.macroViews.get(macroViewId);
-    if (!macroView || !macroView.elements || macroView.elements.length === 0) {
+    if (!macroView) {
       return {
         action: 'CONFUSED',
         thought: '📌 FIELD NOTE: No interactive elements available in view.',
@@ -162,6 +162,13 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
         gridRef: 'B1',
         targetCoordinate: { x: 340, y: 42 },
         thought: '📌 FIELD NOTE: Clicked [東海道新幹線 東京⇒新大阪] at B1',
+      };
+    }
+
+    if (!macroView.elements || macroView.elements.length === 0) {
+      return {
+        action: 'CONFUSED',
+        thought: '📌 FIELD NOTE: No interactive elements available in view.',
       };
     }
 

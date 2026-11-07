@@ -169,8 +169,13 @@ export function reduceShinkansenMicroState(
       summary = 'Agent clicked [◯ ¥14,720 (のぞみ指定席)]';
       break;
 
-    case 14: // Back to Search Conditions
-      nextMacroViewId = 'MV-02';
+    case 14: // Back to Search Conditions / Previous Page
+      if (state.selectedRoute === 'tohoku_hayabusa' || state.macroViewId === 'MV-10') {
+        nextState.selectedRoute = 'none';
+        nextMacroViewId = 'MV-01';
+      } else {
+        nextMacroViewId = 'MV-02';
+      }
       summary = 'Agent clicked [◀ 条件変更へ戻る]';
       break;
 
