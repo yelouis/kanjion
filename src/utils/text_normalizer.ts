@@ -271,3 +271,274 @@ export function tokenizeInstruction(instruction: string): InstructionTokens {
     verbs: extractActionVerbs(instruction),
   };
 }
+
+// =========================================================================
+// OPEN-ENDED SIGNATURE & SHAPE DRAWING SYNTHESIZER (#27 Digital Pad)
+// =========================================================================
+
+export interface SignatureDrawingSpec {
+  /** Stored in state.signatureStroke (e.g. 'SHAPE:smile', 'SHAPE:heart', 'TEXT:BOB', 'T. Tanaka') */
+  strokeValue: string;
+  /** Short human label shown in badge/summary (e.g. '😊 Smile', '❤️ Heart', 'T. Tanaka') */
+  displayLabel: string;
+  /** Witty, human-friendly model thought reacting to the specific drawing request */
+  thought: string;
+  /** SVG path(s) in a 260x60 viewBox for rendering inside #signature-canvas */
+  svgPaths: string[];
+  /** Optional handwritten text rendered above the flourish when the user writes a specific word/name */
+  customText?: string;
+}
+
+const SIGNATURE_SHAPES: Record<string, Omit<SignatureDrawingSpec, 'strokeValue'>> = {
+  smile: {
+    displayLabel: '😊 Smile',
+    thought: '💭 Channeling my inner Picasso — drawing a big happy smiley-face signature in the box! 😊',
+    svgPaths: [
+      'M 102 15 A 3.5 3.5 0 1 1 101.9 15',
+      'M 158 15 A 3.5 3.5 0 1 1 157.9 15',
+      'M 76 25 Q 130 58 184 25',
+    ],
+  },
+  frown: {
+    displayLabel: '☹️ Frown',
+    thought: '💭 Drawing a dramatic sad frown in the signature box — train forms make me emotional too!',
+    svgPaths: [
+      'M 102 15 A 3.5 3.5 0 1 1 101.9 15',
+      'M 158 15 A 3.5 3.5 0 1 1 157.9 15',
+      'M 80 46 Q 130 18 180 46',
+    ],
+  },
+  heart: {
+    displayLabel: '❤️ Heart',
+    thought: '💭 Signing with love! Drawing a big heart right in the middle of the authorization pad!',
+    svgPaths: [
+      'M 130 52 C 95 34, 82 12, 108 8 C 122 8, 130 22, 130 22 C 130 22, 138 8, 152 8 C 178 12, 165 34, 130 52 Z',
+    ],
+  },
+  star: {
+    displayLabel: '⭐ Star',
+    thought: '💭 Giving ourselves a 5-star review — drawing a star in the signature box! ⭐',
+    svgPaths: [
+      'M 130 5 L 140 23 L 160 23 L 144 35 L 150 53 L 130 41 L 110 53 L 116 35 L 100 23 L 120 23 Z',
+    ],
+  },
+  circle: {
+    displayLabel: '⭕ Circle',
+    thought: '💭 Drawing a near-perfect circle in the signature pad — geometry class finally paid off!',
+    svgPaths: ['M 130 6 A 22 22 0 1 1 129.9 6'],
+  },
+  triangle: {
+    displayLabel: '🔺 Triangle',
+    thought: '💭 Three sharp corners coming right up — drawing a triangle in the signature box!',
+    svgPaths: ['M 130 6 L 166 50 L 94 50 Z'],
+  },
+  square: {
+    displayLabel: '⬜ Square',
+    thought: '💭 Drawing a crisp four-cornered square inside the signature box!',
+    svgPaths: ['M 96 8 L 164 8 L 164 50 L 96 50 Z'],
+  },
+  cat: {
+    displayLabel: '🐱 Cat',
+    thought: '💭 Meow! Drawing an adorable cat with pointy ears and whiskers as our official signature!',
+    svgPaths: [
+      'M 98 22 L 94 6 L 112 16 L 148 16 L 166 6 L 162 22 C 170 36, 160 52, 130 52 C 100 52, 90 36, 98 22 Z',
+      'M 115 28 A 2 2 0 1 1 114.9 28 M 145 28 A 2 2 0 1 1 144.9 28 M 122 38 Q 130 44 138 38 M 74 30 L 96 32 M 74 38 L 96 37 M 164 32 L 186 30 M 164 37 L 186 38',
+    ],
+  },
+  house: {
+    displayLabel: '🏠 House',
+    thought: '💭 Drawing a cozy little house with a pitched roof and front door in the signature pad!',
+    svgPaths: [
+      'M 96 26 L 130 6 L 164 26 L 156 26 L 156 52 L 104 52 L 104 26 Z M 123 52 L 123 36 L 137 36 L 137 52',
+    ],
+  },
+  stickfigure: {
+    displayLabel: '🧍 Stick Figure',
+    thought: '💭 Drawing a classic stick figure — peak digital art right in the authorization box!',
+    svgPaths: [
+      'M 130 6 A 7 7 0 1 1 129.9 6 M 130 20 L 130 38 M 110 26 L 150 26 M 130 38 L 114 54 M 130 38 L 146 54',
+    ],
+  },
+  fish: {
+    displayLabel: '🐟 Fish',
+    thought: '💭 Swimming right through authorization — drawing a little fish in the signature box!',
+    svgPaths: [
+      'M 76 30 C 106 8, 154 8, 182 30 L 206 14 L 206 46 L 182 30 C 154 52, 106 52, 76 30 Z M 98 26 A 2 2 0 1 1 97.9 26',
+    ],
+  },
+  flower: {
+    displayLabel: '🌸 Flower',
+    thought: '💭 Adding a floral touch — drawing a blooming flower in the signature box!',
+    svgPaths: [
+      'M 130 20 A 6 6 0 1 1 129.9 20 M 130 8 A 6 6 0 1 1 129.9 8 M 142 20 A 6 6 0 1 1 141.9 20 M 118 20 A 6 6 0 1 1 117.9 20 M 130 32 A 6 6 0 1 1 129.9 32 M 130 38 L 130 56',
+    ],
+  },
+  check: {
+    displayLabel: '✓ Checkmark',
+    thought: '💭 Swoosh! Drawing a bold checkmark in the signature box!',
+    svgPaths: ['M 92 30 L 118 50 L 174 10'],
+  },
+  cross: {
+    displayLabel: '✗ X-Mark',
+    thought: '💭 Signing with an old-school X mark right in the authorization box!',
+    svgPaths: ['M 98 10 L 162 50 M 162 10 L 98 50'],
+  },
+  zigzag: {
+    displayLabel: '⚡ Zigzag',
+    thought: '💭 Zapping a sharp lightning zigzag across the signature pad!',
+    svgPaths: ['M 30 44 L 70 12 L 110 44 L 150 12 L 190 44 L 230 12'],
+  },
+  spiral: {
+    displayLabel: '🌀 Spiral',
+    thought: '💭 Getting hypnotic — drawing a swirl spiral in the signature box!',
+    svgPaths: [
+      'M 130 30 C 136 24, 144 30, 138 38 C 128 48, 112 38, 118 22 C 126 8, 152 12, 154 32 C 156 52, 118 56, 104 36',
+    ],
+  },
+  line: {
+    displayLabel: '━ Straight Line',
+    thought: '💭 Keeping it minimalist — drawing a clean straight line across the signature pad!',
+    svgPaths: ['M 35 30 L 225 30'],
+  },
+};
+
+const DEFAULT_SQUIGGLE_SPEC: SignatureDrawingSpec = {
+  strokeValue: 'T. Tanaka',
+  displayLabel: 'T. Tanaka',
+  thought: '💭 Channels inner doctor handwriting... drawing a very fancy squiggly "T. Tanaka" in the signature box!',
+  svgPaths: [
+    'M 24 42 C 42 12, 58 46, 78 24 C 95 10, 110 44, 132 28 C 152 14, 170 42, 196 22 C 212 12, 226 36, 240 26',
+  ],
+};
+
+/**
+ * Parses a natural-language drawing/signing instruction into a concrete SignatureDrawingSpec.
+ */
+export function extractSignatureDrawingSpec(instruction: string): SignatureDrawingSpec {
+  const raw = (instruction || '').trim();
+  const lower = raw.toLowerCase();
+
+  if (/\b(?:smile|smiley|happy|grin)\b/i.test(lower) || raw.includes(':)') || raw.includes('😊')) {
+    return { strokeValue: 'SHAPE:smile', ...SIGNATURE_SHAPES.smile };
+  }
+  if (/\b(?:frown|sad|unhappy)\b/i.test(lower) || raw.includes(':(') || raw.includes('☹')) {
+    return { strokeValue: 'SHAPE:frown', ...SIGNATURE_SHAPES.frown };
+  }
+  if (/\b(?:heart|love)\b/i.test(lower) || raw.includes('<3') || raw.includes('❤')) {
+    return { strokeValue: 'SHAPE:heart', ...SIGNATURE_SHAPES.heart };
+  }
+  if (/\b(?:star|asterisk)\b/i.test(lower) || raw.includes('⭐')) {
+    return { strokeValue: 'SHAPE:star', ...SIGNATURE_SHAPES.star };
+  }
+  if (/\b(?:circle|oval|ring|round)\b/i.test(lower)) {
+    return { strokeValue: 'SHAPE:circle', ...SIGNATURE_SHAPES.circle };
+  }
+  if (/\b(?:triangle|pyramid|delta)\b/i.test(lower)) {
+    return { strokeValue: 'SHAPE:triangle', ...SIGNATURE_SHAPES.triangle };
+  }
+  if (/\b(?:square|rectangle|cube)\b/i.test(lower)) {
+    return { strokeValue: 'SHAPE:square', ...SIGNATURE_SHAPES.square };
+  }
+  if (/\b(?:cat|kitty|meow|kitten|neko)\b/i.test(lower)) {
+    return { strokeValue: 'SHAPE:cat', ...SIGNATURE_SHAPES.cat };
+  }
+  if (/\b(?:house|home)\b/i.test(lower)) {
+    return { strokeValue: 'SHAPE:house', ...SIGNATURE_SHAPES.house };
+  }
+  if (/\b(?:stick\s*figure|person|human|man)\b/i.test(lower)) {
+    return { strokeValue: 'SHAPE:stickfigure', ...SIGNATURE_SHAPES.stickfigure };
+  }
+  if (/\b(?:fish|shark|sushi)\b/i.test(lower)) {
+    return { strokeValue: 'SHAPE:fish', ...SIGNATURE_SHAPES.fish };
+  }
+  if (/\b(?:flower|rose|daisy|tulip)\b/i.test(lower)) {
+    return { strokeValue: 'SHAPE:flower', ...SIGNATURE_SHAPES.flower };
+  }
+  if (/\b(?:check\s*mark|checkmark|tick)\b/i.test(lower) || raw.includes('✓')) {
+    return { strokeValue: 'SHAPE:check', ...SIGNATURE_SHAPES.check };
+  }
+  if (/\b(?:cross|x-?mark|an\s+x|letter\s+x)\b/i.test(lower)) {
+    return { strokeValue: 'SHAPE:cross', ...SIGNATURE_SHAPES.cross };
+  }
+  if (/\b(?:zigzag|zig-zag|lightning|bolt|wave|sine)\b/i.test(lower)) {
+    return { strokeValue: 'SHAPE:zigzag', ...SIGNATURE_SHAPES.zigzag };
+  }
+  if (/\b(?:spiral|swirl|vortex|tornado)\b/i.test(lower)) {
+    return { strokeValue: 'SHAPE:spiral', ...SIGNATURE_SHAPES.spiral };
+  }
+  if (/\b(?:straight\s*line|horizontal\s*line|flat\s*line)\b/i.test(lower)) {
+    return { strokeValue: 'SHAPE:line', ...SIGNATURE_SHAPES.line };
+  }
+
+  // Check if user requested writing/signing a specific name or quoted text
+  const quoted = raw.match(/["']([A-Za-z0-9\s.!?:)-]{1,22})["']/);
+  const afterWriteOrSign = raw.match(/\b(?:write|sign|type)\s+([A-Za-z0-9.]{2,18})\b/i);
+  const ignoreWords = new Set([
+    'A',
+    'AN',
+    'THE',
+    'IN',
+    'ON',
+    'INTO',
+    'BOX',
+    'PAD',
+    'FIELD',
+    'HERE',
+    'LINE',
+    'SIGNATURE',
+    'SIGNITURE',
+    'NAME',
+    'YOUR',
+    'MY',
+    'IT',
+    'SOMETHING',
+    'SQUIGGLE',
+    'SQUIGGLY',
+    'SQIGGLY',
+  ]);
+  const candidate = quoted
+    ? quoted[1].trim()
+    : afterWriteOrSign && !ignoreWords.has(afterWriteOrSign[1].toUpperCase())
+    ? afterWriteOrSign[1].trim()
+    : null;
+
+  if (candidate && !ignoreWords.has(candidate.toUpperCase())) {
+    return {
+      strokeValue: `TEXT:${candidate}`,
+      displayLabel: candidate,
+      thought: `💭 Signing "${candidate}" in my fanciest cursive handwriting with an underline flourish!`,
+      svgPaths: ['M 45 48 Q 130 56 215 44'],
+      customText: candidate,
+    };
+  }
+
+  return DEFAULT_SQUIGGLE_SPEC;
+}
+
+/**
+ * Resolves a stored state.signatureStroke value (e.g. 'SHAPE:smile', 'TEXT:Bob', 'T. Tanaka')
+ * back to its SVG rendering specification for ShinkansenSandbox.
+ */
+export function resolveSignatureDrawingSpec(strokeValue?: string): SignatureDrawingSpec {
+  if (!strokeValue || strokeValue === 'T. Tanaka') {
+    return DEFAULT_SQUIGGLE_SPEC;
+  }
+  if (strokeValue.startsWith('SHAPE:')) {
+    const key = strokeValue.slice('SHAPE:'.length).toLowerCase();
+    if (SIGNATURE_SHAPES[key]) {
+      return { strokeValue, ...SIGNATURE_SHAPES[key] };
+    }
+  }
+  if (strokeValue.startsWith('TEXT:')) {
+    const customText = strokeValue.slice('TEXT:'.length);
+    return {
+      strokeValue,
+      displayLabel: customText,
+      thought: `💭 Signed "${customText}"!`,
+      svgPaths: ['M 45 48 Q 130 56 215 44'],
+      customText,
+    };
+  }
+  // If raw text or prompt was stored directly, parse it
+  return extractSignatureDrawingSpec(strokeValue);
+}

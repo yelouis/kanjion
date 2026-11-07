@@ -17,6 +17,7 @@ import {
 } from '../data/puzzles/case_042';
 import { calculateScoreReport } from './scoring';
 import { gridToCenter } from '../utils/coordinate_projector';
+import { resolveSignatureDrawingSpec } from '../utils/text_normalizer';
 
 /**
  * Union of all dispatchable actions accepted by gameReducer.
@@ -103,11 +104,16 @@ export function reduceShinkansenMicroState(
     if (
       state.macroViewId === 'MV-03' &&
       state.signatureSigned === false &&
-      ![21, 22, 23, 24, 25, 14, 11, 12].includes(numId)
+      ![21, 22, 23, 24, 25, 28, 29, 30, 14, 11, 12].includes(numId)
     ) {
       summary = '📌 FIELD NOTE: Element is on Page 04. Select a train seat on Page 03 first.';
       return { nextState, summary, isTrap: false, stageShake: false, nextMacroViewId };
     }
+  }
+
+  // Clear any previous modal if the player performs another action
+  if (numId !== 29 && numId !== 11 && nextState.activeModal !== 'none') {
+    nextState.activeModal = 'none';
   }
 
   switch (numId) {
@@ -156,17 +162,22 @@ export function reduceShinkansenMicroState(
       nextState.fare = 13870;
       nextState.greenCarSelected = true;
       nextState.timedWindowHit = true;
-      if (state.signatureSigned === false) {
+      if (state.signatureSigned === false || state.passengerName !== undefined) {
         nextMacroViewId = 'MV-04';
       }
       summary = 'Agent clicked [🍀 ◯ ¥13,870]';
       break;
 
-    case 27: // Digital Signature Authorization Pad (Page 4, Exhibit D DRAW Task)
+    case 27: { // Digital Signature Authorization Pad (Page 4, Exhibit D DRAW Task)
       nextState.signatureSigned = true;
       nextState.signatureStroke = action.textValue || 'T. Tanaka';
-      summary = 'Agent signed [自署・サイン欄]';
+      const sigSpec = resolveSignatureDrawingSpec(nextState.signatureStroke);
+      summary =
+        sigSpec.displayLabel && sigSpec.displayLabel !== 'T. Tanaka'
+          ? `Agent signed [自署・サイン欄] (${sigSpec.displayLabel})`
+          : 'Agent signed [自署・サイン欄]';
       break;
+    }
 
     case 12: // Red Promo Insurance Banner (Decoy Trap Contamination)
       nextState.insuranceTrapHit = true;

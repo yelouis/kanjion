@@ -262,4 +262,43 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     expect(actionLocal.targetId).toBe('#17');
     expect(actionLocal.textValue).toBe('TANAKA');
   });
+
+  it('CUJ 15: Custom smile signature ("Draw a signiture in the shape of a smile") + "Click the blue box on the bottom right"', async () => {
+    const connector = new CloudVisionConnector({
+      puzzleId: 'case_042',
+      macroViews: CASE_042_MACRO_VIEWS,
+      transport: new BrowserGeminiNanoTransport(),
+    });
+
+    let game = createInitialGameState({
+      caseNumber: '#042',
+      preSeeded: false,
+      initialMicroState: createBrowserStartState(),
+    });
+
+    const userPrompts = [
+      'Click on the green box with the 01 in it',
+      'Click on the box under the required type and type TANAKA',
+      'Click on the green 13870 box',
+      'Draw a signiture in the shape of a smile',
+      'Click the blue box on the bottom right',
+    ];
+
+    for (const prompt of userPrompts) {
+      const action = await connector.resolveInstruction(game.macroViewId, game.microState, prompt);
+      game = gameReducer(game, {
+        type: 'APPLY_AGENT_ACTION',
+        payload: { action, instruction: prompt, exhibits: CASE_042_EXHIBITS },
+      });
+    }
+
+    expect(game.microState.signatureSigned).toBe(true);
+    expect(game.microState.signatureStroke).toBe('SHAPE:smile');
+    expect(game.microState.finalConfirmed).toBe(true);
+    expect(game.macroViewId).toBe('MV-05');
+
+    game = gameReducer(game, { type: 'CLOSE_CASE', payload: { exhibits: CASE_042_EXHIBITS } });
+    expect(game.scoreReport?.closenessScore).toBe(100);
+    expect(game.scoreReport?.finalScore).toBe(120);
+  });
 });

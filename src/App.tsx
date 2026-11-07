@@ -84,6 +84,9 @@ export const App: React.FC<AppProps> = ({
   const [previewSignatureProgress, setPreviewSignatureProgress] = useState<number | undefined>(
     undefined
   );
+  const [previewSignatureStroke, setPreviewSignatureStroke] = useState<string | undefined>(
+    undefined
+  );
 
   const offlineEngine = useMemo(
     () => new OfflineSimulationEngine(CASE_042_MACRO_VIEWS),
@@ -216,15 +219,23 @@ export const App: React.FC<AppProps> = ({
           }
           await sleep(650);
         } else if (action.action === 'DRAW') {
+          const strokeSpec = action.textValue || 'T. Tanaka';
+          setPreviewSignatureStroke(strokeSpec);
           const steps = 6;
           for (let i = 1; i <= steps; i++) {
             const p = i / steps;
             setPreviewSignatureProgress(p);
+            const curveYOffset =
+              strokeSpec === 'SHAPE:smile'
+                ? Math.sin(p * Math.PI) * 5
+                : strokeSpec === 'SHAPE:frown'
+                ? -Math.sin(p * Math.PI) * 5
+                : Math.sin(p * Math.PI * 2) * 1.5;
             setPreviewCursor({
-              xPercent: Number((22 + p * 56).toFixed(1)),
-              yPercent: coords.yPercent,
+              xPercent: Number((26 + p * 48).toFixed(1)),
+              yPercent: Number((coords.yPercent + curveYOffset).toFixed(1)),
               thought: action.thought,
-              targetElementId: action.targetId ?? null,
+              targetElementId: null,
             });
             await sleep(180);
           }
@@ -236,6 +247,7 @@ export const App: React.FC<AppProps> = ({
         setPreviewCursor(null);
         setPreviewTypedText(null);
         setPreviewSignatureProgress(undefined);
+        setPreviewSignatureStroke(undefined);
       }
 
       dispatch({
@@ -254,6 +266,7 @@ export const App: React.FC<AppProps> = ({
       setPreviewCursor(null);
       setPreviewTypedText(null);
       setPreviewSignatureProgress(undefined);
+      setPreviewSignatureStroke(undefined);
       dispatch({
         type: 'APPLY_AGENT_ACTION',
         payload: {
@@ -533,6 +546,7 @@ export const App: React.FC<AppProps> = ({
                       somOverlayActive={state.somOverlayActive}
                       onBlockedManualClick={handleBlockedManualClick}
                       signatureProgress={previewSignatureProgress}
+                      signatureStroke={previewSignatureStroke}
                       multiPageMode={process.env.NODE_ENV !== 'test'}
                     />
 

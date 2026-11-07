@@ -15,7 +15,7 @@ import {
 import { SoMElement, MacroView } from '../types/puzzle';
 import { CASE_042_MACRO_VIEWS } from '../data/puzzles/case_042';
 import { parseGridCoordinate, getBoxCenter } from '../utils/coordinate_projector';
-import { normalizeInstruction } from '../utils/text_normalizer';
+import { normalizeInstruction, extractSignatureDrawingSpec } from '../utils/text_normalizer';
 
 export interface ScoringWeights {
   coord: number;
@@ -160,15 +160,22 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
     // Multi-modal Action 2: DRAW signature in Digital Authorization Pad (#27)
     if (
       !lower.includes('sign out') &&
-      (/\b(?:draw|sign|signature|autograph|scribble|署名|サイン)\b/i.test(lower) ||
-        (macroViewId === 'MV-04' && /\b(?:line|pad|dashed\s*box)\b/i.test(lower)))
+      (/\b(?:draw|sign|signature|signiture|autograph|scribble|smile|smiley|frown|heart|star|circle|署名|サイン)\b/i.test(
+        lower
+      ) ||
+        (macroViewId === 'MV-04' &&
+          !/\b(?:blue|confirm|submit|proceed|cancel|red|back|bottom\s*right)\b/i.test(lower) &&
+          /\b(?:line|pad|dashed\s*box|squiggle|squiggly|sqiggly|triangle|square|cat|house|stick|fish|flower|check|cross|zigzag|spiral)\b/i.test(
+            lower
+          )))
     ) {
+      const sigSpec = extractSignatureDrawingSpec(rawTrimmed);
       return {
         action: 'DRAW',
         targetId: '#27',
         gridRef: 'C4',
         targetCoordinate: { x: 490, y: 716 },
-        textValue: 'T. Tanaka',
+        textValue: sigSpec.strokeValue,
         thought: '📌 FIELD NOTE: Signed [自署・サイン欄] at C4',
       };
     }

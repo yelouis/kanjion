@@ -28,6 +28,7 @@ import {
   validateInstruction,
   generateStateHash,
   generateCacheKey,
+  extractSignatureDrawingSpec,
 } from '../utils/text_normalizer';
 
 // =========================================================================
@@ -707,7 +708,9 @@ export function evaluateClientSideDecision(
   // 2. Page 02 Departure Slot (#16) & TYPE Task (#17 Passenger Name)
   if (
     macroViewId === 'MV-02' &&
-    (/\b(?:departure|14:30|dropdown|time\s*slot)\b/i.test(lower) || lower.includes('14:30発'))
+    (/\b(?:departure|14:30|dropdown|time\s*slot|next\s*page)\b/i.test(lower) ||
+      lower.includes('14:30発') ||
+      lower.includes('入力完了'))
   ) {
     return {
       action: 'CLICK',
@@ -717,11 +720,24 @@ export function evaluateClientSideDecision(
       thought: '💭 Locking in the 14:30 departure slot — just enough time to grab a station bento!',
     };
   }
+
+  const isExplicitSignaturePrompt =
+    !lower.includes('sign out') &&
+    (/\b(?:draw|sign|signature|signiture|autograph|stroke|scribble|sketch|doodle|pad|dashed|smile|smiley|frown|heart|star|circle|squiggle|squiggly|sqiggly)\b/i.test(
+      lower
+    ) ||
+      lower.includes('署名') ||
+      lower.includes('サイン') ||
+      lower.includes('#27'));
+
   if (
-    /\b(?:type|enter|write|input|fill|name|passenger|tanaka|field|textbox|text\s*box)\b/i.test(lower) ||
-    lower.includes('搭乗者') ||
-    lower.includes('ローマ字') ||
-    lower.includes('#17')
+    !isExplicitSignaturePrompt &&
+    ((macroViewId !== 'MV-04' &&
+      /\b(?:type|enter|write|input|fill|name|passenger|tanaka|field|textbox|text\s*box)\b/i.test(lower)) ||
+      /\b(?:passenger|tanaka)\b/i.test(lower) ||
+      lower.includes('搭乗者') ||
+      lower.includes('ローマ字') ||
+      lower.includes('#17'))
   ) {
     const explicitQuote = q.match(/["']([A-Za-z\s.]{2,20})["']/);
     const explicitAfterVerb = q.match(/\b(?:type|enter|write|input)\s+([A-Za-z]{2,16})\b/i);
@@ -765,20 +781,57 @@ export function evaluateClientSideDecision(
     };
   }
 
-  // 3. DRAW Task (#27): Digital Signature Pad
+  // 3. Page 04 Explicit Button Disambiguation BEFORE Generic Drawing Match:
+  //    Never let "Click the blue box on the bottom right" get hijacked by "box" into #27!
   if (
-    /\b(?:draw|sign|signature|autograph|stroke|scribble|pad|dashed\s*box)\b/i.test(lower) ||
-    (macroViewId === 'MV-04' && /\b(?:line|box|write|squiggly|sqiggly)\b/i.test(lower)) ||
-    lower.includes('署名') ||
-    lower.includes('サイン') ||
-    lower.includes('#27')
+    !isExplicitSignaturePrompt &&
+    (/\b(?:blue|confirm|submit|proceed|issue|final|bottom\s*right)\b/i.test(lower) ||
+      lower.includes('確定') ||
+      lower.includes('▶') ||
+      lower.includes('#30'))
   ) {
+    return {
+      action: 'CLICK',
+      target_id: 30,
+      text_value: null,
+      scroll_direction: null,
+      thought: '💭 Smashing the big blue Confirm button in the bottom-right corner — lock it in!',
+    };
+  }
+  if (/\b(?:checkbox|check\s*insurance|uncheck|untick)\b/i.test(lower) || lower.includes('#28')) {
+    return {
+      action: 'CLICK',
+      target_id: 28,
+      text_value: null,
+      scroll_direction: null,
+      thought: '💭 Ticking the little ¥2,400 travel insurance checkbox at the bottom... hope that wasn\'t an upsell!',
+    };
+  }
+  if (/\b(?:cancel|grey\s*(?:button|box)|gray\s*(?:button|box))\b/i.test(lower) || lower.includes('取消') || lower.includes('#29')) {
+    return {
+      action: 'CLICK',
+      target_id: 29,
+      text_value: null,
+      scroll_direction: null,
+      thought: '💭 Clicking the grey Cancel button — aborting mission!',
+    };
+  }
+
+  // 4. DRAW Task (#27): Digital Signature Pad (Supports Smile, Heart, Star, Cat, Circle, Custom Text, etc.)
+  if (
+    isExplicitSignaturePrompt ||
+    (macroViewId === 'MV-04' &&
+      /\b(?:line|write|triangle|square|cat|house|stick|fish|flower|check|cross|zigzag|lightning|spiral|swirl)\b/i.test(
+        lower
+      ))
+  ) {
+    const sigSpec = extractSignatureDrawingSpec(q);
     return {
       action: 'DRAW',
       target_id: 27,
-      text_value: 'T. Tanaka',
+      text_value: sigSpec.strokeValue,
       scroll_direction: null,
-      thought: '💭 Channels inner doctor handwriting... drawing a very fancy squiggly "T. Tanaka" in the signature box!',
+      thought: sigSpec.thought,
     };
   }
 
@@ -1149,12 +1202,13 @@ export class BrowserGeminiNanoTransport implements VisionLLMTransport {
                 };
               }
               if (nanoDecision.target_id === 27) {
+                const sigSpec = extractSignatureDrawingSpec(request.instruction);
                 return {
                   action: 'DRAW',
                   target_id: 27,
-                  text_value: nanoDecision.text_value || 'T. Tanaka',
+                  text_value: sigSpec.strokeValue,
                   scroll_direction: null,
-                  thought: nanoThought || targetMatchedDecision.thought,
+                  thought: sigSpec.thought || nanoThought,
                 };
               }
               return {
@@ -1366,6 +1420,15 @@ export class CloudVisionConnector implements AgentExecutionConnector {
           gridRef: 'C3',
           thought: decision.thought || '⚠️ FIELD NOTE: Clicked [JRE POINT・Suica連携] (Wrong Portal MV-12)',
           isTrap: true,
+        };
+      }
+      if (decision.target_id === 16) {
+        return {
+          action: 'CLICK',
+          targetId: '#16',
+          targetCoordinate: { x: 450, y: 215 },
+          gridRef: 'B2',
+          thought: decision.thought || '📌 FIELD NOTE: Selected [14:30発] departure slot',
         };
       }
       if (decision.target_id === 17) {

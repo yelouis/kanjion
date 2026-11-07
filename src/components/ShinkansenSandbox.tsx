@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { ShinkansenMicroState } from '../types/engine';
 import type { SoMElement } from '../types/puzzle';
+import { resolveSignatureDrawingSpec } from '../utils/text_normalizer';
 
 export interface ShinkansenSandboxProps {
   /** Current sandbox micro-state */
@@ -17,6 +18,8 @@ export interface ShinkansenSandboxProps {
   activeFlashColumn?: 0 | 1 | 2;
   /** Optional partial signature stroke progress (0 to 1) for replay animation */
   signatureProgress?: number;
+  /** Optional preview signature stroke specification while drawing */
+  signatureStroke?: string;
   /** Whether to render distinct full-screen pages across the 12-page JR-East Ekinet portal */
   multiPageMode?: boolean;
   /** Whether page transitions should happen immediately (used by LoopedTargetReplay) */
@@ -30,8 +33,8 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
   onBlockedManualClick,
   activeFlashColumn: externalFlashColumn,
   signatureProgress,
+  signatureStroke,
   multiPageMode = false,
-  instantPageFlip = false,
 }) => {
   const handleClick = (id: number) => {
     if (onElementClick) {
@@ -58,6 +61,7 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
   const isSignatureSigned = Boolean(microState.signatureSigned);
   const effectiveSigProgress =
     typeof signatureProgress === 'number' ? signatureProgress : isSignatureSigned ? 1 : 0;
+  const sigSpec = resolveSignatureDrawingSpec(signatureStroke ?? microState.signatureStroke);
 
   // Live cycling flash-sale window for the live agent webpage when externalFlashColumn isn't controlled
   const [internalFlashCol, setInternalFlashCol] = useState<0 | 1 | 2>(2);
@@ -101,25 +105,7 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
     return 1;
   })();
 
-  // In live multi-page gameplay, hold current page briefly (650ms) on forward transitions
-  // so the player sees the agent cursor click/type on the active element before the page flips.
-  const [displayedPage, setDisplayedPage] = useState<number>(targetPortalPage);
-  useEffect(() => {
-    if (!multiPageMode || instantPageFlip || process.env.NODE_ENV === 'test') {
-      setDisplayedPage(targetPortalPage);
-      return;
-    }
-    if (targetPortalPage === displayedPage) return;
-    // If resetting back to page 1, flip immediately
-    if (targetPortalPage === 1) {
-      setDisplayedPage(1);
-      return;
-    }
-    const timer = setTimeout(() => {
-      setDisplayedPage(targetPortalPage);
-    }, 650);
-    return () => clearTimeout(timer);
-  }, [targetPortalPage, displayedPage, multiPageMode, instantPageFlip]);
+  const displayedPage = targetPortalPage;
 
   // ===========================================================================
   // TRUE MULTI-PAGE PORTAL RENDERING (Pages 1..12 of JR-East Ekinet Portal)
@@ -752,8 +738,11 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                       署名欄 (DRAW SIGNATURE HERE)
                     </span>
                     {effectiveSigProgress > 0 && (
-                      <span className="absolute top-2 right-3 text-xs font-black text-emerald-800 bg-emerald-100 border border-emerald-500 px-2 py-0.5 rounded">
-                        ✓ 署名済 (SIGNED)
+                      <span
+                        data-testid="signature-signed-badge"
+                        className="absolute top-2 right-3 text-xs font-black text-emerald-800 bg-emerald-100 border border-emerald-500 px-2 py-0.5 rounded"
+                      >
+                        ✓ 署名済 (SIGNED{sigSpec.displayLabel && sigSpec.displayLabel !== 'T. Tanaka' ? ` • ${sigSpec.displayLabel}` : ''})
                       </span>
                     )}
                     <svg
@@ -770,15 +759,36 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                         strokeDasharray="4 4"
                       />
                       {effectiveSigProgress > 0 && (
-                        <path
-                          d="M 24 42 C 42 12, 58 46, 78 24 C 95 10, 110 44, 132 28 C 152 14, 170 42, 196 22 C 212 12, 226 36, 240 26"
-                          fill="none"
-                          stroke="#065f46"
-                          strokeWidth="3.5"
-                          strokeLinecap="round"
-                          strokeDasharray="320"
-                          strokeDashoffset={Math.round(320 * (1 - effectiveSigProgress))}
-                        />
+                        <>
+                          {sigSpec.customText && (
+                            <text
+                              x="130"
+                              y="35"
+                              textAnchor="middle"
+                              fill="#065f46"
+                              fontSize="22"
+                              fontStyle="italic"
+                              fontWeight="bold"
+                              fontFamily="Georgia, serif"
+                              opacity={Math.min(1, effectiveSigProgress * 1.4)}
+                            >
+                              {sigSpec.customText}
+                            </text>
+                          )}
+                          {sigSpec.svgPaths.map((dPath, idx) => (
+                            <path
+                              key={idx}
+                              d={dPath}
+                              fill="none"
+                              stroke="#065f46"
+                              strokeWidth="3.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeDasharray="360"
+                              strokeDashoffset={Math.round(360 * (1 - effectiveSigProgress))}
+                            />
+                          ))}
+                        </>
                       )}
                     </svg>
                   </div>
@@ -1335,32 +1345,53 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                 </span>
                 {effectiveSigProgress > 0 && (
                   <span className="absolute top-1 right-2 text-[10px] font-black text-emerald-800 bg-emerald-100 px-1.5 rounded">
-                    ✓ 署名済 (SIGNED)
+                    ✓ 署名済 (SIGNED{sigSpec.displayLabel && sigSpec.displayLabel !== 'T. Tanaka' ? ` • ${sigSpec.displayLabel}` : ''})
                   </span>
                 )}
                 <svg
-                  viewBox="0 0 260 44"
+                  viewBox="0 0 260 60"
                   className="w-full h-11 overflow-visible pointer-events-none"
                 >
                   <line
                     x1="15"
-                    y1="36"
+                    y1="48"
                     x2="245"
-                    y2="36"
+                    y2="48"
                     stroke="#cbd5e1"
                     strokeWidth="1"
                     strokeDasharray="3 3"
                   />
                   {effectiveSigProgress > 0 && (
-                    <path
-                      d="M 24 32 C 42 10, 58 36, 78 18 C 95 6, 110 34, 132 20 C 152 10, 170 32, 196 16 C 212 8, 226 28, 240 20"
-                      fill="none"
-                      stroke="#065f46"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeDasharray="300"
-                      strokeDashoffset={Math.round(300 * (1 - effectiveSigProgress))}
-                    />
+                    <>
+                      {sigSpec.customText && (
+                        <text
+                          x="130"
+                          y="35"
+                          textAnchor="middle"
+                          fill="#065f46"
+                          fontSize="20"
+                          fontStyle="italic"
+                          fontWeight="bold"
+                          fontFamily="Georgia, serif"
+                          opacity={Math.min(1, effectiveSigProgress * 1.4)}
+                        >
+                          {sigSpec.customText}
+                        </text>
+                      )}
+                      {sigSpec.svgPaths.map((dPath, idx) => (
+                        <path
+                          key={idx}
+                          d={dPath}
+                          fill="none"
+                          stroke="#065f46"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeDasharray="360"
+                          strokeDashoffset={Math.round(360 * (1 - effectiveSigProgress))}
+                        />
+                      ))}
+                    </>
                   )}
                 </svg>
               </div>
