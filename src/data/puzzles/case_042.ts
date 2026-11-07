@@ -396,7 +396,9 @@ export const CASE_042_EXHIBITS: ExhibitDefinition[] = [
     weight: 20,
     criteria: 'Entered passenger name (TANAKA) and configured 14:30 departure slot on Page 2.',
     evaluate: (state: ShinkansenMicroState) => {
-      const verified = state.departureTime === '14:30';
+      const verified =
+        state.departureTime === '14:30' &&
+        (state.passengerName === undefined || state.passengerName.toUpperCase() === 'TANAKA');
       return {
         status: verified ? 'VERIFIED' : 'MISSED',
         awardedPoints: verified ? 20 : 0,
@@ -426,11 +428,19 @@ export const CASE_042_EXHIBITS: ExhibitDefinition[] = [
     weight: 15,
     criteria: 'Signed the JR Digital Signature Verification Pad (自署・サイン欄) to authorize ticket issuance.',
     evaluate: (state: ShinkansenMicroState) => {
-      const clean = !state.insuranceTrapHit && !state.insuranceCheckboxChecked;
+      const contaminated = Boolean(state.insuranceTrapHit || state.insuranceCheckboxChecked);
+      if (contaminated) {
+        return {
+          status: 'CONTAMINATED',
+          awardedPoints: 0,
+          stampText: '[CONTAMINATED ✗ +0%]',
+        };
+      }
+      const signed = state.signatureSigned !== false;
       return {
-        status: clean ? 'CLEAN' : 'CONTAMINATED',
-        awardedPoints: clean ? 15 : 0,
-        stampText: clean ? '[CLEAN ✓ +15%]' : '[CONTAMINATED ✗ +0%]',
+        status: signed ? 'CLEAN' : 'MISSED',
+        awardedPoints: signed ? 15 : 0,
+        stampText: signed ? '[CLEAN ✓ +15%]' : '[MISSED ✗ +0%]',
       };
     },
   },

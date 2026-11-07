@@ -79,6 +79,37 @@ export function reduceShinkansenMicroState(
   const rawId = action.targetId.replace(/^#/, '');
   const numId = parseInt(rawId, 10);
 
+  // Page-Gated Guard for Multi-Page Portal Progression:
+  // Prevent out-of-order teleportation when the target element is not on the active portal page.
+  const isMultiPageBrowserSession = state.signatureSigned === false;
+  if (isMultiPageBrowserSession) {
+    if (state.macroViewId === 'MV-01' && ![1, 2, 3, 4, 11, 12].includes(numId)) {
+      summary = '📌 FIELD NOTE: Element is not on Page 01. Select a Shinkansen route card first.';
+      return { nextState, summary, isTrap: false, stageShake: false, nextMacroViewId };
+    }
+    if (state.macroViewId === 'MV-02' && ![16, 17, 14, 11, 12].includes(numId)) {
+      summary = '📌 FIELD NOTE: Element is not on Page 02. Type passenger name (TANAKA) first.';
+      return { nextState, summary, isTrap: false, stageShake: false, nextMacroViewId };
+    }
+    if (
+      (state.macroViewId === 'MV-10' ||
+        state.macroViewId === 'MV-11' ||
+        state.macroViewId === 'MV-12') &&
+      ![14, 11, 12].includes(numId)
+    ) {
+      summary = '📌 FIELD NOTE: Wrong portal branch. Click the Back button to return to Page 01.';
+      return { nextState, summary, isTrap: false, stageShake: false, nextMacroViewId };
+    }
+    if (
+      state.macroViewId === 'MV-03' &&
+      state.signatureSigned === false &&
+      ![21, 22, 23, 24, 25, 14, 11, 12].includes(numId)
+    ) {
+      summary = '📌 FIELD NOTE: Element is on Page 04. Select a train seat on Page 03 first.';
+      return { nextState, summary, isTrap: false, stageShake: false, nextMacroViewId };
+    }
+  }
+
   switch (numId) {
     case 1: // Tokaido-Sanyo Shinkansen Route (Page 1 -> Page 2, Exhibit A)
       nextState.selectedRoute = 'tokyo_osaka';
@@ -90,6 +121,26 @@ export function reduceShinkansenMicroState(
       nextState.selectedRoute = 'tohoku_hayabusa';
       nextMacroViewId = 'MV-10';
       summary = 'Agent clicked [東北・北海道新幹線]';
+      break;
+
+    case 3: // Hokuriku Shinkansen Wrong Route (Page 1 -> Page 11)
+      nextState.selectedRoute = 'hokuriku_kagayaki';
+      nextMacroViewId = 'MV-11';
+      summary = 'Agent clicked [北陸・上越新幹線]';
+      break;
+
+    case 4: // JRE Point & IC Card Portal (Page 1 -> Page 12)
+      nextState.selectedRoute = 'none';
+      nextMacroViewId = 'MV-12';
+      summary = 'Agent clicked [JRE POINT・Suica連携]';
+      break;
+
+    case 16: // Departure Time 14:30 Slot (Page 2 -> Page 3)
+      nextState.departureTime = '14:30';
+      nextState.passengerName = nextState.passengerName || 'TANAKA';
+      nextState.signatureSigned = true;
+      nextMacroViewId = 'MV-03';
+      summary = 'Agent selected [14:30発]';
       break;
 
     case 17: // Passenger Name Input Field (Page 2 -> Page 3, Exhibit B TYPE Task)
@@ -105,6 +156,9 @@ export function reduceShinkansenMicroState(
       nextState.fare = 13870;
       nextState.greenCarSelected = true;
       nextState.timedWindowHit = true;
+      if (state.signatureSigned === false) {
+        nextMacroViewId = 'MV-04';
+      }
       summary = 'Agent clicked [🍀 ◯ ¥13,870]';
       break;
 
@@ -170,10 +224,30 @@ export function reduceShinkansenMicroState(
       break;
 
     case 14: // Back to Search Conditions / Previous Page
-      if (state.selectedRoute === 'tohoku_hayabusa' || state.macroViewId === 'MV-10') {
+      if (
+        state.macroViewId === 'MV-10' ||
+        state.macroViewId === 'MV-11' ||
+        state.macroViewId === 'MV-12' ||
+        state.macroViewId === 'MV-02' ||
+        state.selectedRoute === 'tohoku_hayabusa' ||
+        state.selectedRoute === 'hokuriku_kagayaki'
+      ) {
         nextState.selectedRoute = 'none';
+        nextState.passengerName = '';
+        nextState.departureTime = 'none';
         nextMacroViewId = 'MV-01';
+      } else if (state.macroViewId === 'MV-04') {
+        nextState.greenCarSelected = false;
+        nextState.signatureSigned = false;
+        nextState.trainName = 'none';
+        nextState.seatClass = 'none';
+        nextState.fare = 0;
+        nextMacroViewId = 'MV-03';
       } else {
+        if (state.signatureSigned === false) {
+          nextState.passengerName = '';
+          nextState.departureTime = 'none';
+        }
         nextMacroViewId = 'MV-02';
       }
       summary = 'Agent clicked [◀ 条件変更へ戻る]';
@@ -195,6 +269,8 @@ export function reduceShinkansenMicroState(
       summary = `Agent clicked element #${numId}`;
       break;
   }
+
+  nextState.macroViewId = nextMacroViewId;
 
   // Update audit log
   nextState.stepHistory = [

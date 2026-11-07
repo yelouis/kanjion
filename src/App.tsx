@@ -46,7 +46,9 @@ export const App: React.FC<AppProps> = ({
           ...CASE_042_INITIAL_MICRO_STATE,
           macroViewId: 'MV-01',
           selectedRoute: 'none' as const,
+          departureTime: 'none' as const,
           passengerName: '',
+          signatureSigned: false,
         };
 
   // 1. Every game starts on Line 01 (preSeeded: false) with all 6 instruction slots available!

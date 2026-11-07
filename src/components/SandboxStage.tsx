@@ -106,7 +106,7 @@ export const SandboxStage: React.FC<SandboxStageProps & { children?: React.React
             <div className="flex items-center gap-1.5 bg-white border border-neutral-300 px-2 py-0.5 rounded text-neutral-800 text-[11px]">
               <span className="text-neutral-500">🔒</span>
               <span className="font-mono-clean truncate max-w-[500px]">
-                sandbox://ekinet-jr-sim.jp/reserve/seat-matrix (Macro-View {currentMacroViewNum} of 9)
+                sandbox://ekinet-jr-sim.jp/reserve/seat-matrix (Macro-View {currentMacroViewNum} of 12)
               </span>
             </div>
           </div>

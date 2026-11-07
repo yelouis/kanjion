@@ -124,11 +124,15 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
     // Multi-modal Action 1: TYPE into Passenger Name field (#17)
     if (
       /\btanaka\b/i.test(rawTrimmed) ||
-      (/\b(?:type|enter|input|fill)\b/i.test(lower) &&
-        /\b(?:name|passenger|romaji|搭乗者)\b/i.test(lower))
+      (/\b(?:type|enter|input|fill|write)\b/i.test(lower) &&
+        /\b(?:name|passenger|romaji|box|field|搭乗者)\b/i.test(lower))
     ) {
-      const nameMatch = rawTrimmed.match(/["']([A-Za-z\s.]{2,20})["']/) || rawTrimmed.match(/\b(tanaka)\b/i);
-      const typedValue = (nameMatch ? nameMatch[1].trim() : 'TANAKA').toUpperCase();
+      const explicitName =
+        rawTrimmed.match(/["']([A-Za-z\s.]{2,20})["']/) ||
+        rawTrimmed.match(/\b(?:type|enter|input|write|name)\s+([A-Za-z]{2,16})\b/i);
+      const candidate = explicitName ? explicitName[1].trim().toUpperCase() : 'TANAKA';
+      const stopwords = new Set(['IN', 'INTO', 'THE', 'BOX', 'FIELD', 'NAME', 'PASSENGER', 'TEXT']);
+      const typedValue = stopwords.has(candidate) ? 'TANAKA' : candidate;
       return {
         action: 'TYPE',
         targetId: '#17',
@@ -139,10 +143,25 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
       };
     }
 
+    // Multi-modal Action 1b: Departure Time 14:30 selection (#16) on Page 02 (MV-02)
+    if (
+      macroViewId === 'MV-02' &&
+      (/\b(?:departure|14:30|dropdown|time\s*slot)\b/i.test(lower) || lower.includes('14:30発'))
+    ) {
+      return {
+        action: 'CLICK',
+        targetId: '#16',
+        gridRef: 'A2',
+        targetCoordinate: { x: 128, y: 205 },
+        thought: '📌 FIELD NOTE: Selected [14:30発] departure slot at A2',
+      };
+    }
+
     // Multi-modal Action 2: DRAW signature in Digital Authorization Pad (#27)
     if (
       !lower.includes('sign out') &&
-      /\b(?:draw|sign|signature|autograph|署名|サイン)\b/i.test(lower)
+      (/\b(?:draw|sign|signature|autograph|scribble|署名|サイン)\b/i.test(lower) ||
+        (macroViewId === 'MV-04' && /\b(?:line|pad|dashed\s*box)\b/i.test(lower)))
     ) {
       return {
         action: 'DRAW',
@@ -154,7 +173,89 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
       };
     }
 
-    // Multi-page Action 3: Route Selection (Tokaido-Sanyo Tokyo -> Shin-Osaka #1)
+    // Multi-page Action 3: Route Selection on Page 01 (MV-01) or explicit route keywords
+    if (macroViewId === 'MV-01') {
+      if (/\b(?:red|promo|insurance|2,?400)\b/i.test(lower)) {
+        return {
+          action: 'CLICK',
+          targetId: '#12',
+          gridRef: 'D1',
+          targetCoordinate: { x: 900, y: 112 },
+          isTrap: true,
+          thought: '⚠️ TRAP TRIGGERED: Clicked red ¥2,400 promo insurance banner!',
+        };
+      }
+      if (/\b(?:logout|sign\s*out|ログアウト)\b/i.test(lower)) {
+        return {
+          action: 'CLICK',
+          targetId: '#11',
+          gridRef: 'D1',
+          targetCoordinate: { x: 960, y: 58 },
+          isTrap: true,
+          thought: '⚠️ TRAP TRIGGERED: Clicked Logout button!',
+        };
+      }
+      if (
+        /\b(?:tohoku|hayabusa|sendai|aomori|hokkaido|top\s*right|second\s*(?:card|box|route|option)|route\s*0?2|page\s*10)\b/i.test(
+          lower
+        ) ||
+        lower.includes('東北')
+      ) {
+        return {
+          action: 'CLICK',
+          targetId: '#2',
+          gridRef: 'C2',
+          targetCoordinate: { x: 750, y: 290 },
+          isTrap: true,
+          thought: '⚠️ FIELD NOTE: Clicked [東北・北海道新幹線] (Wrong Route MV-10)',
+        };
+      }
+      if (
+        /\b(?:hokuriku|joetsu|kanazawa|niigata|bottom\s*left|third\s*(?:card|box|route|option)|route\s*0?3|page\s*11)\b/i.test(
+          lower
+        ) ||
+        lower.includes('北陸')
+      ) {
+        return {
+          action: 'CLICK',
+          targetId: '#3',
+          gridRef: 'B3',
+          targetCoordinate: { x: 265, y: 520 },
+          isTrap: true,
+          thought: '⚠️ FIELD NOTE: Clicked [北陸・上越新幹線] (Wrong Route MV-11)',
+        };
+      }
+      if (
+        /\b(?:point|jre|suica|ic\s*card|bottom\s*right|fourth\s*(?:card|box|route|option)|menu\s*0?4|page\s*12)\b/i.test(
+          lower
+        )
+      ) {
+        return {
+          action: 'CLICK',
+          targetId: '#4',
+          gridRef: 'C3',
+          targetCoordinate: { x: 750, y: 520 },
+          isTrap: true,
+          thought: '⚠️ FIELD NOTE: Clicked [JRE POINT・Suica連携] (Wrong Portal MV-12)',
+        };
+      }
+      if (
+        /\b(?:tokaido|tokyo|osaka|shin-?osaka|nozomi|top\s*left|first\s*(?:card|box|route|option|green)|green\s*(?:card|box|route|button)|left\s*green|route\s*0?1)\b/i.test(
+          lower
+        ) ||
+        lower.includes('東海道') ||
+        lower.includes('新大阪')
+      ) {
+        return {
+          action: 'CLICK',
+          targetId: '#1',
+          gridRef: 'B1',
+          targetCoordinate: { x: 340, y: 42 },
+          thought: '📌 FIELD NOTE: Clicked [東海道新幹線 東京⇒新大阪] at B1',
+        };
+      }
+    }
+
     if (/\b(?:tokaido|tokyo\s*(?:to|->|⇒)\s*(?:shin-?)?osaka|shin-?osaka\s*route|東海道)\b/i.test(lower)) {
       return {
         action: 'CLICK',
@@ -163,6 +264,42 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
         targetCoordinate: { x: 340, y: 42 },
         thought: '📌 FIELD NOTE: Clicked [東海道新幹線 東京⇒新大阪] at B1',
       };
+    }
+
+    // Back button (#14) across multi-page views (MV-02, MV-04, MV-10, MV-11, MV-12)
+    if (
+      macroViewId !== 'MV-03' &&
+      (/\b(?:back|return|previous|路線選択|条件変更|座席表)\b/i.test(lower) || lower.includes('戻る'))
+    ) {
+      return {
+        action: 'CLICK',
+        targetId: '#14',
+        gridRef: 'A2',
+        targetCoordinate: { x: 128, y: 244 },
+        thought: '📌 FIELD NOTE: Clicked [◀ 条件変更へ戻る] at A2',
+      };
+    }
+
+    // Confirm button (#30) or Cancel (#29) or Insurance (#28) on MV-04
+    if (macroViewId === 'MV-04') {
+      if (/\b(?:blue|confirm|submit|proceed|issue|final|bottom\s*right|確定)\b/i.test(lower) || lower.includes('▶')) {
+        return {
+          action: 'CLICK',
+          targetId: '#30',
+          gridRef: 'D4',
+          targetCoordinate: { x: 905, y: 720 },
+          thought: '📌 FIELD NOTE: Clicked [予約内容を確認・確定へ ▶] at D4',
+        };
+      }
+      if (/\b(?:cancel|取消)\b/i.test(lower)) {
+        return {
+          action: 'CLICK',
+          targetId: '#29',
+          gridRef: 'C4',
+          targetCoordinate: { x: 706, y: 720 },
+          thought: '📌 FIELD NOTE: Clicked [予約を取消] at C4',
+        };
+      }
     }
 
     if (!macroView.elements || macroView.elements.length === 0) {

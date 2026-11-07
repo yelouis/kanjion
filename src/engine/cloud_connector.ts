@@ -735,6 +735,26 @@ export class CloudVisionConnector implements AgentExecutionConnector {
           isTrap: true,
         };
       }
+      if (decision.target_id === 3) {
+        return {
+          action: 'CLICK',
+          targetId: '#3',
+          targetCoordinate: { x: 265, y: 520 },
+          gridRef: 'B3',
+          thought: decision.thought || '⚠️ FIELD NOTE: Clicked [北陸・上越新幹線] (Wrong Route MV-11)',
+          isTrap: true,
+        };
+      }
+      if (decision.target_id === 4) {
+        return {
+          action: 'CLICK',
+          targetId: '#4',
+          targetCoordinate: { x: 750, y: 520 },
+          gridRef: 'C3',
+          thought: decision.thought || '⚠️ FIELD NOTE: Clicked [JRE POINT・Suica連携] (Wrong Portal MV-12)',
+          isTrap: true,
+        };
+      }
       if (decision.target_id === 17) {
         return {
           action: 'TYPE',

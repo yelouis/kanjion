@@ -73,6 +73,12 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
 
   // Determine target page in the 12-page JR-East Ekinet portal
   const targetPortalPage = (() => {
+    if (microState.macroViewId === 'MV-11' || microState.selectedRoute === 'hokuriku_kagayaki') {
+      return 11;
+    }
+    if (microState.macroViewId === 'MV-12') {
+      return 12;
+    }
     if (microState.selectedRoute === 'tohoku_hayabusa' || microState.macroViewId === 'MV-10') {
       return 10;
     }
@@ -327,7 +333,7 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                   {/* DECOY CARD #3: HOKURIKU-JOETSU SHINKANSEN (MV-11) */}
                   <div
                     id="btn-route-hokuriku"
-                    onClick={() => handleClick(2)}
+                    onClick={() => handleClick(3)}
                     className="p-4 rounded-lg border-2 border-neutral-300 bg-neutral-50 hover:bg-neutral-100 cursor-pointer transition-all flex flex-col justify-between min-h-[150px]"
                   >
                     <div className="space-y-1">
@@ -349,7 +355,7 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                   {/* DECOY CARD #4: JRE POINT & IC CARD PORTAL (MV-12) */}
                   <div
                     id="btn-route-points"
-                    onClick={() => handleClick(2)}
+                    onClick={() => handleClick(4)}
                     className="p-4 rounded-lg border-2 border-neutral-300 bg-neutral-50 hover:bg-neutral-100 cursor-pointer transition-all flex flex-col justify-between min-h-[150px]"
                   >
                     <div className="space-y-1">
@@ -895,6 +901,60 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                 </h2>
                 <p className="text-xs text-neutral-600">
                   ※ 新大阪方面（東海道新幹線）は路線選択トップ（Page 01）から選択してください。
+                </p>
+                <button
+                  id="btn-back-conditions"
+                  type="button"
+                  onClick={() => handleClick(14)}
+                  className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs rounded shadow"
+                >
+                  ◀ 路線選択トップ (Page 01) へ戻る
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* =================================================================
+              PAGE 11 / 12: WRONG ROUTE BRANCH — HOKURIKU SHINKANSEN (MV-11)
+             ================================================================= */}
+          {displayedPage === 11 && (
+            <div className="p-6 flex-1 flex flex-col justify-center items-center bg-blue-50/40">
+              <div className="w-full max-w-xl bg-white border-4 border-blue-900 rounded-xl shadow p-6 space-y-4 text-center">
+                <span className="px-3 py-1 bg-blue-900 text-white font-black text-xs rounded">
+                  PAGE 11 / 12 • 北陸・上越新幹線 予約ページ (WRONG ROUTE)
+                </span>
+                <h2 className="text-xl font-black text-neutral-900">
+                  北陸・上越新幹線（東京 ⇒ 長野・金沢・敦賀 / 新潟）
+                </h2>
+                <p className="text-xs text-neutral-600">
+                  ※ 新大阪方面（東海道新幹線）は路線選択トップ（Page 01）から選択してください。
+                </p>
+                <button
+                  id="btn-back-conditions"
+                  type="button"
+                  onClick={() => handleClick(14)}
+                  className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs rounded shadow"
+                >
+                  ◀ 路線選択トップ (Page 01) へ戻る
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* =================================================================
+              PAGE 12 / 12: WRONG BRANCH — JRE POINT & SUICA PORTAL (MV-12)
+             ================================================================= */}
+          {displayedPage === 12 && (
+            <div className="p-6 flex-1 flex flex-col justify-center items-center bg-amber-50/40">
+              <div className="w-full max-w-xl bg-white border-4 border-amber-700 rounded-xl shadow p-6 space-y-4 text-center">
+                <span className="px-3 py-1 bg-amber-700 text-white font-black text-xs rounded">
+                  PAGE 12 / 12 • JRE POINT 特典・Suica IC連携ページ (WRONG PORTAL)
+                </span>
+                <h2 className="text-xl font-black text-neutral-900">
+                  JRE POINT 特典チケット交換・交通系ICカード登録
+                </h2>
+                <p className="text-xs text-neutral-600">
+                  ※ 新幹線の通常指定席・グリーン車特割予約は路線選択トップ（Page 01）から行ってください。
                 </p>
                 <button
                   id="btn-back-conditions"
