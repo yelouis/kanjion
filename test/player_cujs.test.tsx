@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { reduceShinkansenMicroState, createInitialGameState, gameReducer } from '../src/engine/game_reducer';
 import { OfflineSimulationEngine } from '../src/engine/offline_simulator';
-import { CASE_042_INITIAL_MICRO_STATE, CASE_042_EXHIBITS } from '../src/data/puzzles/case_042';
+import { BrowserGeminiNanoTransport, CloudVisionConnector } from '../src/engine/cloud_connector';
+import { CASE_042_INITIAL_MICRO_STATE, CASE_042_EXHIBITS, CASE_042_MACRO_VIEWS } from '../src/data/puzzles/case_042';
 import { calculateScoreReport } from '../src/engine/scoring';
 import type { ShinkansenMicroState } from '../src/types/engine';
 
@@ -215,5 +216,50 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     expect(game.scoreReport?.closenessScore).toBe(80);
     expect(game.scoreReport?.multiplier).toBe(1.0);
     expect(game.scoreReport?.finalScore).toBe(80);
+  });
+
+  it('CUJ 14: BrowserGeminiNanoTransport executes 100% client-side via window.LanguageModel and local fallback', async () => {
+    const connector = new CloudVisionConnector({
+      puzzleId: 'case_042',
+      macroViews: CASE_042_MACRO_VIEWS,
+      transport: new BrowserGeminiNanoTransport(),
+    });
+
+    // 1. With mock Chrome Built-in Gemini Nano (window.LanguageModel) installed
+    const g = globalThis as unknown as Record<string, unknown>;
+    let promptCalled = false;
+    g.LanguageModel = {
+      availability: async () => 'available',
+      create: async () => ({
+        prompt: async () => {
+          promptCalled = true;
+          return JSON.stringify({
+            action: 'CLICK',
+            target_id: 1,
+            text_value: null,
+            scroll_direction: null,
+            thought: '📌 FIELD NOTE: Gemini Nano selected Tokaido Shinkansen card.',
+          });
+        },
+        destroy: () => {},
+      }),
+    };
+
+    try {
+      const startState = createBrowserStartState();
+      const actionNano = await connector.resolveInstruction('MV-01', startState, 'click top left green card');
+      expect(promptCalled).toBe(true);
+      expect(actionNano.action).toBe('CLICK');
+      expect(actionNano.targetId).toBe('#1');
+    } finally {
+      delete g.LanguageModel;
+    }
+
+    // 2. Without window.LanguageModel (e.g. mobile Safari), still resolves 100% client-side with zero network calls
+    const startState2 = createBrowserStartState();
+    const actionLocal = await connector.resolveInstruction('MV-02', startState2, 'type TANAKA in the text box');
+    expect(actionLocal.action).toBe('TYPE');
+    expect(actionLocal.targetId).toBe('#17');
+    expect(actionLocal.textValue).toBe('TANAKA');
   });
 });

@@ -3,7 +3,7 @@ import { gameReducer, createInitialGameState } from './engine/game_reducer';
 import { OfflineSimulationEngine } from './engine/offline_simulator';
 import {
   CloudVisionConnector,
-  HttpVisionLLMTransport,
+  BrowserGeminiNanoTransport,
   MockVisionLLMTransport,
 } from './engine/cloud_connector';
 import { calculateEfficiencyMultiplier } from './engine/scoring';
@@ -82,11 +82,7 @@ export const App: React.FC<AppProps> = ({
     const transport =
       process.env.NODE_ENV === 'test'
         ? new MockVisionLLMTransport()
-        : new HttpVisionLLMTransport({
-            endpointUrl: '/api/decision',
-            maxRetries: 0,
-            timeoutMs: 6000,
-          });
+        : new BrowserGeminiNanoTransport();
     return new CloudVisionConnector({
       puzzleId: 'case_042',
       macroViews: CASE_042_MACRO_VIEWS,

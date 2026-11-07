@@ -8,13 +8,6 @@
     ],
     "rewrites": [
       {
-        "source": "/api/decision",
-        "function": {
-          "functionId": "decision",
-          "region": "us-central1"
-        }
-      },
-      {
         "source": "**",
         "destination": "/index.html"
       }
