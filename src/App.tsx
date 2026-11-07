@@ -174,6 +174,10 @@ export const App: React.FC<AppProps> = ({
     setMenuOpen(false);
   };
 
+  const stepHistory = state.microState.stepHistory || [];
+  const lastTargetElementId =
+    stepHistory.length > 0 ? stepHistory[stepHistory.length - 1]?.targetId ?? null : null;
+
   return (
     <div className="min-h-screen bg-dossier-bg text-dossier-ink p-2 sm:p-4 md:p-5 antialiased font-mono-clean relative">
       {/* =====================================================================
@@ -254,7 +258,8 @@ export const App: React.FC<AppProps> = ({
       </div>
 
       {/* =====================================================================
-          2. MAIN NEWSPAPER CONTAINER: FRONT COVER vs UNFOLDED TWO-PAGE SPREAD
+          2. MAIN NEWSPAPER CONTAINER:
+             ONLY COVERS THE TWO SCREENS (LEFT = AGENT WEBPAGE, RIGHT = REPLAY)
          ===================================================================== */}
       <main className="max-w-[1640px] mx-auto bg-dossier-paper text-dossier-ink border-2 border-dossier-ink shadow-ink-lg p-3 sm:p-5 transition-all">
         {!isNewspaperOpen ? (
@@ -264,9 +269,9 @@ export const App: React.FC<AppProps> = ({
             onOpenNewspaper={() => setIsNewspaperOpen(true)}
           />
         ) : (
-          /* --- UNFOLDED STATE: TWO-PAGE OPEN NEWSPAPER SPREAD (Desktop) & FLIP-PAD (Mobile) --- */
+          /* --- UNFOLDED STATE: TWO-PAGE OPEN NEWSPAPER SPREAD (SCREENS ONLY) --- */
           <div className="newspaper-unfold-anim space-y-4">
-            {/* Clean Broadsheet Masthead Header (No SoM IDs, No Mode: Offline, No Difficulty clutter) */}
+            {/* Clean Broadsheet Masthead Header */}
             <MastheadHeader
               caseNumber={state.caseNumber}
               caseTitle="KANJION"
@@ -312,22 +317,23 @@ export const App: React.FC<AppProps> = ({
                       : 'bg-stone-100 text-dossier-muted'
                   }`}
                 >
-                  🤖 Left Page: Agent &amp; Pad
+                  🤖 Left Page: Agent Webpage
                 </button>
               </div>
             </div>
 
             {/* ===============================================================
-                OPEN TWO-PAGE NEWSPAPER SPREAD (Desktop Side-by-Side / Mobile Tabbed)
+                OPEN TWO-PAGE NEWSPAPER SPREAD:
+                Left Page = Agent Screen ONLY | Right Page = Replay Screen ONLY
                =============================================================== */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-0 relative items-start">
               {/* -------------------------------------------------------------
                   LEFT NEWSPAPER PAGE (Cols 1-6):
-                  Live Webpage (Prompt-Only, Manual Clicks Disabled) + 6-Line Pad
+                  Your Agent's Live Webpage Screen ONLY
                  ------------------------------------------------------------- */}
               <div
                 data-testid="newspaper-left-page"
-                className={`lg:col-span-6 lg:pr-5 lg:border-r-4 lg:border-double lg:border-dossier-ink space-y-4 ${
+                className={`lg:col-span-6 lg:pr-5 lg:border-r-4 lg:border-double lg:border-dossier-ink space-y-3 ${
                   mobilePage === 'replay' ? 'hidden lg:block' : 'block'
                 }`}
               >
@@ -351,12 +357,12 @@ export const App: React.FC<AppProps> = ({
                   >
                     <span>
                       🔒 Manual clicking on the webpage is disabled! Type an English instruction in
-                      Line 01–06 below to move your agent.
+                      the centered command pad below to move your agent.
                     </span>
                   </div>
                 )}
 
-                {/* Live Sandbox Webpage (No CoordinateRulers clutter; Manual Clicks Disabled) */}
+                {/* Live Sandbox Webpage */}
                 <section>
                   <SandboxStage
                     macroViewId={state.macroViewId}
@@ -381,6 +387,7 @@ export const App: React.FC<AppProps> = ({
                     <AgentCursor
                       xPercent={state.agentCursor.xPercent}
                       yPercent={state.agentCursor.yPercent}
+                      targetElementId={lastTargetElementId}
                       thoughtText={state.agentCursor.thought}
                       variant={state.agentCursor.variant}
                       isTrap={state.agentCursor.variant === 'trap'}
@@ -388,30 +395,15 @@ export const App: React.FC<AppProps> = ({
                     />
                   </SandboxStage>
                 </section>
-
-                {/* 6-Line Instruction Pad directly beneath Left Page Webpage */}
-                <section>
-                  <DispatchPad
-                    telegrams={state.telegrams}
-                    activeLineIndex={state.activeLineIndex}
-                    currentInput={state.currentInput}
-                    onInputChange={handleInputChange}
-                    onSubmitLine={handleDispatchLine}
-                    onCloseCase={handleCloseCase}
-                    caseStatus={state.caseStatus}
-                    currentMultiplier={currentMultiplier}
-                    isSubmitting={state.isExecuting}
-                  />
-                </section>
               </div>
 
               {/* -------------------------------------------------------------
                   RIGHT NEWSPAPER PAGE (Cols 7-12):
-                  Continuous Unredacted Target Replay Video + 5 Sealed/Unsealed Exhibits
+                  Target Replay Screen ONLY
                  ------------------------------------------------------------- */}
               <div
                 data-testid="newspaper-right-page"
-                className={`lg:col-span-6 lg:pl-5 space-y-4 ${
+                className={`lg:col-span-6 lg:pl-5 space-y-3 ${
                   mobilePage === 'agent' ? 'hidden lg:block' : 'block'
                 }`}
               >
@@ -429,31 +421,42 @@ export const App: React.FC<AppProps> = ({
                 <section>
                   <LoopedTargetReplay />
                 </section>
-
-                {/* Mobile Quick Jump Back to Prompt Pad */}
-                <div className="lg:hidden">
-                  <button
-                    type="button"
-                    onClick={() => setMobilePage('agent')}
-                    className="btn-press w-full py-2.5 bg-dossier-ink text-dossier-accent border-2 border-dossier-ink font-black uppercase text-xs shadow-ink"
-                  >
-                    👈 Flip to Left Page: Type Your English Instruction ⏎
-                  </button>
-                </div>
-
-                {/* 5 Required Exhibits Panel (Sealed until Case Closed, then Unsealed on Right Page) */}
-                <section ref={exhibitsPanelRef}>
-                  <ExhibitsPanel
-                    caseClosed={state.caseStatus === 'closed'}
-                    scoreReport={state.scoreReport}
-                    onReopenCase={handleReopenCase}
-                  />
-                </section>
               </div>
             </div>
           </div>
         )}
       </main>
+
+      {/* =====================================================================
+          3. CENTERED BOTTOM COMMAND DOCK (OUTSIDE THE NEWSPAPER PAGES):
+             6-Line Instruction Pad (Exact 60-Char Fit) + Unsealed Exhibits
+         ===================================================================== */}
+      {isNewspaperOpen && (
+        <div
+          data-testid="bottom-dispatch-dock"
+          className="max-w-5xl mx-auto mt-6 space-y-5"
+        >
+          <DispatchPad
+            telegrams={state.telegrams}
+            activeLineIndex={state.activeLineIndex}
+            currentInput={state.currentInput}
+            onInputChange={handleInputChange}
+            onSubmitLine={handleDispatchLine}
+            onCloseCase={handleCloseCase}
+            caseStatus={state.caseStatus}
+            currentMultiplier={currentMultiplier}
+            isSubmitting={state.isExecuting}
+          />
+
+          <section ref={exhibitsPanelRef}>
+            <ExhibitsPanel
+              caseClosed={state.caseStatus === 'closed'}
+              scoreReport={state.scoreReport}
+              onReopenCase={handleReopenCase}
+            />
+          </section>
+        </div>
+      )}
     </div>
   );
 };

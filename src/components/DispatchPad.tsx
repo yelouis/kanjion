@@ -50,8 +50,8 @@ export const DispatchPad: React.FC<DispatchPadProps> = ({
             <span>FILL OUT UP TO 6 INSTRUCTIONS BELOW TO CONTROL THE AGENT</span>
           </h2>
           <p className="text-xs text-dossier-muted mt-0.5">
-            Each line sends 1 English command (max 60 chars) to your AI agent above. Unused lines
-            give a +20% score bonus.
+            Each line sends 1 English command (max 60 chars) to your AI agent on the left newspaper
+            page. Unused lines give a +20% score bonus.
           </p>
           <span className="sr-only">6-LINE WESTERN UNION DISPATCH PAD</span>
         </div>
@@ -96,7 +96,7 @@ export const DispatchPad: React.FC<DispatchPadProps> = ({
             );
           }
 
-          // 2. ACTIVE INPUT ROW (Large, high-contrast, impossible to miss)
+          // 2. ACTIVE INPUT ROW (Exact 60-character monospace width)
           if (index === activeLineIndex && caseStatus === 'active') {
             return (
               <div
@@ -105,27 +105,30 @@ export const DispatchPad: React.FC<DispatchPadProps> = ({
                   inputShake ? 'shake-anim border-red-600 bg-red-100/50' : ''
                 }`}
               >
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-                  <span className="font-black text-sm sm:text-base text-dossier-ink bg-dossier-accent px-2.5 py-2 border-2 border-dossier-ink shrink-0 select-none text-center">
+                <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-center gap-2.5">
+                  <span className="font-black text-sm sm:text-base text-dossier-ink bg-dossier-accent px-3 py-2.5 border-2 border-dossier-ink shrink-0 select-none text-center">
                     LINE {lineStr} ▸
                   </span>
 
-                  <div className="relative flex-1">
+                  {/* Input + External 60-char Counter so all 60 monospace chars fit edge-to-edge */}
+                  <div className="flex items-center gap-2 justify-center">
                     <input
                       id="telegram-input"
                       type="text"
                       maxLength={60}
+                      size={60}
                       value={currentInput}
                       disabled={isSubmitting}
                       onChange={(e) => onInputChange(e.target.value.slice(0, 60))}
                       onKeyDown={handleKeyDown}
-                      placeholder={`Type instruction #${lineNumber} in English (e.g. "click the green button in row 2")...`}
-                      className="w-full bg-white border-2 border-dossier-ink px-3.5 py-2.5 pr-16 font-mono-clean font-bold text-sm sm:text-base text-dossier-ink placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-dossier-ink disabled:bg-stone-100 disabled:cursor-not-allowed"
+                      placeholder={`Type instruction #${lineNumber} in English (e.g. click green 13,870)...`}
+                      style={{ width: 'min(100%, calc(60ch + 1.75rem))' }}
+                      className="bg-white border-2 border-dossier-ink px-3 py-2.5 font-mono-clean font-bold text-sm sm:text-base text-dossier-ink placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-dossier-ink disabled:bg-stone-100 disabled:cursor-not-allowed tracking-normal"
                       autoFocus
                     />
                     <span
                       id="char-counter"
-                      className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold font-mono-clean ${
+                      className={`px-2 py-2.5 bg-white border-2 border-dossier-ink text-xs font-bold font-mono-clean shrink-0 select-none ${
                         currentInput.length >= 60 ? 'text-red-700 font-black' : 'text-dossier-muted'
                       }`}
                     >

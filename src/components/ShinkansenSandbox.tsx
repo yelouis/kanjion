@@ -32,6 +32,15 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
   const isGreenSelected = microState.greenCarSelected;
   const isInsChecked = microState.insuranceCheckboxChecked;
   const isFinalConfirmed = microState.finalConfirmed;
+  const isHikariFreeSelected =
+    microState.trainName === 'Hikari 515' && microState.seatClass === 'ordinary_free';
+  const isHikariResSelected =
+    microState.trainName === 'Hikari 515' && microState.seatClass === 'ordinary_reserved';
+  const isNozomiFreeSelected =
+    microState.trainName === 'Nozomi 24' && microState.seatClass === 'ordinary_free';
+  const isNozomiResSelected =
+    microState.trainName === 'Nozomi 24' && microState.seatClass === 'ordinary_reserved';
+  const isPromoTrapHit = microState.insuranceTrapHit;
 
   return (
     <div className="w-full h-full bg-white flex flex-col justify-between text-neutral-900 select-none">
@@ -83,9 +92,13 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
             id="btn-promo-insurance"
             type="button"
             onClick={() => handleClick(12)}
-            className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow relative active:scale-95 transition-transform"
+            className={`px-3 py-1 font-bold text-xs shadow relative active:scale-95 transition-all ${
+              isPromoTrapHit
+                ? 'bg-red-900 text-amber-200 ring-2 ring-amber-400 border-2 border-amber-300 scale-105'
+                : 'bg-red-600 hover:bg-red-700 text-white'
+            }`}
           >
-            今すぐ申し込む（赤ボタン）
+            {isPromoTrapHit ? '✓ 申込済 • 今すぐ申し込む（赤ボタン）' : '今すぐ申し込む（赤ボタン）'}
             {somOverlayActive && (
               <span className="som-badge absolute -top-2 -right-2 bg-fuchsia-600 text-white font-mono-clean text-xs px-1 border border-white font-bold shadow-sm z-10">
                 #12
@@ -148,9 +161,13 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                       id="btn-hikari-free"
                       type="button"
                       onClick={() => handleClick(21)}
-                      className="px-2 py-1 bg-neutral-100 hover:bg-neutral-200 border border-neutral-400 relative rounded font-medium"
+                      className={`px-2 py-1 border relative rounded transition-all ${
+                        isHikariFreeSelected
+                          ? 'bg-amber-300 border-2 border-neutral-900 ring-2 ring-amber-500 font-black scale-105'
+                          : 'bg-neutral-100 hover:bg-neutral-200 border-neutral-400 font-medium'
+                      }`}
                     >
-                      ◯ ¥13,870
+                      {isHikariFreeSelected ? '✓ 選択中 • ◯ ¥13,870' : '◯ ¥13,870'}
                       {somOverlayActive && (
                         <span className="som-badge absolute -top-2 -right-2 bg-fuchsia-600 text-white font-mono-clean text-xs px-1 border border-white font-bold shadow-sm z-10">
                           #21
@@ -163,9 +180,13 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                       id="btn-hikari-res"
                       type="button"
                       onClick={() => handleClick(22)}
-                      className="px-2 py-1 bg-neutral-100 hover:bg-neutral-200 border border-neutral-400 relative rounded font-medium"
+                      className={`px-2 py-1 border relative rounded transition-all ${
+                        isHikariResSelected
+                          ? 'bg-amber-300 border-2 border-neutral-900 ring-2 ring-amber-500 font-black scale-105'
+                          : 'bg-neutral-100 hover:bg-neutral-200 border-neutral-400 font-medium'
+                      }`}
                     >
-                      △ ¥14,520
+                      {isHikariResSelected ? '✓ 選択中 • △ ¥14,520' : '△ ¥14,520'}
                       {somOverlayActive && (
                         <span className="som-badge absolute -top-2 -right-2 bg-fuchsia-600 text-white font-mono-clean text-xs px-1 border border-white font-bold shadow-sm z-10">
                           #22
@@ -189,9 +210,13 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                       id="btn-nozomi-free"
                       type="button"
                       onClick={() => handleClick(23)}
-                      className="px-2 py-1 bg-neutral-100 hover:bg-neutral-200 border border-neutral-400 relative rounded font-medium"
+                      className={`px-2 py-1 border relative rounded transition-all ${
+                        isNozomiFreeSelected
+                          ? 'bg-amber-300 border-2 border-neutral-900 ring-2 ring-amber-500 font-black scale-105'
+                          : 'bg-neutral-100 hover:bg-neutral-200 border-neutral-400 font-medium'
+                      }`}
                     >
-                      ◯ ¥13,870
+                      {isNozomiFreeSelected ? '✓ 選択中 • ◯ ¥13,870' : '◯ ¥13,870'}
                       {somOverlayActive && (
                         <span className="som-badge absolute -top-2 -right-2 bg-fuchsia-600 text-white font-mono-clean text-xs px-1 border border-white font-bold shadow-sm z-10">
                           #23
@@ -204,9 +229,13 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                       id="btn-nozomi-res"
                       type="button"
                       onClick={() => handleClick(24)}
-                      className="px-2 py-1 bg-neutral-100 hover:bg-neutral-200 border border-neutral-400 relative rounded font-medium"
+                      className={`px-2 py-1 border relative rounded transition-all ${
+                        isNozomiResSelected
+                          ? 'bg-amber-300 border-2 border-neutral-900 ring-2 ring-amber-500 font-black scale-105'
+                          : 'bg-neutral-100 hover:bg-neutral-200 border-neutral-400 font-medium'
+                      }`}
                     >
-                      ◯ ¥14,720
+                      {isNozomiResSelected ? '✓ 選択中 • ◯ ¥14,720' : '◯ ¥14,720'}
                       {somOverlayActive && (
                         <span className="som-badge absolute -top-2 -right-2 bg-fuchsia-600 text-white font-mono-clean text-xs px-1 border border-white font-bold shadow-sm z-10">
                           #24
@@ -214,18 +243,22 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                       )}
                     </button>
                   </td>
-                  <td className="border border-neutral-300 p-1.5 text-center bg-emerald-50">
+                  <td
+                    className={`border border-neutral-300 p-1.5 text-center transition-colors ${
+                      isGreenSelected ? 'bg-amber-200/80 ring-2 ring-inset ring-emerald-800' : 'bg-emerald-50'
+                    }`}
+                  >
                     <button
                       id="target-green-btn"
                       type="button"
                       onClick={() => handleClick(25)}
                       className={`px-2.5 py-1 font-bold shadow relative rounded transition-all ${
                         isGreenSelected
-                          ? 'bg-emerald-700 ring-2 ring-emerald-950 text-white'
+                          ? 'bg-emerald-700 ring-2 ring-emerald-950 border-2 border-amber-300 text-amber-200 shadow-[0_0_14px_rgba(250,204,21,0.9)] scale-105'
                           : 'bg-emerald-600 hover:bg-emerald-700 text-white'
                       }`}
                     >
-                      🍀 ◯ ¥13,870 (特割)
+                      {isGreenSelected ? '✓ 選択中 • 🍀 ◯ ¥13,870 (特割)' : '🍀 ◯ ¥13,870 (特割)'}
                       {somOverlayActive && (
                         <span className="som-badge absolute -top-2 -right-2 bg-fuchsia-600 text-white font-mono-clean text-xs px-1 border border-white font-bold shadow-sm z-10">
                           #25
@@ -283,11 +316,11 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
             onClick={() => handleClick(30)}
             className={`px-3.5 py-1 font-bold text-xs shadow relative rounded transition-all ${
               isFinalConfirmed
-                ? 'bg-blue-800 ring-2 ring-blue-950 text-white'
+                ? 'bg-blue-800 ring-2 ring-blue-950 border-2 border-amber-300 text-amber-200 shadow-[0_0_14px_rgba(250,204,21,0.9)] scale-105'
                 : 'bg-blue-600 hover:bg-blue-700 text-white active:scale-95'
             }`}
           >
-            予約内容を確認・確定へ ▶
+            {isFinalConfirmed ? '✓ 確定済 • 予約内容を確認・確定へ ▶' : '予約内容を確認・確定へ ▶'}
             {somOverlayActive && (
               <span className="som-badge absolute -top-2 -right-2 bg-fuchsia-600 text-white font-mono-clean text-xs px-1 border border-white font-bold shadow-sm z-10">
                 #30
