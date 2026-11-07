@@ -255,7 +255,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩⬜🟥⬜');
     });
 
-    it('empirically triggers stage shake and contaminates Exhibit D via direct stage click', async () => {
+    it('empirically blocks direct manual webpage clicks in prompt-only mode without contaminating Exhibit D', async () => {
       const { container } = render(<App />);
 
       // Direct click on the red promo insurance button (#12) in the Japanese sandbox
@@ -266,24 +266,22 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
         fireEvent.click(promoBtn);
       });
 
-      // Verify stage shake and note
+      // Verify prompt-only lock warning is shown and stage was NOT mutated
+      expect(screen.getByTestId('manual-click-warning')).toBeInTheDocument();
       const stageCore = container.querySelector('#sandbox-core');
-      expect(stageCore).toHaveClass('shake-anim');
+      expect(stageCore).not.toHaveClass('shake-anim');
 
-      const agentNote = container.querySelector('#agent-note');
-      expect(agentNote).toHaveTextContent(/\[⚠️ TRAP DETECTED\]/i);
-
-      // Verify checkbox is visually checked (#ins-checkbox)
+      // Verify checkbox remains UNCHECKED (#ins-checkbox)
       const insCheckbox = container.querySelector('#ins-checkbox') as HTMLInputElement;
-      expect(insCheckbox?.checked).toBe(true);
+      expect(insCheckbox?.checked).toBe(false);
 
-      // Close case
+      // Close case and verify Exhibit D remains CLEAN (not contaminated by manual click)
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /CLOSE CASE FILE/i }));
       });
 
       const stampD = container.querySelector('#exhibit-d-stamp');
-      expect(stampD).toHaveTextContent('[CONTAMINATED ✗ +0%]');
+      expect(stampD).toHaveTextContent('[CLEAN ✓ +15%]');
     });
 
     it('empirically enforces trap irreversibility: subsequent green car pick does NOT undo contamination', async () => {

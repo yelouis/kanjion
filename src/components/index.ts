@@ -24,6 +24,12 @@ export type { AgentCursorProps } from './AgentCursor';
 export { GhostReplay } from './GhostReplay';
 export type { GhostReplayProps } from './GhostReplay';
 
+export { LoopedTargetReplay } from './LoopedTargetReplay';
+export type { LoopedTargetReplayProps } from './LoopedTargetReplay';
+
+export { NewspaperFrontCover } from './NewspaperFrontCover';
+export type { NewspaperFrontCoverProps } from './NewspaperFrontCover';
+
 export { DispatchPad } from './DispatchPad';
 
 export { ExhibitsPanel } from './ExhibitsPanel';

@@ -7,8 +7,10 @@ export interface ShinkansenSandboxProps {
   microState: ShinkansenMicroState;
   /** Whether backend Set-of-Mark tags overlay is visible */
   somOverlayActive: boolean;
-  /** Click handler dispatched when an interactive DOM element is activated */
+  /** Click handler dispatched when an interactive DOM element is activated (omitted in prompt-only gameplay) */
   onElementClick?: (elementId: number | string) => void;
+  /** Callback fired when a player attempts to manually click the webpage while in prompt-only mode */
+  onBlockedManualClick?: () => void;
   /** Registered Set-of-Mark elements for Macro-View 3 */
   somElements?: SoMElement[];
 }
@@ -17,10 +19,13 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
   microState,
   somOverlayActive,
   onElementClick,
+  onBlockedManualClick,
 }) => {
   const handleClick = (id: number) => {
     if (onElementClick) {
       onElementClick(id);
+    } else if (onBlockedManualClick) {
+      onBlockedManualClick();
     }
   };
 

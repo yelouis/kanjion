@@ -690,4 +690,38 @@ describe('10. App Top-Level Integration Gameplay Loop', () => {
     expect(screen.queryByText(/FORENSIC AUDIT REPORT/i)).not.toBeInTheDocument();
     expect(screen.getByText(/LINE 04 \/ 06/i)).toBeInTheDocument();
   });
+
+  it('starts on the Krillion-style Newspaper Front Cover, unfolds into a two-page spread, and supports top-left menu & mobile flip tabs', async () => {
+    render(<App initialNewspaperOpen={false} />);
+
+    // 1. Newspaper Front Cover is rendered initially
+    expect(screen.getByTestId('newspaper-front-cover')).toBeInTheDocument();
+    expect(screen.getByText(/THE DAILY DOSSIER/i)).toBeInTheDocument();
+
+    // 2. Top-Left Menu button opens the Mode & Difficulty drawer
+    const menuBtn = screen.getByRole('button', { name: /Open Game Menu/i });
+    fireEvent.click(menuBtn);
+    expect(screen.getByTestId('top-left-menu-drawer')).toBeInTheDocument();
+    expect(screen.getByText(/Daily Puzzle #042 \(Default\)/i)).toBeInTheDocument();
+
+    // Select Easy difficulty from top-left menu
+    fireEvent.click(screen.getByRole('button', { name: /Easy \(English Translation Hints\)/i }));
+    expect(screen.queryByTestId('top-left-menu-drawer')).not.toBeInTheDocument();
+
+    // 3. Click "OPEN TODAY'S NEWSPAPER" to unfold into the Two-Page Spread
+    const openBtn = screen.getByRole('button', { name: /OPEN TODAY'S NEWSPAPER/i });
+    fireEvent.click(openBtn);
+
+    expect(screen.queryByTestId('newspaper-front-cover')).not.toBeInTheDocument();
+    expect(screen.getByTestId('newspaper-left-page')).toBeInTheDocument();
+    expect(screen.getByTestId('newspaper-right-page')).toBeInTheDocument();
+    expect(screen.getByTestId('looped-target-replay')).toBeInTheDocument();
+    expect(screen.getByText(/EASY MODE TRANSLATION GUIDE/i)).toBeInTheDocument();
+
+    // 4. Mobile Page Switcher toggles active mobile page
+    const mobileSwitcher = screen.getByTestId('mobile-page-switcher');
+    expect(mobileSwitcher).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Right Page: Target Video/i }));
+    expect(screen.getByTestId('newspaper-left-page')).toHaveClass('hidden');
+  });
 });
