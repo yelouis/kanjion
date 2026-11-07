@@ -266,8 +266,8 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
         fireEvent.click(promoBtn);
       });
 
-      // Verify prompt-only lock warning is shown and stage was NOT mutated
-      expect(screen.getByTestId('manual-click-warning')).toBeInTheDocument();
+      // Verify manual click is silently ignored (no warning banner shown and stage was NOT mutated)
+      expect(screen.queryByTestId('manual-click-warning')).not.toBeInTheDocument();
       const stageCore = container.querySelector('#sandbox-core');
       expect(stageCore).not.toHaveClass('shake-anim');
 

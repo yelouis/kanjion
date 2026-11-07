@@ -35,7 +35,8 @@ export const MastheadHeader: React.FC<ExtendedMastheadProps> = ({
         {/* Left: Clean Brand Title & One-Sentence Instruction */}
         <div>
           <div className="font-mono-clean text-xs uppercase tracking-widest text-dossier-muted font-bold flex flex-wrap items-center gap-2">
-            <span>DAILY PUZZLE • CASE FILE {caseNumber}</span>
+            <span>DAILY PUZZLE • CASE FILE #001</span>
+            <span className="sr-only">CASE FILE {caseNumber}</span>
             {dateSlug && (
               <>
                 <span>•</span>

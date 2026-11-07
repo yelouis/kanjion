@@ -338,8 +338,8 @@ export function validateLLMOutput(rawResponse: unknown): LLMDecisionResponse {
   let targetId: number | null = null;
   if (typeof obj.target_id === 'number' && Number.isInteger(obj.target_id)) {
     targetId = obj.target_id;
-  } else if (typeof obj.target_id === 'string' && /^\d+$/.test(obj.target_id)) {
-    targetId = parseInt(obj.target_id, 10);
+  } else if (typeof obj.target_id === 'string' && /^#?\d+$/.test(obj.target_id.trim())) {
+    targetId = parseInt(obj.target_id.trim().replace(/^#/, ''), 10);
   }
 
   let thought =
@@ -600,7 +600,8 @@ interface ChromeLanguageModelFactory {
  */
 export function evaluateClientSideDecision(
   instructionRaw: string,
-  macroViewId = 'MV-01'
+  macroViewId = 'MV-01',
+  alwaysAct = false
 ): LLMDecisionResponse {
   const q = instructionRaw.trim();
   const lower = q.toLowerCase();
@@ -612,7 +613,7 @@ export function evaluateClientSideDecision(
       target_id: 11,
       text_value: null,
       scroll_direction: null,
-      thought: '⚠️ TRAP TRIGGERED: Clicked red Logout button!',
+      thought: '💭 Interpreted command as clicking the red Logout button (ログアウト)!',
     };
   }
   if (/\b(?:red|promo|insurance|2,?400)\b/i.test(lower) || lower.includes('#12')) {
@@ -621,7 +622,7 @@ export function evaluateClientSideDecision(
       target_id: 12,
       text_value: null,
       scroll_direction: null,
-      thought: '⚠️ TRAP TRIGGERED: Clicked red ¥2,400 promo insurance banner!',
+      thought: '💭 Interpreted command as clicking the red ¥2,400 promo insurance banner!',
     };
   }
   if (/\b(?:back|return|previous)\b/i.test(lower) || lower.includes('戻る') || lower.includes('#14')) {
@@ -630,14 +631,14 @@ export function evaluateClientSideDecision(
       target_id: 14,
       text_value: null,
       scroll_direction: null,
-      thought: '📌 FIELD NOTE: Clicked Back button (◀ 前のページへ戻る).',
+      thought: '💭 Interpreted command as clicking the Back button (◀ 前のページへ戻る).',
     };
   }
 
   // 1. Page 01 (MV-01): Route Selection Cards (#1 Tokaido, #2 Tohoku, #3 Hokuriku, #4 JRE Points)
   if (macroViewId === 'MV-01') {
     if (
-      /\b(?:tohoku|hayabusa|sendai|aomori|hokkaido|top\s*right|second\s*(?:card|box|route|option)|route\s*0?2|page\s*10)\b/i.test(
+      /\b(?:tohoku|hayabusa|sendai|aomori|hokkaido|top\s*right|second\s*(?:card|box|route|option|quadrant)|route\s*0?2|02|page\s*10)\b/i.test(
         lower
       ) ||
       lower.includes('東北') ||
@@ -648,11 +649,11 @@ export function evaluateClientSideDecision(
         target_id: 2,
         text_value: null,
         scroll_direction: null,
-        thought: '⚠️ FIELD NOTE: Selected Tohoku Shinkansen route (wrong portal branch MV-10).',
+        thought: '💭 Interpreted command as selecting Route 02 (東北・北海道新幹線) on the top right.',
       };
     }
     if (
-      /\b(?:hokuriku|joetsu|kanazawa|niigata|bottom\s*left|third\s*(?:card|box|route|option)|route\s*0?3|page\s*11)\b/i.test(
+      /\b(?:hokuriku|joetsu|kanazawa|niigata|bottom\s*left|third\s*(?:card|box|route|option|quadrant)|route\s*0?3|03|page\s*11)\b/i.test(
         lower
       ) ||
       lower.includes('北陸') ||
@@ -663,11 +664,11 @@ export function evaluateClientSideDecision(
         target_id: 3,
         text_value: null,
         scroll_direction: null,
-        thought: '⚠️ FIELD NOTE: Selected Hokuriku Shinkansen route (wrong portal branch MV-11).',
+        thought: '💭 Interpreted command as selecting Route 03 (北陸・上越新幹線) on the bottom left.',
       };
     }
     if (
-      /\b(?:point|jre|suica|ic\s*card|bottom\s*right|fourth\s*(?:card|box|route|option)|menu\s*0?4|page\s*12)\b/i.test(
+      /\b(?:point|jre|suica|ic\s*card|bottom\s*right|fourth\s*(?:card|box|route|option|quadrant)|menu\s*0?4|04|page\s*12)\b/i.test(
         lower
       ) ||
       lower.includes('#4')
@@ -677,11 +678,11 @@ export function evaluateClientSideDecision(
         target_id: 4,
         text_value: null,
         scroll_direction: null,
-        thought: '⚠️ FIELD NOTE: Selected JRE POINT / Suica portal (wrong branch MV-12).',
+        thought: '💭 Interpreted command as selecting Menu 04 (JRE POINT・Suica連携) on the bottom right.',
       };
     }
     if (
-      /\b(?:tokaido|tokyo|osaka|shin-?osaka|nozomi|top\s*left|first\s*(?:card|box|route|option|green)|green\s*(?:card|box|route|button)|left\s*green|route\s*0?1)\b/i.test(
+      /\b(?:tokaido|tokyo|osaka|shin-?osaka|nozomi|top\s*left|first\s*(?:card|box|route|option|green|quadrant)|green|quadrant|01|route\s*0?1)\b/i.test(
         lower
       ) ||
       lower.includes('東海道') ||
@@ -693,7 +694,7 @@ export function evaluateClientSideDecision(
         target_id: 1,
         text_value: null,
         scroll_direction: null,
-        thought: '📌 FIELD NOTE: Selected Tokaido-Sanyo Shinkansen (東京 ⇒ 新大阪) route.',
+        thought: '💭 Interpreted command as clicking the top-left green Route 01 card (東海道新幹線 東京⇒新大阪).',
       };
     }
   }
@@ -708,37 +709,61 @@ export function evaluateClientSideDecision(
       target_id: 16,
       text_value: null,
       scroll_direction: null,
-      thought: '📌 FIELD NOTE: Selected [14:30発] departure slot at A2.',
+      thought: '💭 Interpreted command as selecting the [14:30発] departure slot.',
     };
   }
   if (
-    /\b(?:type|enter|write|input|fill|name|passenger|tanaka)\b/i.test(lower) ||
+    /\b(?:type|enter|write|input|fill|name|passenger|tanaka|field|textbox|text\s*box)\b/i.test(lower) ||
     lower.includes('搭乗者') ||
     lower.includes('ローマ字') ||
     lower.includes('#17')
   ) {
     const explicitQuote = q.match(/["']([A-Za-z\s.]{2,20})["']/);
     const explicitAfterVerb = q.match(/\b(?:type|enter|write|input)\s+([A-Za-z]{2,16})\b/i);
-    const stopwords = new Set(['IN', 'INTO', 'THE', 'BOX', 'FIELD', 'NAME', 'PASSENGER', 'TEXT']);
+    const stopwords = new Set([
+      'IN',
+      'INTO',
+      'THE',
+      'BOX',
+      'FIELD',
+      'NAME',
+      'PASSENGER',
+      'TEXT',
+      'TEXTBOX',
+      'ON',
+      'AT',
+      'AND',
+    ]);
     let typedValue = 'TANAKA';
-    if (explicitQuote) {
+    if (/\btanaka\b/i.test(lower)) {
+      typedValue = 'TANAKA';
+    } else if (explicitQuote && !stopwords.has(explicitQuote[1].trim().toUpperCase())) {
       typedValue = explicitQuote[1].trim().toUpperCase();
     } else if (explicitAfterVerb && !stopwords.has(explicitAfterVerb[1].toUpperCase())) {
       typedValue = explicitAfterVerb[1].toUpperCase();
+    } else if (!/\btanaka\b/i.test(lower) && /\b(?:click|select|tap)\b/i.test(lower) && alwaysAct) {
+      typedValue = 'UNKNOWN';
+      return {
+        action: 'TYPE',
+        target_id: 17,
+        text_value: typedValue,
+        scroll_direction: null,
+        thought: '💭 Focused the Passenger Name box without a name specified, so I typed "UNKNOWN"!',
+      };
     }
     return {
       action: 'TYPE',
       target_id: 17,
       text_value: typedValue,
       scroll_direction: null,
-      thought: `📌 FIELD NOTE: Typed passenger name "${typedValue}" into 搭乗者名 field.`,
+      thought: `💭 Interpreted command as typing "${typedValue}" into the Passenger Name field (搭乗者名).`,
     };
   }
 
   // 3. DRAW Task (#27): Digital Signature Pad
   if (
     /\b(?:draw|sign|signature|autograph|stroke|scribble|pad|dashed\s*box)\b/i.test(lower) ||
-    (macroViewId === 'MV-04' && /\bline\b/i.test(lower)) ||
+    (macroViewId === 'MV-04' && /\b(?:line|box|write)\b/i.test(lower)) ||
     lower.includes('署名') ||
     lower.includes('サイン') ||
     lower.includes('#27')
@@ -748,7 +773,7 @@ export function evaluateClientSideDecision(
       target_id: 27,
       text_value: 'T. Tanaka',
       scroll_direction: null,
-      thought: '📌 FIELD NOTE: Signed "T. Tanaka" in the Digital Signature Verification Pad.',
+      thought: '💭 Interpreted command as drawing signature "T. Tanaka" in the Digital Signature Pad.',
     };
   }
 
@@ -763,7 +788,7 @@ export function evaluateClientSideDecision(
       target_id: 2,
       text_value: null,
       scroll_direction: null,
-      thought: '⚠️ FIELD NOTE: Selected Tohoku Shinkansen route (wrong portal branch MV-10).',
+      thought: '💭 Interpreted command as selecting Tohoku Shinkansen route (Route 02).',
     };
   }
   if (
@@ -777,7 +802,7 @@ export function evaluateClientSideDecision(
       target_id: 1,
       text_value: null,
       scroll_direction: null,
-      thought: '📌 FIELD NOTE: Selected Tokaido-Sanyo Shinkansen (東京 ⇒ 新大阪) route.',
+      thought: '💭 Interpreted command as selecting Tokaido-Sanyo Shinkansen (東京 ⇒ 新大阪).',
     };
   }
 
@@ -788,7 +813,7 @@ export function evaluateClientSideDecision(
       target_id: 28,
       text_value: null,
       scroll_direction: null,
-      thought: '⚠️ TRAP TRIGGERED: Checked ¥2,400 travel insurance checkbox!',
+      thought: '💭 Interpreted command as checking the ¥2,400 travel insurance checkbox!',
     };
   }
   if (/\bcancel\b/i.test(lower) || lower.includes('取消') || lower.includes('#29')) {
@@ -797,7 +822,7 @@ export function evaluateClientSideDecision(
       target_id: 29,
       text_value: null,
       scroll_direction: null,
-      thought: '📌 FIELD NOTE: Clicked Cancel button (予約を取消).',
+      thought: '💭 Interpreted command as clicking the Cancel button (予約を取消).',
     };
   }
   if (/\b(?:14,?520|triangle)\b/i.test(lower) || lower.includes('△') || lower.includes('#22')) {
@@ -806,7 +831,7 @@ export function evaluateClientSideDecision(
       target_id: 22,
       text_value: null,
       scroll_direction: null,
-      thought: '📌 FIELD NOTE: Selected Hikari 515 Ordinary Reserved Seat (△ ¥14,520).',
+      thought: '💭 Interpreted command as selecting Hikari 515 Ordinary Reserved Seat (△ ¥14,520).',
     };
   }
   if (/\b14,?720\b/i.test(lower) || lower.includes('#24')) {
@@ -815,7 +840,7 @@ export function evaluateClientSideDecision(
       target_id: 24,
       text_value: null,
       scroll_direction: null,
-      thought: '📌 FIELD NOTE: Selected Nozomi 24 Ordinary Reserved Seat (◯ ¥14,720).',
+      thought: '💭 Interpreted command as selecting Nozomi 24 Ordinary Reserved Seat (◯ ¥14,720).',
     };
   }
   if (
@@ -828,7 +853,7 @@ export function evaluateClientSideDecision(
       target_id: 21,
       text_value: null,
       scroll_direction: null,
-      thought: '📌 FIELD NOTE: Selected Hikari 515 Free Seat (◯ ¥13,870).',
+      thought: '💭 Interpreted command as selecting Hikari 515 Free Seat (◯ ¥13,870) in Row 1.',
     };
   }
   if (
@@ -841,7 +866,7 @@ export function evaluateClientSideDecision(
       target_id: 23,
       text_value: null,
       scroll_direction: null,
-      thought: '📌 FIELD NOTE: Selected Nozomi 24 Free Seat (◯ ¥13,870).',
+      thought: '💭 Interpreted command as selecting Nozomi 24 Free Seat (◯ ¥13,870) in Row 2.',
     };
   }
   if (
@@ -852,6 +877,15 @@ export function evaluateClientSideDecision(
     !lower.includes('特割') &&
     !lower.includes('#25')
   ) {
+    if (alwaysAct) {
+      return {
+        action: 'CLICK',
+        target_id: 21,
+        text_value: null,
+        scroll_direction: null,
+        thought: '💭 Two ¥13,870 buttons exist! Guessed the 1st-row white ¥13,870 button (Hikari Free) instead of the green one.',
+      };
+    }
     return {
       action: 'CONFUSED',
       target_id: null,
@@ -875,7 +909,7 @@ export function evaluateClientSideDecision(
       target_id: 25,
       text_value: null,
       scroll_direction: null,
-      thought: '📌 FIELD NOTE: Timed click on Nozomi 24 Green Car (🍀 ¥13,870) during flash window.',
+      thought: '💭 Interpreted command as clicking Nozomi 24 Green Car (🍀 ¥13,870) in the 2nd row.',
     };
   }
 
@@ -891,8 +925,57 @@ export function evaluateClientSideDecision(
       target_id: 30,
       text_value: null,
       scroll_direction: null,
-      thought: '📌 FIELD NOTE: Clicked final blue confirm button (予約内容を確認・確定へ).',
+      thought: '💭 Interpreted command as clicking the final blue Confirm button (予約内容を確認・確定へ).',
     };
+  }
+
+  // 8. When alwaysAct is true, NEVER do nothing — always pick a best-guess action on the active page!
+  if (alwaysAct) {
+    if (macroViewId === 'MV-01') {
+      return {
+        action: 'CLICK',
+        target_id: 2,
+        text_value: null,
+        scroll_direction: null,
+        thought: `💭 Unsure which route "${q.slice(0, 28)}" meant — guessed Route 02 (東北・北海道新幹線)!`,
+      };
+    }
+    if (macroViewId === 'MV-02') {
+      return {
+        action: 'TYPE',
+        target_id: 17,
+        text_value: 'UNKNOWN',
+        scroll_direction: null,
+        thought: `💭 Didn't see "TANAKA" in "${q.slice(0, 24)}", so I typed "UNKNOWN" into the Passenger Name box!`,
+      };
+    }
+    if (macroViewId === 'MV-03') {
+      return {
+        action: 'CLICK',
+        target_id: 24,
+        text_value: null,
+        scroll_direction: null,
+        thought: `💭 Unsure which seat "${q.slice(0, 24)}" meant — clicked Ordinary Reserved (◯ ¥14,720)!`,
+      };
+    }
+    if (macroViewId === 'MV-04') {
+      return {
+        action: 'CLICK',
+        target_id: 30,
+        text_value: null,
+        scroll_direction: null,
+        thought: `💭 Interpreted "${q.slice(0, 26)}" on Page 04 as clicking the Confirm button right away!`,
+      };
+    }
+    if (macroViewId === 'MV-10' || macroViewId === 'MV-11' || macroViewId === 'MV-12') {
+      return {
+        action: 'CLICK',
+        target_id: 14,
+        text_value: null,
+        scroll_direction: null,
+        thought: '💭 Realized this is a wrong-route detour page — clicked Back to return to Page 01!',
+      };
+    }
   }
 
   return {
@@ -907,7 +990,8 @@ export function evaluateClientSideDecision(
 /**
  * Zero-quota, zero-login client-side transport powered by Chrome's built-in
  * Gemini Nano (`window.LanguageModel` / `window.ai.languageModel`).
- * Runs 100% locally in the player's browser with zero server calls.
+ * Runs 100% locally in the player's browser with zero server calls, and guarantees
+ * the agent always attempts a visible action on the current page while showing the model's thought.
  */
 export class BrowserGeminiNanoTransport implements VisionLLMTransport {
   private getLanguageModelFactory(): ChromeLanguageModelFactory | null {
@@ -924,7 +1008,30 @@ export class BrowserGeminiNanoTransport implements VisionLLMTransport {
     return null;
   }
 
+  private getValidTargetsForPage(macroViewId: string): number[] {
+    switch (macroViewId) {
+      case 'MV-01':
+        return [1, 2, 3, 4, 11, 12];
+      case 'MV-02':
+        return [16, 17, 14, 11, 12];
+      case 'MV-03':
+        return [21, 22, 23, 24, 25, 28, 29, 14, 11, 12];
+      case 'MV-04':
+        return [27, 30, 28, 29, 14, 11, 12];
+      case 'MV-10':
+      case 'MV-11':
+      case 'MV-12':
+        return [14, 11, 12];
+      default:
+        return [1, 2, 3, 4, 11, 12, 14, 16, 17, 21, 22, 23, 24, 25, 27, 28, 29, 30];
+    }
+  }
+
   async requestDecision(request: LLMDecisionRequest): Promise<LLMDecisionResponse> {
+    const exactDecision = evaluateClientSideDecision(request.instruction, request.macroViewId, false);
+    const fallbackBestGuess = evaluateClientSideDecision(request.instruction, request.macroViewId, true);
+    const validTargets = this.getValidTargetsForPage(request.macroViewId);
+
     const factory = this.getLanguageModelFactory();
     if (factory) {
       try {
@@ -939,26 +1046,24 @@ export class BrowserGeminiNanoTransport implements VisionLLMTransport {
 
         if (isReady) {
           const systemPrompt = [
-            'You are an autonomous web navigation agent on a 12-page Japanese Shinkansen booking portal (JR Ekinet).',
+            'You are an autonomous web navigation agent on a Japanese Shinkansen booking portal (JR Ekinet).',
             `Active page: ${request.macroViewId}.`,
-            'Interactive targets:',
-            '- #1: Tokaido-Sanyo Shinkansen Route card (top-left green card, 東京⇒新大阪) [action: "CLICK"]',
-            '- #2: Tohoku Shinkansen Route card (top-right card, 東北・北海道新幹線) [action: "CLICK"]',
-            '- #3: Hokuriku Shinkansen Route card (bottom-left card, 北陸・上越新幹線) [action: "CLICK"]',
-            '- #4: JRE POINT / Suica card (bottom-right card) [action: "CLICK"]',
-            '- #11: Red Logout button (ログアウト) [action: "CLICK"]',
-            '- #12: Red ¥2,400 promo travel insurance banner [action: "CLICK"]',
-            '- #14: Back button (◀ 前のページへ戻る) [action: "CLICK"]',
-            '- #16: Departure time 14:30 dropdown (14:30発) [action: "CLICK"]',
-            '- #17: Passenger Name input field (搭乗者名 ローマ字, e.g. TANAKA) [action: "TYPE", text_value: "TANAKA"]',
-            '- #21: Hikari 515 Free Seat (◯ ¥13,870, row 1) [action: "CLICK"]',
-            '- #22: Hikari 515 Reserved Seat (△ ¥14,520, row 1) [action: "CLICK"]',
-            '- #23: Nozomi 24 Free Seat (◯ ¥13,870, row 2) [action: "CLICK"]',
-            '- #24: Nozomi 24 Reserved Seat (◯ ¥14,720, row 2) [action: "CLICK"]',
-            '- #25: Timed Flash Discount Green Car button (🍀 ◯ ¥13,870 特割, row 2 green button) [action: "TIMED_CLICK" or "CLICK"]',
-            '- #27: Digital Signature Verification Pad (自署・サイン欄) [action: "DRAW", text_value: "T. Tanaka"]',
-            '- #30: Final Blue Confirm button (予約内容を確認・確定へ ▶) [action: "CLICK"]',
-            'Respond ONLY with valid JSON: {"action":"CLICK"|"TYPE"|"DRAW"|"TIMED_CLICK"|"CONFUSED","target_id":number|null,"text_value":string|null,"scroll_direction":null,"thought":string}.',
+            'Always choose a concrete target_id from the active page (never null or 0):',
+            '- target_id 1: Tokaido-Sanyo Shinkansen Route 01 card (top-left green quadrant, 東京⇒新大阪) [action: "CLICK"]',
+            '- target_id 2: Tohoku Shinkansen Route 02 card (top-right quadrant, 東北・北海道新幹線) [action: "CLICK"]',
+            '- target_id 3: Hokuriku Shinkansen Route 03 card (bottom-left quadrant, 北陸・上越新幹線) [action: "CLICK"]',
+            '- target_id 4: JRE POINT / Suica Menu 04 card (bottom-right quadrant) [action: "CLICK"]',
+            '- target_id 12: Red ¥2,400 promo travel insurance banner [action: "CLICK"]',
+            '- target_id 14: Back button (◀ 前のページへ戻る) [action: "CLICK"]',
+            '- target_id 17: Passenger Name input field on Page 02 (搭乗者名 ローマ字, e.g. TANAKA) [action: "TYPE", text_value: "TANAKA"]',
+            '- target_id 21: Hikari 515 Free Seat (◯ ¥13,870, row 1 white button) [action: "CLICK"]',
+            '- target_id 22: Hikari 515 Reserved Seat (△ ¥14,520, row 1) [action: "CLICK"]',
+            '- target_id 23: Nozomi 24 Free Seat (◯ ¥13,870, row 2 white button) [action: "CLICK"]',
+            '- target_id 24: Nozomi 24 Reserved Seat (◯ ¥14,720, row 2) [action: "CLICK"]',
+            '- target_id 25: Timed Flash Discount Green Car button (🍀 ◯ ¥13,870 特割, row 2 green button) [action: "CLICK"]',
+            '- target_id 27: Digital Signature Verification Pad on Page 04 (自署・サイン欄) [action: "TYPE", text_value: "T. Tanaka"]',
+            '- target_id 30: Final Blue Confirm button on Page 04 (予約内容を確認・確定へ ▶) [action: "CLICK"]',
+            'In "thought", write 1 short sentence explaining how you interpreted the player instruction.',
           ].join('\n');
 
           const session = await factory.create({
@@ -973,17 +1078,71 @@ export class BrowserGeminiNanoTransport implements VisionLLMTransport {
             );
             const cleaned = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
             const parsed = JSON.parse(cleaned);
-            return validateLLMOutput(parsed);
+            const nanoDecision = validateLLMOutput(parsed);
+            const nanoThought =
+              nanoDecision.thought && !nanoDecision.thought.startsWith('Executing ')
+                ? `💭 ${nanoDecision.thought.replace(/^(?:💭|📌\s*FIELD\s*NOTE:)\s*/i, '')}`.slice(0, 80)
+                : '';
+
+            // 1. If our deterministic page-aware matcher matched an explicit target on this page,
+            //    use its reliable action/target_id/text_value combined with Gemini Nano's thought!
+            if (
+              exactDecision.action !== 'CONFUSED' &&
+              exactDecision.target_id !== null &&
+              validTargets.includes(exactDecision.target_id)
+            ) {
+              return {
+                ...exactDecision,
+                thought: nanoThought || exactDecision.thought,
+              };
+            }
+
+            // 2. Otherwise, if Gemini Nano picked a valid target on the current page, normalize and execute it!
+            if (
+              nanoDecision.target_id !== null &&
+              validTargets.includes(nanoDecision.target_id)
+            ) {
+              if (nanoDecision.target_id === 17) {
+                return {
+                  action: 'TYPE',
+                  target_id: 17,
+                  text_value: (nanoDecision.text_value || exactDecision.text_value || 'TANAKA').toUpperCase(),
+                  scroll_direction: null,
+                  thought: nanoThought || fallbackBestGuess.thought,
+                };
+              }
+              if (nanoDecision.target_id === 27) {
+                return {
+                  action: 'DRAW',
+                  target_id: 27,
+                  text_value: nanoDecision.text_value || 'T. Tanaka',
+                  scroll_direction: null,
+                  thought: nanoThought || fallbackBestGuess.thought,
+                };
+              }
+              return {
+                ...nanoDecision,
+                action: nanoDecision.action === 'CONFUSED' ? 'CLICK' : nanoDecision.action,
+                thought: nanoThought || fallbackBestGuess.thought,
+              };
+            }
+
+            // 3. If Gemini Nano returned null/0 or an off-page target, execute the best-guess action on this page
+            //    and display Gemini Nano's thought so the player sees how the model interpreted their prompt!
+            return {
+              ...fallbackBestGuess,
+              thought: nanoThought || fallbackBestGuess.thought,
+            };
           } finally {
             session.destroy?.();
           }
         }
       } catch {
-        // Fall through to deterministic client-side decision evaluator when local model is unavailable or rejects
+        // Fall through to alwaysAct client-side decision evaluator
       }
     }
 
-    return evaluateClientSideDecision(request.instruction, request.macroViewId);
+    return fallbackBestGuess;
   }
 }
 

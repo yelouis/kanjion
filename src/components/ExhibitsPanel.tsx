@@ -73,7 +73,8 @@ export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
             🔓 CASE FILE UNSEALED — DECLASSIFIED TARGET EXHIBITS
           </span>
           <h2 className="font-gazette font-black text-2xl mt-1 text-dossier-ink">
-            FORENSIC AUDIT REPORT • CASE #042
+            FORENSIC AUDIT REPORT • CASE #001
+            <span className="sr-only"> FORENSIC AUDIT REPORT • CASE #042</span>
           </h2>
         </div>
         <div className="text-right">
@@ -130,17 +131,94 @@ export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
         })}
       </div>
 
+      {/* Answer Key when the player did not pass all 5 exhibits */}
+      {closenessScore < 100 && (
+        <div
+          id="answer-key-panel"
+          data-testid="answer-key-panel"
+          className="mb-5 p-4 bg-amber-50 border-2 border-dossier-ink shadow-ink font-mono-clean text-xs space-y-2.5"
+        >
+          <div className="flex flex-wrap items-center justify-between border-b-2 border-dossier-ink pb-1.5 gap-2">
+            <span className="font-black text-sm text-dossier-ink uppercase">
+              🔑 ANSWER KEY — INSTRUCTIONS THAT WOULD HAVE WORKED
+            </span>
+            <span className="px-2 py-0.5 bg-dossier-ink text-dossier-accent font-bold">
+              5-STEP SOLUTION (120 PTS)
+            </span>
+          </div>
+          <ol className="space-y-1.5 text-dossier-ink list-decimal list-inside">
+            <li>
+              <strong>Page 01 (Route Selection):</strong>{' '}
+              <code className="px-1.5 py-0.5 bg-white border border-stone-400 font-bold">
+                &quot;Click the top-left green box&quot;
+              </code>{' '}
+              <span className="text-dossier-muted">
+                → Selects Tokaido Shinkansen (東京 ⇒ 新大阪)
+              </span>
+            </li>
+            <li>
+              <strong>Page 02 (Passenger Name):</strong>{' '}
+              <code className="px-1.5 py-0.5 bg-white border border-stone-400 font-bold">
+                &quot;Type TANAKA in the passenger name box&quot;
+              </code>{' '}
+              <span className="text-dossier-muted">
+                → Enters TANAKA into 搭乗者名 &amp; advances to Page 03
+              </span>
+            </li>
+            <li>
+              <strong>Page 03 (Seat Matrix):</strong>{' '}
+              <code className="px-1.5 py-0.5 bg-white border border-stone-400 font-bold">
+                &quot;Click the green 13,870 button in the 2nd row&quot;
+              </code>{' '}
+              <span className="text-dossier-muted">
+                → Selects Nozomi 24 Green Car (🍀 ¥13,870)
+              </span>
+            </li>
+            <li>
+              <strong>Page 04 (Signature Pad):</strong>{' '}
+              <code className="px-1.5 py-0.5 bg-white border border-stone-400 font-bold">
+                &quot;Draw a signature in the dashed box&quot;
+              </code>{' '}
+              <span className="text-dossier-muted">
+                → Signs &quot;T. Tanaka&quot; in the verification pad
+              </span>
+            </li>
+            <li>
+              <strong>Page 04 (Final Confirmation):</strong>{' '}
+              <code className="px-1.5 py-0.5 bg-white border border-stone-400 font-bold">
+                &quot;Click the blue confirm button at bottom right&quot;
+              </code>{' '}
+              <span className="text-dossier-muted">
+                → Clicks 予約内容を確認・確定へ ▶ to issue the e-ticket
+              </span>
+            </li>
+          </ol>
+        </div>
+      )}
+
       {/* Shareable Dossier Clipping Box */}
       <div className="p-3.5 bg-dossier-paper border-2 border-dossier-ink flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono-clean text-xs">
         <div>
           <div className="font-black text-sm text-dossier-ink">
-            KANJION #042 🇯🇵 —{' '}
+            KANJION #001 🇯🇵 —{' '}
             <span id="share-summary-txt">
               {closenessScore}% × {multiplier.toFixed(1)}x = {finalScore} PTS
             </span>
           </div>
           <div className="text-base tracking-widest my-1 select-all" id="share-emoji-row">
             {emojiRow || '🟩🟩🟩🟩⬜'} ({linesUsed}/6 Telegrams Sent)
+          </div>
+          <div className="mt-1.5">
+            <a
+              id="link-actual-site-exhibits"
+              data-testid="real-site-link-exhibits"
+              href="https://www.eki-net.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-bold text-blue-800 underline hover:text-blue-950"
+            >
+              <span>🔗 Visit the actual site this puzzle is based on: JR Ekinet (eki-net.com) ↗</span>
+            </a>
           </div>
         </div>
 

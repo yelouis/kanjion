@@ -71,7 +71,6 @@ export const App: React.FC<AppProps> = ({
     process.env.NODE_ENV === 'test' ? 'offline' : 'cloud'
   );
   const [mobilePage, setMobilePage] = useState<MobileActivePage>('agent');
-  const [manualClickWarning, setManualClickWarning] = useState<boolean>(false);
 
   const offlineEngine = useMemo(
     () => new OfflineSimulationEngine(CASE_042_MACRO_VIEWS),
@@ -156,10 +155,9 @@ export const App: React.FC<AppProps> = ({
     }
   };
 
-  // 6. Prompt-Only Lock: Manual clicks on the webpage are strictly blocked!
+  // 6. Prompt-Only Lock: Manual clicks on the webpage are silently ignored
   const handleBlockedManualClick = () => {
-    setManualClickWarning(true);
-    setTimeout(() => setManualClickWarning(false), 2200);
+    // Intentionally silent: manual clicks on the webpage do not respond or show an error toast
   };
 
   // 7. Action Handlers
@@ -219,17 +217,31 @@ export const App: React.FC<AppProps> = ({
           </button>
         </div>
 
-        {/* Right Quick Action: Fold Back to Front Page */}
-        {isNewspaperOpen && (
-          <button
-            id="btn-fold-front-page"
-            type="button"
-            onClick={() => setIsNewspaperOpen(false)}
-            className="btn-press px-2.5 py-1 bg-dossier-card border-2 border-dossier-ink shadow-ink-sm text-xs font-bold hover:bg-amber-50"
+        {/* Right Quick Actions: Real Site Link + Fold Back to Front Page */}
+        <div className="flex items-center gap-2">
+          <a
+            id="link-actual-site-top"
+            data-testid="real-site-link-header"
+            href="https://www.eki-net.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-press px-2.5 py-1 bg-dossier-card border-2 border-dossier-ink shadow-ink-sm text-xs font-bold text-blue-900 hover:bg-amber-50 flex items-center gap-1"
+            title="Visit the actual Japanese Shinkansen reservation portal (JR Ekinet)"
           >
-            📰 Front Page
-          </button>
-        )}
+            <span>🚄 Actual Site (eki-net.com) ↗</span>
+          </a>
+
+          {isNewspaperOpen && (
+            <button
+              id="btn-fold-front-page"
+              type="button"
+              onClick={() => setIsNewspaperOpen(false)}
+              className="btn-press px-2.5 py-1 bg-dossier-card border-2 border-dossier-ink shadow-ink-sm text-xs font-bold hover:bg-amber-50"
+            >
+              📰 Front Page
+            </button>
+          )}
+        </div>
 
         {/* Top-Left Dropdown Menu Panel */}
         {menuOpen && (
@@ -259,7 +271,10 @@ export const App: React.FC<AppProps> = ({
                 }}
                 className="w-full p-2.5 text-left border-2 border-dossier-ink bg-dossier-accent text-dossier-ink font-black shadow-ink-sm flex items-center justify-between"
               >
-                <span>📅 Daily Puzzle #042 (Restart)</span>
+                <span>
+                  📅 Daily Puzzle #001 (Restart)
+                  <span className="sr-only"> Daily Puzzle #042 (Restart)</span>
+                </span>
                 <span>↺</span>
               </button>
 
@@ -273,6 +288,15 @@ export const App: React.FC<AppProps> = ({
               >
                 📰 Return to Front Page Cover
               </button>
+
+              <a
+                href="https://www.eki-net.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full p-2.5 text-left border-2 border-dossier-ink bg-dossier-card text-blue-900 font-bold hover:bg-stone-100"
+              >
+                🔗 Visit Actual Site (JR Ekinet) ↗
+              </a>
             </div>
           </div>
         )}
@@ -364,24 +388,7 @@ export const App: React.FC<AppProps> = ({
                     <span className="px-1.5 py-0.5 bg-dossier-ink text-dossier-paper">LEFT PAGE</span>
                     <span>YOUR AGENT&apos;S WEBPAGE</span>
                   </span>
-                  <span className="text-red-800 font-black text-[11px] uppercase">
-                    🔒 PROMPT-ONLY (MANUAL CLICKS DISABLED)
-                  </span>
                 </div>
-
-                {/* Prompt-Only Click Warning Toast */}
-                {manualClickWarning && (
-                  <div
-                    role="status"
-                    data-testid="manual-click-warning"
-                    className="bg-red-800 text-white border-2 border-dossier-ink px-3 py-1.5 text-xs font-bold shadow-ink-sm flex items-center justify-between"
-                  >
-                    <span>
-                      🔒 Manual clicking on the webpage is disabled! Type an English instruction in
-                      the centered command pad below to move your agent.
-                    </span>
-                  </div>
-                )}
 
                 {/* Live Sandbox Webpage */}
                 <section>

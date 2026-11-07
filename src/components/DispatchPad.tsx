@@ -81,17 +81,34 @@ export const DispatchPad: React.FC<DispatchPadProps> = ({
 
           // 1. PAST SUBMITTED LINE
           if (lineData && lineData.submitted) {
+            const rawThought = lineData.agentAction?.thought?.trim() || '';
+            const showDistinctThought =
+              rawThought.length > 0 && rawThought !== lineData.actionSummary?.trim();
             return (
               <div
                 key={lineNumber}
-                className="py-2.5 px-3.5 bg-stone-100 border-2 border-stone-400 flex flex-col sm:flex-row sm:items-center justify-between text-xs sm:text-sm gap-1"
+                className="py-2.5 px-3.5 bg-stone-100 border-2 border-stone-400 flex flex-col gap-1 text-xs sm:text-sm"
               >
-                <span className="text-dossier-ink">
-                  <strong className="font-black mr-1.5">LINE {lineStr}:</strong> &quot;{lineData.text}&quot;
-                </span>
-                <span className="text-emerald-900 font-bold text-xs">
-                  → {lineData.actionSummary || 'Agent executed action'} (Exhibit Status: ██ REDACTED ██)
-                </span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                  <span className="text-dossier-ink">
+                    <strong className="font-black mr-1.5">LINE {lineStr}:</strong> &quot;{lineData.text}&quot;
+                  </span>
+                  <span className="text-emerald-900 font-bold text-xs">
+                    → {lineData.actionSummary || 'Agent executed action'}
+                    <span className="sr-only"> (Exhibit Status: ██ REDACTED ██)</span>
+                  </span>
+                </div>
+                {showDistinctThought && (
+                  <div
+                    data-testid={`line-${lineStr}-model-thought`}
+                    className="text-xs text-stone-700 bg-amber-50/80 border border-amber-300/80 px-2.5 py-1 italic"
+                  >
+                    <strong className="not-italic font-bold text-dossier-ink mr-1">
+                      Model Thought:
+                    </strong>
+                    {rawThought}
+                  </div>
+                )}
               </div>
             );
           }
