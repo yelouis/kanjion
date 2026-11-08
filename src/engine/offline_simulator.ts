@@ -10,11 +10,10 @@ import {
   AgentExecutionConnector,
   AgentAction,
   AgentCoordinate,
-  ShinkansenMicroState,
 } from '../types/engine';
 import { SoMElement, MacroView } from '../types/puzzle';
 import { CASE_001_MACRO_VIEWS } from '../data/puzzles/case_001';
-import { parseGridCoordinate, getBoxCenter } from '../utils/coordinate_projector';
+import { parseGridCoordinate, getBoxCenter, gridToCenter } from '../utils/coordinate_projector';
 import {
   normalizeInstruction,
   extractSignatureDrawingSpec,
@@ -102,7 +101,7 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
    */
   public resolveInstruction(
     macroViewId: string,
-    microState: ShinkansenMicroState,
+    microState: Record<string, unknown>,
     instruction: string
   ): AgentAction {
     const rawTrimmed = (instruction || '').trim();
@@ -287,6 +286,41 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
       };
     }
 
+    // MV-07 Cancel Confirmation Modal (#71 confirm, #72 dismiss)
+    if (macroViewId === 'MV-07') {
+      if (/\b(?:back|return|dismiss|keep|no|gray|grey)\b/i.test(lower) || lower.includes('戻る')) {
+        return {
+          action: 'CLICK',
+          targetId: '#72',
+          gridRef: 'B3',
+          targetCoordinate: { x: 460, y: 420 },
+          thought: '📌 FIELD NOTE: Clicked [戻る]',
+        };
+      }
+      if (/\b(?:cancel|confirm|yes|red|abort)\b/i.test(lower) || lower.includes('取り消す')) {
+        return {
+          action: 'CLICK',
+          targetId: '#71',
+          gridRef: 'C3',
+          targetCoordinate: { x: 560, y: 420 },
+          thought: '📌 FIELD NOTE: Clicked [取り消す]',
+        };
+      }
+    }
+
+    // MV-08 News Page (#81 back)
+    if (macroViewId === 'MV-08') {
+      if (/\b(?:back|return|previous)\b/i.test(lower) || lower.includes('戻る') || rawTrimmed.includes('◀')) {
+        return {
+          action: 'CLICK',
+          targetId: '#81',
+          gridRef: 'A2',
+          targetCoordinate: { x: 100, y: 170 },
+          thought: '📌 FIELD NOTE: Clicked [◀ 戻る]',
+        };
+      }
+    }
+
     // Back button (#14) across multi-page views (MV-02, MV-04, MV-10, MV-11, MV-12)
     if (
       macroViewId !== 'MV-03' &&
@@ -374,7 +408,7 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
   public scoreElements(
     elements: SoMElement[],
     rawInstruction: string,
-    _microState: ShinkansenMicroState
+    _microState: Record<string, unknown>
   ): ElementMatchScore[] {
     const lower = rawInstruction.toLowerCase();
     const normalized = normalizeInstruction(rawInstruction);
@@ -503,15 +537,15 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
       case 'header':
       case 'banner':
       case 'row 1':
-        return box.y < 192 || el.gridRef.endsWith('1');
+        return (box ? box.y < 192 : false) || el.gridRef.endsWith('1');
       case 'bottom':
       case 'row 4':
-        return box.y > 576 || el.gridRef.endsWith('4');
+        return (box ? box.y > 576 : false) || el.gridRef.endsWith('4');
       case 'left':
       case 'sidebar':
-        return box.x < 512 || el.gridRef.startsWith('A') || el.gridRef.startsWith('B');
+        return (box ? box.x < 512 : false) || el.gridRef.startsWith('A') || el.gridRef.startsWith('B');
       case 'right':
-        return box.x > 512 || el.gridRef.startsWith('C') || el.gridRef.startsWith('D');
+        return (box ? box.x > 512 : false) || el.gridRef.startsWith('C') || el.gridRef.startsWith('D');
       case '1st row':
       case 'first row':
         return el.id === 21 || el.id === 22; // Hikari 515 row
@@ -684,8 +718,8 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
   /**
    * Constructs the concrete AgentAction with exact center coordinates and thought note.
    */
-  private buildAction(el: SoMElement, microState: ShinkansenMicroState): AgentAction {
-    const center = getBoxCenter(el.boundingBox);
+  private buildAction(el: SoMElement, microState: Record<string, unknown>): AgentAction {
+    const center = el.boundingBox ? getBoxCenter(el.boundingBox) : gridToCenter(el.gridRef);
     const targetCoordinate: AgentCoordinate = {
       x: Math.round(center.x),
       y: Math.round(center.y),
@@ -706,7 +740,7 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
   /**
    * Formats concise, informative field notes strictly under 80 characters.
    */
-  private generateFieldNote(el: SoMElement, microState: ShinkansenMicroState): string {
+  private generateFieldNote(el: SoMElement, microState: Record<string, unknown>): string {
     switch (el.id) {
       case 25:
         return '📌 FIELD NOTE: Clicked [🍀 ◯ ¥13,870] at D3'; // 44 chars
@@ -715,7 +749,7 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
       case 12:
         return '📌 FIELD NOTE: Clicked [今すぐ申し込む] at D1'; // 42 chars
       case 28:
-        return microState.insuranceCheckboxChecked
+        return microState.insuranceAttached || microState.insuranceCheckboxChecked
           ? '📌 FIELD NOTE: Unchecked [旅行キャンセル保険を追加] at B4' // 53 chars
           : '📌 FIELD NOTE: Checked [旅行キャンセル保険を追加] at B4'; // 51 chars
       case 14:

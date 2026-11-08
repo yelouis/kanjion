@@ -29,11 +29,12 @@ import {
   CASE_001_MACRO_VIEWS,
   CASE_001_MV03_ELEMENTS,
 } from '../src/data/puzzles/case_001';
-import { ShinkansenMicroState, LLMDecisionResponse } from '../src/types/engine';
+import { LLMDecisionResponse } from '../src/types/engine';
+import type { FieldValue } from '../src/types/puzzle_data';
 
 describe('Milestone 2 Adversarial Challenge Suite', () => {
   let offlineEngine: OfflineSimulationEngine;
-  let microState: ShinkansenMicroState;
+  let microState: Record<string, FieldValue>;
 
   beforeEach(() => {
     offlineEngine = new OfflineSimulationEngine();
@@ -173,8 +174,11 @@ describe('Milestone 2 Adversarial Challenge Suite', () => {
       expect(action.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });
 
-    it('returns NOOP on macro-view with empty elements list (MV-01)', () => {
-      const action = offlineEngine.resolveInstruction('MV-01', microState, 'click green car');
+    it('returns NOOP on macro-view with empty elements list', () => {
+      const emptyEngine = new OfflineSimulationEngine([
+        { id: 'MV-EMPTY', name: 'empty', elements: [] },
+      ]);
+      const action = emptyEngine.resolveInstruction('MV-EMPTY', microState, 'click green car');
       expect(action.action).toBe('NOOP');
       expect(action.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });

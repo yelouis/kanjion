@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { ShinkansenSandbox } from './ShinkansenSandbox';
-import { CASE_001_INITIAL_MICRO_STATE } from '../data/puzzles/case_001';
-import type { ShinkansenMicroState } from '../types/engine';
+import { Sandbox } from '../data/puzzles/case_001/Sandbox';
+import { CASE_001_PUZZLE } from '../data/puzzles/case_001/puzzle';
+import type { PuzzleState } from '../types/puzzle_data';
 
 export interface LoopedTargetReplayProps {
   /** Optional className override */
@@ -265,22 +265,25 @@ export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({
     }));
   }, [currentMacroViewId, scale]);
 
-  const replayMicroState: ShinkansenMicroState = {
-    ...CASE_001_INITIAL_MICRO_STATE,
-    macroViewId: currentMacroViewId,
-    selectedRoute: routeSelected ? 'tokyo_osaka' : 'none',
-    passengerName:
-      passengerSubmitted
-        ? PASSENGER_NAME
-        : typedChars > 0
-        ? PASSENGER_NAME.slice(0, typedChars)
-        : '',
-    greenCarSelected: greenSelected,
-    trainName: greenSelected ? 'Nozomi 24' : 'none',
-    seatClass: greenSelected ? 'green_car' : 'none',
-    fare: greenSelected ? 13870 : 0,
-    signatureStroke: sigProgress >= 1 ? 'SHAPE:signature' : undefined,
-    finalConfirmed,
+  const replayState: PuzzleState = {
+    pageId: currentMacroViewId,
+    previousPageId: null,
+    fields: {
+      ...CASE_001_PUZZLE.initialFields,
+      selectedRoute: routeSelected ? 'tokyo_osaka' : 'none',
+      passengerName:
+        passengerSubmitted
+          ? PASSENGER_NAME
+          : typedChars > 0
+          ? PASSENGER_NAME.slice(0, typedChars)
+          : '',
+      greenCarSelected: greenSelected,
+      trainName: greenSelected ? 'Nozomi 24' : 'none',
+      seatClass: greenSelected ? 'green_car' : 'none',
+      fare: greenSelected ? 13870 : 0,
+      signatureStroke: sigProgress >= 1 ? 'SHAPE:signature' : '',
+      finalConfirmed,
+    },
   };
 
   const scaledHeight = Math.round(768 * scale);
@@ -368,8 +371,8 @@ export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({
           className="relative pointer-events-none select-none bg-white overflow-hidden"
         >
           {/* Exact 1:1 Unredacted Multi-Page Shinkansen Webpage */}
-          <ShinkansenSandbox
-            microState={replayMicroState}
+          <Sandbox
+            state={replayState}
             activeFlashColumn={activeFlashColumn}
             signatureProgress={sigProgress}
           />

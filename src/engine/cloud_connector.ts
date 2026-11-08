@@ -17,13 +17,12 @@ import {
   AgentAction,
   AgentActionType,
   AgentExecutionConnector,
-  ShinkansenMicroState,
   GridCoordinate,
   LLMDecisionRequest,
   LLMDecisionResponse,
 } from '../types/engine';
 import { MacroView, SoMElement } from '../types/puzzle';
-import { getBoxCenter } from '../utils/coordinate_projector';
+import { getBoxCenter, gridToCenter } from '../utils/coordinate_projector';
 import {
   validateInstruction,
   generateStateHash,
@@ -77,7 +76,7 @@ export const AGENT_ACTION_JSON_SCHEMA = {
  * Guardrail 1: Goal Blindness Sanitizer
  * Strips all winning path indicators, target flags, exhibits, and replay trajectories.
  */
-export function sanitizeMicroStateForLLM(microState: ShinkansenMicroState): Record<string, unknown> {
+export function sanitizeMicroStateForLLM(microState: Record<string, unknown>): Record<string, unknown> {
   return {
     macroViewId: microState.macroViewId,
     activeModal: microState.activeModal ?? 'none',
@@ -87,7 +86,7 @@ export function sanitizeMicroStateForLLM(microState: ShinkansenMicroState): Reco
     seatClass: microState.seatClass,
     fare: microState.fare,
     greenCarSelected: microState.greenCarSelected,
-    insuranceCheckboxChecked: microState.insuranceCheckboxChecked,
+    insuranceCheckboxChecked: microState.insuranceAttached ?? microState.insuranceCheckboxChecked,
   };
 }
 
@@ -152,7 +151,7 @@ export interface SyntheticIdFilterResult {
 
 export function filterPromptSyntheticIds(
   instruction: string,
-  _visibleElements: SoMElement[] = []
+  _visibleElements: readonly unknown[] = []
 ): SyntheticIdFilterResult {
   // 1. Strip zero-width and invisible control characters prior to URI decoding
   let preprocessed = (instruction || '').replace(/[\u200B-\u200D\uFEFF]/g, '');
@@ -215,7 +214,7 @@ export interface MultimodalPromptBundle {
 
 export function buildMultimodalPrompt(
   macroView: MacroView,
-  microState: ShinkansenMicroState,
+  microState: Record<string, unknown>,
   sanitizedInstruction: string
 ): MultimodalPromptBundle {
   const sanitizedState = sanitizeMicroStateForLLM(microState);
@@ -1144,7 +1143,7 @@ export class CloudVisionConnector implements AgentExecutionConnector {
 
   async resolveInstruction(
     macroViewId: string,
-    microState: ShinkansenMicroState,
+    microState: Record<string, unknown>,
     instruction: string
   ): Promise<AgentAction> {
     // 1. Validate instruction length and non-empty constraint
@@ -1205,7 +1204,7 @@ export class CloudVisionConnector implements AgentExecutionConnector {
       macroViewId,
       instruction,
       normalizedInstruction: normalized,
-      microState: promptBundle.contextJson.microState as ShinkansenMicroState,
+      microState: promptBundle.contextJson.microState as Record<string, unknown>,
       somImageUrl: `${this.somBaseUrl}${promptBundle.somImageUrl}`,
       visibleMarks: promptBundle.contextJson.visibleMarks as LLMDecisionRequest['visibleMarks'],
     };
@@ -1350,7 +1349,9 @@ export class CloudVisionConnector implements AgentExecutionConnector {
       };
     }
 
-    const center = getBoxCenter(matchedElement.boundingBox);
+    const center = matchedElement.boundingBox
+      ? getBoxCenter(matchedElement.boundingBox)
+      : gridToCenter(matchedElement.gridRef);
 
     return {
       action: decision.action,

@@ -5,8 +5,9 @@
  * macro-view definitions, state checkpoints (Required Exhibits), and target trajectories.
  */
 
-import { GridCoordinate, GridColumn, GridRow, AgentActionType, ShinkansenMicroState } from './engine';
+import { GridCoordinate, GridColumn, GridRow, AgentActionType } from './engine';
 import { StampStatus } from './game';
+import { FieldValue } from './puzzle_data';
 
 /**
  * Bounding box coordinates within the fixed 1024x768 stage.
@@ -40,8 +41,8 @@ export interface SoMElement {
   tag: string;
   /** ARIA or functional role. */
   role?: string;
-  /** Exact bounding-box geometry on the 1024x768 canvas. */
-  boundingBox: BoundingBox;
+  /** Exact bounding-box geometry on the 1024x768 canvas (populated by capture pipeline). */
+  boundingBox?: BoundingBox;
   /** Grid cell quadrant reference (e.g. 'D3'). */
   gridRef: GridCoordinate;
   /** Visible Japanese/English text label. */
@@ -132,9 +133,9 @@ export interface ExhibitDefinition {
   /** Descriptive evaluation criteria. */
   criteria: string;
   /**
-   * Deterministic evaluation function checking final micro-state.
+   * Deterministic evaluation function checking final state.
    */
-  evaluate: (microState: ShinkansenMicroState) => {
+  evaluate: (microState: Record<string, FieldValue>) => {
     status: StampStatus;
     awardedPoints: number;
     stampText: string;
@@ -210,8 +211,8 @@ export interface PuzzleManifest {
   themeBadge?: string;
   /** Initial Macro-View ID. */
   initialMacroViewId?: string;
-  /** Initial sandbox micro-state. */
-  initialMicroState?: ShinkansenMicroState;
+  /** Initial sandbox state. */
+  initialMicroState?: Record<string, FieldValue>;
   /** Stage configuration. */
   stage?: {
     width: number;

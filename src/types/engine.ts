@@ -76,58 +76,6 @@ export interface AgentAction {
 }
 
 /**
- * Case File #001: Tokyo–Osaka Shinkansen Micro-State Model.
- * Represents all mutable state variables of the sandboxed booking website clone.
- */
-export interface ShinkansenMicroState {
-  /** Current active Macro-View identifier (e.g. 'MV-03' or 'view_03'). */
-  macroViewId: string;
-  /** Currently selected route identifier (e.g. 'tokyo_osaka' or 'tokyo_shinosaka'). */
-  selectedRoute: string;
-  /** Configured departure time slot (e.g. '14:30'). */
-  departureTime: string;
-  /** Selected train name (e.g. 'Nozomi 24', 'Hikari 515', or 'none'). */
-  trainName: string;
-  /** Selected seat class (e.g. 'green_car', 'ordinary_reserved', 'ordinary_free', or 'none'). */
-  seatClass: string;
-  /** Total calculated fare in Japanese Yen (e.g. 13870). */
-  fare: number;
-  /** True if the target discount Green Car seat (🍀 Nozomi 24) is selected (Exhibit C). */
-  greenCarSelected: boolean;
-  /** True if the red decoy promotional insurance banner (#12) was clicked (Exhibit D contamination). */
-  insuranceTrapHit: boolean;
-  /** True if the add-on insurance checkbox (#28) is checked in Row 4 (Exhibit D contamination). */
-  insuranceCheckboxChecked: boolean;
-  /** True if the final blue confirmation button (#30) was clicked (Exhibit E). */
-  finalConfirmed: boolean;
-  /** Active modal dialog overlay (if any). */
-  activeModal?: 'none' | 'insurance' | 'cancel' | 'logout' | 'seat_map';
-  /** Departure date string (e.g. '2026-11-05'). */
-  departureDate?: string;
-  /** Passenger count record. */
-  passengerCount?: {
-    adults: number;
-    children: number;
-  };
-  /** Passenger name typed into the reservation input field. */
-  passengerName?: string;
-  /** Signature label or stroke rendered inside the signature pad. */
-  signatureStroke?: string;
-  /** True if the timed flash-sale window was clicked on the green seat button. */
-  timedWindowHit?: boolean;
-  /** Ordered list of Macro-View page IDs visited across the 12-page portal graph. */
-  visitedViews?: string[];
-  /** Step history audit log for simulation debugging. */
-  stepHistory?: Array<{
-    lineIndex: number;
-    instruction: string;
-    actionType: AgentActionType;
-    targetId?: string;
-    fieldNote: string;
-  }>;
-}
-
-/**
  * Canonical interface for agent execution engines.
  * Implemented by both:
  * 1. OfflineSimulator (standalone deterministic regex/heuristic interpreter)
@@ -136,7 +84,7 @@ export interface ShinkansenMicroState {
 export interface AgentExecutionConnector {
   resolveInstruction(
     macroViewId: string,
-    microState: ShinkansenMicroState,
+    microState: Record<string, unknown>,
     instruction: string
   ): Promise<AgentAction> | AgentAction;
 }
@@ -154,7 +102,7 @@ export interface LLMDecisionRequest {
   /** Normalized instruction string (lowercase, NFKC, stripped punctuation). */
   normalizedInstruction: string;
   /** Micro-state context passed as compact JSON. */
-  microState: ShinkansenMicroState;
+  microState: Record<string, unknown>;
   /** Public URL or base64 data URI of the pre-rendered Set-of-Mark view image. */
   somImageUrl?: string;
   /** Bounded list of visible Set-of-Mark tags and descriptions in this view. */

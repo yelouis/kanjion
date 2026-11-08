@@ -30,11 +30,12 @@ import {
   CASE_001_MACRO_VIEWS,
   CASE_001_MV03_ELEMENTS,
 } from '../src/data/puzzles/case_001';
-import { ShinkansenMicroState, LLMDecisionResponse } from '../src/types/engine';
+import { LLMDecisionResponse } from '../src/types/engine';
+import type { FieldValue } from '../src/types/puzzle_data';
 import { generateStateHash, generateCacheKey } from '../src/utils/text_normalizer';
 
 describe('Cloud Vision LLM Connector & Security Guardrails', () => {
-  let microState: ShinkansenMicroState;
+  let microState: Record<string, FieldValue>;
   let mockTransport: MockVisionLLMTransport;
   let offlineEngine: OfflineSimulationEngine;
   let connector: CloudVisionConnector;
@@ -437,7 +438,7 @@ describe('Cloud Vision LLM Connector & Security Guardrails', () => {
       expect(action.action).toBe('CLICK');
       expect(action.targetId).toBe('#25');
       expect(action.gridRef).toBe('D3');
-      expect(action.targetCoordinate).toEqual({ x: 885, y: 468 });
+      expect(action.targetCoordinate).toEqual({ x: 896, y: 480 });
       expect(action.thought).toBe('Selected Nozomi 24 green car discount seat');
     });
 

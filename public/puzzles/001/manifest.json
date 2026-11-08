@@ -24,37 +24,145 @@
       ]
     }
   },
-  "initialMacroViewId": "MV-03",
+  "initialMacroViewId": "MV-01",
   "initialMicroState": {
     "macroViewId": "MV-01",
     "selectedRoute": "none",
-    "departureTime": "none",
     "passengerName": "",
     "trainName": "none",
     "seatClass": "none",
     "fare": 0,
     "greenCarSelected": false,
-    "insuranceTrapHit": false,
-    "insuranceCheckboxChecked": false,
+    "timedWindowHit": false,
+    "signatureStroke": "",
+    "insuranceAttached": false,
     "finalConfirmed": false,
-    "activeModal": "none",
-    "departureDate": "2026-11-05",
-    "passengerCount": {
-      "adults": 1,
-      "children": 0
-    },
-    "stepHistory": []
+    "confirmedWithInsurance": false
   },
   "macroViews": [
     {
       "id": "MV-01",
-      "name": "route_select",
-      "description": "Kanjion Rail Portal Home — Shinkansen line and route selection",
+      "name": "route-select",
+      "description": "STEP 1: ご利用になる新幹線路線を選択してください",
       "simulatedUrl": "sandbox://kanjion-rail.example/reserve/route-select",
       "cleanScreenshotUrl": "views/clean_mv_01.webp",
-      "somScreenshotUrl": "/som/case_001_mv01.webp",
-      "elements": [],
+      "somScreenshotUrl": "views/som_mv_01.webp",
+      "elements": [
+        {
+          "id": 11,
+          "somId": "#11",
+          "elementKey": "nav_news",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "D1",
+          "text": "お知らせ",
+          "visualAttributes": {
+            "description": "お知らせ"
+          },
+          "isTarget": false,
+          "isTrap": true,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 12,
+          "somId": "#12",
+          "elementKey": "promo_insurance",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "D1",
+          "text": "今すぐ申し込む",
+          "visualAttributes": {
+            "bgColor": "#DC2626",
+            "color": "#FFFFFF",
+            "description": "今すぐ申し込む"
+          },
+          "isTarget": false,
+          "isTrap": true,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 90,
+          "somId": "#90",
+          "elementKey": "page_title",
+          "tag": "h2",
+          "role": "heading",
+          "gridRef": "B2",
+          "text": "STEP 1: ご利用になる新幹線路線を選択してください",
+          "visualAttributes": {
+            "description": "STEP 1: ご利用になる新幹線路線を選択してください"
+          },
+          "isTarget": false,
+          "isTrap": false,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 1,
+          "somId": "#1",
+          "elementKey": "route_tokaido",
+          "tag": "button",
+          "role": "card",
+          "gridRef": "B2",
+          "text": "東海道新幹線 東京⇒新大阪",
+          "visualAttributes": {
+            "bgColor": "#059669",
+            "color": "#FFFFFF",
+            "description": "東海道新幹線 東京⇒新大阪"
+          },
+          "isTarget": true,
+          "isTrap": false,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 2,
+          "somId": "#2",
+          "elementKey": "route_tohoku",
+          "tag": "button",
+          "role": "card",
+          "gridRef": "C2",
+          "text": "東北・北海道新幹線",
+          "visualAttributes": {
+            "description": "東北・北海道新幹線"
+          },
+          "isTarget": false,
+          "isTrap": false,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 3,
+          "somId": "#3",
+          "elementKey": "route_hokuriku",
+          "tag": "button",
+          "role": "card",
+          "gridRef": "B3",
+          "text": "北陸・上越新幹線",
+          "visualAttributes": {
+            "description": "北陸・上越新幹線"
+          },
+          "isTarget": false,
+          "isTrap": false,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 4,
+          "somId": "#4",
+          "elementKey": "route_points",
+          "tag": "button",
+          "role": "card",
+          "gridRef": "C3",
+          "text": "かんじおんポイント・ICカード連携",
+          "visualAttributes": {
+            "description": "かんじおんポイント・ICカード連携"
+          },
+          "isTarget": false,
+          "isTrap": false,
+          "actionType": "CLICK"
+        }
+      ],
       "transitions": [
+        {
+          "targetElementId": 11,
+          "destinationMacroViewId": "MV-08"
+        },
         {
           "targetElementId": 1,
           "destinationMacroViewId": "MV-02"
@@ -66,387 +174,593 @@
         {
           "targetElementId": 3,
           "destinationMacroViewId": "MV-11"
+        },
+        {
+          "targetElementId": 4,
+          "destinationMacroViewId": "MV-12"
         }
       ]
     },
     {
       "id": "MV-02",
-      "name": "condition_filter",
-      "description": "Departure time and passenger name (TYPE) filter form",
+      "name": "passenger",
+      "description": "STEP 2: 乗車条件・搭乗者名（ローマ字）の入力",
       "simulatedUrl": "sandbox://kanjion-rail.example/reserve/passenger",
       "cleanScreenshotUrl": "views/clean_mv_02.webp",
-      "somScreenshotUrl": "/som/case_001_mv02.webp",
-      "elements": [],
-      "transitions": [
-        {
-          "targetElementId": 2,
-          "destinationMacroViewId": "MV-03"
-        },
-        {
-          "targetElementId": 14,
-          "destinationMacroViewId": "MV-01"
-        }
-      ]
-    },
-    {
-      "id": "MV-03",
-      "name": "seat_matrix",
-      "description": "Primary seat availability, timed flash discount window, and signature authorization",
-      "simulatedUrl": "sandbox://kanjion-rail.example/reserve/seats",
-      "cleanScreenshotUrl": "views/clean_mv_03.webp",
-      "somScreenshotUrl": "/som/case_001_mv03.webp",
+      "somScreenshotUrl": "views/som_mv_02.webp",
       "elements": [
         {
           "id": 11,
           "somId": "#11",
-          "elementKey": "btn_logout",
+          "elementKey": "nav_news",
           "tag": "button",
           "role": "button",
-          "boundingBox": {
-            "x": 920,
-            "y": 42,
-            "width": 74,
-            "height": 26,
-            "xPercent": 89.84,
-            "yPercent": 5.47
-          },
           "gridRef": "D1",
           "text": "お知らせ",
           "visualAttributes": {
-            "bgColor": "#FFFFFF",
-            "color": "#171717",
-            "description": "White news button in header"
+            "description": "お知らせ"
           },
+          "isTarget": false,
           "isTrap": true,
           "actionType": "CLICK"
         },
         {
           "id": 12,
           "somId": "#12",
-          "elementKey": "btn_promo_insurance",
+          "elementKey": "promo_insurance",
           "tag": "button",
           "role": "button",
-          "boundingBox": {
-            "x": 780,
-            "y": 94,
-            "width": 214,
-            "height": 30,
-            "xPercent": 76.17,
-            "yPercent": 12.24
-          },
           "gridRef": "D1",
           "text": "今すぐ申し込む",
           "visualAttributes": {
             "bgColor": "#DC2626",
             "color": "#FFFFFF",
-            "description": "Promotional insurance banner red CTA button"
+            "description": "今すぐ申し込む"
           },
+          "isTarget": false,
+          "isTrap": true,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 90,
+          "somId": "#90",
+          "elementKey": "page_title",
+          "tag": "h2",
+          "role": "heading",
+          "gridRef": "B2",
+          "text": "STEP 2: 乗車条件・搭乗者名（ローマ字）の入力",
+          "visualAttributes": {
+            "description": "STEP 2: 乗車条件・搭乗者名（ローマ字）の入力"
+          },
+          "isTarget": false,
+          "isTrap": false,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 14,
+          "somId": "#14",
+          "elementKey": "back",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "A2",
+          "text": "◀ 路線選択へ戻る",
+          "visualAttributes": {
+            "description": "◀ 路線選択へ戻る"
+          },
+          "isTarget": false,
+          "isTrap": false,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 17,
+          "somId": "#17",
+          "elementKey": "passenger_name",
+          "tag": "input",
+          "role": "input",
+          "gridRef": "B2",
+          "text": "搭乗者名",
+          "visualAttributes": {
+            "description": "搭乗者名"
+          },
+          "isTarget": true,
+          "isTrap": false,
+          "actionType": "TYPE"
+        }
+      ],
+      "transitions": [
+        {
+          "targetElementId": 11,
+          "destinationMacroViewId": "MV-08"
+        },
+        {
+          "targetElementId": 14,
+          "destinationMacroViewId": "MV-01"
+        },
+        {
+          "targetElementId": 17,
+          "destinationMacroViewId": "MV-03"
+        }
+      ]
+    },
+    {
+      "id": "MV-03",
+      "name": "seats",
+      "description": "STEP 3: 列車・座席指定（タイムセール特割 空席照会）",
+      "simulatedUrl": "sandbox://kanjion-rail.example/reserve/seats",
+      "cleanScreenshotUrl": "views/clean_mv_03.webp",
+      "somScreenshotUrl": "views/som_mv_03.webp",
+      "elements": [
+        {
+          "id": 11,
+          "somId": "#11",
+          "elementKey": "nav_news",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "D1",
+          "text": "お知らせ",
+          "visualAttributes": {
+            "description": "お知らせ"
+          },
+          "isTarget": false,
+          "isTrap": true,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 12,
+          "somId": "#12",
+          "elementKey": "promo_insurance",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "D1",
+          "text": "今すぐ申し込む",
+          "visualAttributes": {
+            "bgColor": "#DC2626",
+            "color": "#FFFFFF",
+            "description": "今すぐ申し込む"
+          },
+          "isTarget": false,
           "isTrap": true,
           "actionType": "CLICK"
         },
         {
           "id": 14,
           "somId": "#14",
-          "elementKey": "btn_back_conditions",
+          "elementKey": "back",
           "tag": "button",
           "role": "button",
-          "boundingBox": {
-            "x": 26,
-            "y": 230,
-            "width": 204,
-            "height": 28,
-            "xPercent": 2.54,
-            "yPercent": 29.95
-          },
           "gridRef": "A2",
-          "text": "◀ 条件変更へ戻る",
+          "text": "◀ 条件変更",
           "visualAttributes": {
-            "bgColor": "#FFFFFF",
-            "color": "#111111",
-            "description": "Return to search conditions button"
+            "description": "◀ 条件変更"
           },
+          "isTarget": false,
+          "isTrap": false,
           "actionType": "CLICK"
         },
         {
           "id": 21,
           "somId": "#21",
-          "elementKey": "btn_seat_hikari_free",
+          "elementKey": "seat_hikari_free",
           "tag": "button",
           "role": "button",
-          "boundingBox": {
-            "x": 370,
-            "y": 260,
-            "width": 110,
-            "height": 32,
-            "xPercent": 36.13,
-            "yPercent": 33.85
-          },
           "gridRef": "B2",
           "text": "◯ ¥13,870",
           "visualAttributes": {
-            "bgColor": "#F5F5F5",
+            "bgColor": "#FFFFFF",
             "color": "#111111",
             "glyph": "◯",
-            "description": "Hikari 515 Non-reserved Seat"
+            "description": "◯ ¥13,870"
           },
+          "isTarget": false,
+          "isTrap": false,
           "actionType": "CLICK"
         },
         {
           "id": 22,
           "somId": "#22",
-          "elementKey": "btn_seat_hikari_res",
+          "elementKey": "seat_hikari_reserved",
           "tag": "button",
           "role": "button",
-          "boundingBox": {
-            "x": 580,
-            "y": 260,
-            "width": 110,
-            "height": 32,
-            "xPercent": 56.64,
-            "yPercent": 33.85
-          },
           "gridRef": "C2",
           "text": "△ ¥14,520",
           "visualAttributes": {
-            "bgColor": "#F5F5F5",
-            "color": "#111111",
             "glyph": "△",
-            "description": "Hikari 515 Reserved Seat"
+            "description": "△ ¥14,520"
           },
+          "isTarget": false,
+          "isTrap": false,
           "actionType": "CLICK"
         },
         {
           "id": 23,
           "somId": "#23",
-          "elementKey": "btn_seat_nozomi_free",
+          "elementKey": "seat_nozomi_free",
           "tag": "button",
           "role": "button",
-          "boundingBox": {
-            "x": 370,
-            "y": 450,
-            "width": 110,
-            "height": 32,
-            "xPercent": 36.13,
-            "yPercent": 58.59
-          },
           "gridRef": "B3",
           "text": "◯ ¥13,870",
           "visualAttributes": {
-            "bgColor": "#F5F5F5",
+            "bgColor": "#FFFFFF",
             "color": "#111111",
             "glyph": "◯",
-            "description": "Nozomi 24 Non-reserved Seat"
+            "description": "◯ ¥13,870"
           },
+          "isTarget": false,
+          "isTrap": false,
           "actionType": "CLICK"
         },
         {
           "id": 24,
           "somId": "#24",
-          "elementKey": "btn_seat_nozomi_res",
+          "elementKey": "seat_nozomi_reserved",
           "tag": "button",
           "role": "button",
-          "boundingBox": {
-            "x": 580,
-            "y": 450,
-            "width": 110,
-            "height": 32,
-            "xPercent": 56.64,
-            "yPercent": 58.59
-          },
           "gridRef": "C3",
           "text": "◯ ¥14,720",
           "visualAttributes": {
-            "bgColor": "#F5F5F5",
-            "color": "#111111",
             "glyph": "◯",
-            "description": "Nozomi 24 Reserved Seat"
+            "description": "◯ ¥14,720"
           },
+          "isTarget": false,
+          "isTrap": false,
           "actionType": "CLICK"
         },
         {
           "id": 25,
           "somId": "#25",
-          "elementKey": "btn_seat_nozomi_green",
+          "elementKey": "seat_nozomi_green",
           "tag": "button",
           "role": "button",
-          "boundingBox": {
-            "x": 790,
-            "y": 450,
-            "width": 190,
-            "height": 36,
-            "xPercent": 77.15,
-            "yPercent": 58.59
-          },
           "gridRef": "D3",
           "text": "🍀 ◯ ¥13,870 (特割)",
           "visualAttributes": {
             "bgColor": "#059669",
             "color": "#FFFFFF",
             "glyph": "🍀",
-            "description": "Nozomi 24 Discount Green Car Seat"
+            "description": "🍀 ◯ ¥13,870 (特割)"
           },
           "isTarget": true,
+          "isTrap": false,
           "actionType": "CLICK"
         },
         {
           "id": 28,
           "somId": "#28",
-          "elementKey": "chk_insurance_add",
+          "elementKey": "insurance_checkbox",
           "tag": "input",
           "role": "checkbox",
-          "boundingBox": {
-            "x": 270,
-            "y": 706,
-            "width": 260,
-            "height": 24,
-            "xPercent": 26.37,
-            "yPercent": 91.93
-          },
           "gridRef": "B4",
-          "text": "旅行キャンセル保険（¥2,400）を追加",
+          "text": "旅行キャンセル保険を追加",
           "visualAttributes": {
-            "description": "Travel cancellation insurance add-on checkbox"
+            "description": "旅行キャンセル保険を追加"
           },
+          "isTarget": false,
           "isTrap": true,
           "actionType": "CLICK"
         },
         {
           "id": 29,
           "somId": "#29",
-          "elementKey": "btn_cancel_booking",
+          "elementKey": "cancel_booking",
           "tag": "button",
           "role": "button",
-          "boundingBox": {
-            "x": 640,
-            "y": 704,
-            "width": 130,
-            "height": 32,
-            "xPercent": 62.5,
-            "yPercent": 91.67
-          },
           "gridRef": "C4",
-          "text": "予約を取消 (Cancel)",
+          "text": "予約を取消",
           "visualAttributes": {
-            "bgColor": "#D4D4D4",
-            "color": "#111111",
-            "description": "Cancel reservation button"
+            "description": "予約を取消"
           },
+          "isTarget": false,
+          "isTrap": false,
           "actionType": "CLICK"
         },
         {
           "id": 30,
           "somId": "#30",
-          "elementKey": "btn_confirm_booking",
+          "elementKey": "confirm_booking",
           "tag": "button",
           "role": "button",
-          "boundingBox": {
-            "x": 810,
-            "y": 704,
-            "width": 190,
-            "height": 32,
-            "xPercent": 79.1,
-            "yPercent": 91.67
-          },
           "gridRef": "D4",
           "text": "予約内容を確認・確定へ ▶",
           "visualAttributes": {
             "bgColor": "#2563EB",
             "color": "#FFFFFF",
             "glyph": "▶",
-            "description": "Final reservation confirmation button"
+            "description": "予約内容を確認・確定へ ▶"
           },
           "isTarget": true,
+          "isTrap": false,
           "actionType": "CLICK"
         }
       ],
       "transitions": [
         {
-          "targetElementId": 30,
-          "destinationMacroViewId": "MV-05"
-        },
-        {
-          "targetElementId": 12,
-          "destinationMacroViewId": "MV-04"
+          "targetElementId": 11,
+          "destinationMacroViewId": "MV-08"
         },
         {
           "targetElementId": 14,
           "destinationMacroViewId": "MV-02"
         },
         {
-          "targetElementId": 29,
-          "destinationMacroViewId": "MV-07"
+          "targetElementId": 25,
+          "destinationMacroViewId": "MV-04"
         },
         {
-          "targetElementId": 11,
-          "destinationMacroViewId": "MV-08"
-        },
-        {
-          "targetElementId": 21,
-          "destinationMacroViewId": "MV-12"
+          "targetElementId": 25,
+          "destinationMacroViewId": "MV-04"
         }
       ]
     },
     {
       "id": "MV-04",
-      "name": "signature_and_seat_map",
-      "description": "Car 8 Green Car seat verification and digital signature pad (DRAW)",
+      "name": "confirm",
+      "description": "STEP 4: ご予約内容の確認・本人自署サイン",
       "simulatedUrl": "sandbox://kanjion-rail.example/reserve/confirm",
       "cleanScreenshotUrl": "views/clean_mv_04.webp",
-      "somScreenshotUrl": "/som/case_001_mv04.webp",
-      "elements": [],
+      "somScreenshotUrl": "views/som_mv_04.webp",
+      "elements": [
+        {
+          "id": 11,
+          "somId": "#11",
+          "elementKey": "nav_news",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "D1",
+          "text": "お知らせ",
+          "visualAttributes": {
+            "description": "お知らせ"
+          },
+          "isTarget": false,
+          "isTrap": true,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 12,
+          "somId": "#12",
+          "elementKey": "promo_insurance",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "D1",
+          "text": "今すぐ申し込む",
+          "visualAttributes": {
+            "bgColor": "#DC2626",
+            "color": "#FFFFFF",
+            "description": "今すぐ申し込む"
+          },
+          "isTarget": false,
+          "isTrap": true,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 90,
+          "somId": "#90",
+          "elementKey": "page_title",
+          "tag": "h2",
+          "role": "heading",
+          "gridRef": "B2",
+          "text": "STEP 4: ご予約内容の確認・本人自署サイン",
+          "visualAttributes": {
+            "description": "STEP 4: ご予約内容の確認・本人自署サイン"
+          },
+          "isTarget": false,
+          "isTrap": false,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 14,
+          "somId": "#14",
+          "elementKey": "back",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "A2",
+          "text": "◀ 座席表へ戻る",
+          "visualAttributes": {
+            "description": "◀ 座席表へ戻る"
+          },
+          "isTarget": false,
+          "isTrap": false,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 27,
+          "somId": "#27",
+          "elementKey": "signature_pad",
+          "tag": "button",
+          "role": "canvas",
+          "gridRef": "C3",
+          "text": "自署・サイン欄",
+          "visualAttributes": {
+            "description": "自署・サイン欄"
+          },
+          "isTarget": true,
+          "isTrap": false,
+          "actionType": "DRAW"
+        },
+        {
+          "id": 28,
+          "somId": "#28",
+          "elementKey": "insurance_checkbox",
+          "tag": "input",
+          "role": "checkbox",
+          "gridRef": "B4",
+          "text": "旅行キャンセル保険を追加",
+          "visualAttributes": {
+            "description": "旅行キャンセル保険を追加"
+          },
+          "isTarget": false,
+          "isTrap": true,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 29,
+          "somId": "#29",
+          "elementKey": "cancel_booking",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "C4",
+          "text": "予約を取消",
+          "visualAttributes": {
+            "description": "予約を取消"
+          },
+          "isTarget": false,
+          "isTrap": false,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 30,
+          "somId": "#30",
+          "elementKey": "confirm_booking",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "D4",
+          "text": "予約内容を確認・確定へ ▶",
+          "visualAttributes": {
+            "bgColor": "#2563EB",
+            "color": "#FFFFFF",
+            "glyph": "▶",
+            "description": "予約内容を確認・確定へ ▶"
+          },
+          "isTarget": true,
+          "isTrap": false,
+          "actionType": "CLICK"
+        }
+      ],
       "transitions": [
         {
-          "targetElementId": 41,
+          "targetElementId": 11,
+          "destinationMacroViewId": "MV-08"
+        },
+        {
+          "targetElementId": 14,
           "destinationMacroViewId": "MV-03"
         },
         {
-          "targetElementId": 42,
+          "targetElementId": 29,
+          "destinationMacroViewId": "MV-07"
+        },
+        {
+          "targetElementId": 30,
           "destinationMacroViewId": "MV-05"
         }
       ]
     },
     {
       "id": "MV-05",
-      "name": "reservation_confirm",
-      "description": "Final order verification sheet and IC card binding",
+      "name": "ticket",
+      "description": "🎉 新幹線 eチケットのご予約・発券が完了しました",
       "simulatedUrl": "sandbox://kanjion-rail.example/reserve/ticket",
       "cleanScreenshotUrl": "views/clean_mv_05.webp",
-      "somScreenshotUrl": "/som/case_001_mv05.webp",
-      "elements": [],
-      "transitions": [
+      "somScreenshotUrl": "views/som_mv_05.webp",
+      "elements": [
         {
-          "targetElementId": 51,
-          "destinationMacroViewId": "MV-09"
+          "id": 11,
+          "somId": "#11",
+          "elementKey": "nav_news",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "D1",
+          "text": "お知らせ",
+          "visualAttributes": {
+            "description": "お知らせ"
+          },
+          "isTarget": false,
+          "isTrap": true,
+          "actionType": "CLICK"
         },
         {
-          "targetElementId": 52,
-          "destinationMacroViewId": "MV-03"
+          "id": 12,
+          "somId": "#12",
+          "elementKey": "promo_insurance",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "D1",
+          "text": "今すぐ申し込む",
+          "visualAttributes": {
+            "bgColor": "#DC2626",
+            "color": "#FFFFFF",
+            "description": "今すぐ申し込む"
+          },
+          "isTarget": false,
+          "isTrap": true,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 90,
+          "somId": "#90",
+          "elementKey": "page_title",
+          "tag": "h2",
+          "role": "heading",
+          "gridRef": "B2",
+          "text": "🎉 新幹線 eチケットのご予約・発券が完了しました",
+          "visualAttributes": {
+            "description": "🎉 新幹線 eチケットのご予約・発券が完了しました"
+          },
+          "isTarget": false,
+          "isTrap": false,
+          "actionType": "CLICK"
         }
-      ]
-    },
-    {
-      "id": "MV-06",
-      "name": "seat_map_modal",
-      "description": "Car seating chart layout dialog",
-      "simulatedUrl": "sandbox://kanjion-rail.example/reserve/seat-map",
-      "cleanScreenshotUrl": "views/clean_mv_06.webp",
-      "somScreenshotUrl": "/som/case_001_mv06.webp",
-      "elements": [],
+      ],
       "transitions": [
         {
-          "targetElementId": 61,
-          "destinationMacroViewId": "MV-03"
+          "targetElementId": 11,
+          "destinationMacroViewId": "MV-08"
         }
       ]
     },
     {
       "id": "MV-07",
-      "name": "cancel_prompt",
-      "description": "Booking cancellation confirmation modal",
+      "name": "cancel",
+      "description": "予約を取り消しますか？",
       "simulatedUrl": "sandbox://kanjion-rail.example/reserve/cancel",
       "cleanScreenshotUrl": "views/clean_mv_07.webp",
-      "somScreenshotUrl": "/som/case_001_mv07.webp",
-      "elements": [],
+      "somScreenshotUrl": "views/som_mv_07.webp",
+      "elements": [
+        {
+          "id": 90,
+          "somId": "#90",
+          "elementKey": "page_title",
+          "tag": "h2",
+          "role": "heading",
+          "gridRef": "B2",
+          "text": "予約を取り消しますか？",
+          "visualAttributes": {
+            "description": "予約を取り消しますか？"
+          },
+          "isTarget": false,
+          "isTrap": false,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 71,
+          "somId": "#71",
+          "elementKey": "cancel_confirm",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "C3",
+          "text": "取り消す",
+          "visualAttributes": {
+            "description": "取り消す"
+          },
+          "isTarget": false,
+          "isTrap": false,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 72,
+          "somId": "#72",
+          "elementKey": "cancel_dismiss",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "B3",
+          "text": "戻る",
+          "visualAttributes": {
+            "description": "戻る"
+          },
+          "isTarget": false,
+          "isTrap": false,
+          "actionType": "CLICK"
+        }
+      ],
       "transitions": [
         {
           "targetElementId": 71,
@@ -454,44 +768,164 @@
         },
         {
           "targetElementId": 72,
-          "destinationMacroViewId": "MV-03"
+          "destinationMacroViewId": "MV-04"
         }
       ]
     },
     {
       "id": "MV-08",
-      "name": "logout_trap",
-      "description": "Account news view",
+      "name": "news",
+      "description": "お知らせ",
       "simulatedUrl": "sandbox://kanjion-rail.example/reserve/news",
       "cleanScreenshotUrl": "views/clean_mv_08.webp",
-      "somScreenshotUrl": "/som/case_001_mv08.webp",
-      "elements": [],
+      "somScreenshotUrl": "views/som_mv_08.webp",
+      "elements": [
+        {
+          "id": 11,
+          "somId": "#11",
+          "elementKey": "nav_news",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "D1",
+          "text": "お知らせ",
+          "visualAttributes": {
+            "description": "お知らせ"
+          },
+          "isTarget": false,
+          "isTrap": true,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 12,
+          "somId": "#12",
+          "elementKey": "promo_insurance",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "D1",
+          "text": "今すぐ申し込む",
+          "visualAttributes": {
+            "bgColor": "#DC2626",
+            "color": "#FFFFFF",
+            "description": "今すぐ申し込む"
+          },
+          "isTarget": false,
+          "isTrap": true,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 90,
+          "somId": "#90",
+          "elementKey": "page_title",
+          "tag": "h2",
+          "role": "heading",
+          "gridRef": "B2",
+          "text": "お知らせ",
+          "visualAttributes": {
+            "description": "お知らせ"
+          },
+          "isTarget": false,
+          "isTrap": false,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 81,
+          "somId": "#81",
+          "elementKey": "news_back",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "A2",
+          "text": "◀ 戻る",
+          "visualAttributes": {
+            "description": "◀ 戻る"
+          },
+          "isTarget": false,
+          "isTrap": false,
+          "actionType": "CLICK"
+        }
+      ],
       "transitions": [
         {
-          "targetElementId": 81,
-          "destinationMacroViewId": "MV-03"
+          "targetElementId": 11,
+          "destinationMacroViewId": "MV-08"
         }
       ]
     },
     {
-      "id": "MV-09",
-      "name": "booking_complete",
-      "description": "Booking confirmation receipt and QR e-ticket issue",
-      "simulatedUrl": "sandbox://kanjion-rail.example/reserve/ticket",
-      "cleanScreenshotUrl": "views/clean_mv_09.webp",
-      "somScreenshotUrl": "/som/case_001_mv09.webp",
-      "elements": [],
-      "transitions": []
-    },
-    {
       "id": "MV-10",
-      "name": "tohoku_route_branch",
-      "description": "Tohoku-Hokkaido Shinkansen (Hayabusa/Komachi) wrong-route branch page",
+      "name": "tohoku",
+      "description": "東北・北海道新幹線（東京 ⇒ 仙台・新青森・新函館北斗）",
       "simulatedUrl": "sandbox://kanjion-rail.example/reserve/tohoku",
       "cleanScreenshotUrl": "views/clean_mv_10.webp",
-      "somScreenshotUrl": "/som/case_001_mv10.webp",
-      "elements": [],
+      "somScreenshotUrl": "views/som_mv_10.webp",
+      "elements": [
+        {
+          "id": 11,
+          "somId": "#11",
+          "elementKey": "nav_news",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "D1",
+          "text": "お知らせ",
+          "visualAttributes": {
+            "description": "お知らせ"
+          },
+          "isTarget": false,
+          "isTrap": true,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 12,
+          "somId": "#12",
+          "elementKey": "promo_insurance",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "D1",
+          "text": "今すぐ申し込む",
+          "visualAttributes": {
+            "bgColor": "#DC2626",
+            "color": "#FFFFFF",
+            "description": "今すぐ申し込む"
+          },
+          "isTarget": false,
+          "isTrap": true,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 90,
+          "somId": "#90",
+          "elementKey": "page_title",
+          "tag": "h2",
+          "role": "heading",
+          "gridRef": "B2",
+          "text": "東北・北海道新幹線（東京 ⇒ 仙台・新青森・新函館北斗）",
+          "visualAttributes": {
+            "description": "東北・北海道新幹線（東京 ⇒ 仙台・新青森・新函館北斗）"
+          },
+          "isTarget": false,
+          "isTrap": false,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 14,
+          "somId": "#14",
+          "elementKey": "back",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "A2",
+          "text": "◀ 路線選択トップへ戻る",
+          "visualAttributes": {
+            "description": "◀ 路線選択トップへ戻る"
+          },
+          "isTarget": false,
+          "isTrap": false,
+          "actionType": "CLICK"
+        }
+      ],
       "transitions": [
+        {
+          "targetElementId": 11,
+          "destinationMacroViewId": "MV-08"
+        },
         {
           "targetElementId": 14,
           "destinationMacroViewId": "MV-01"
@@ -500,13 +934,80 @@
     },
     {
       "id": "MV-11",
-      "name": "hokuriku_route_branch",
-      "description": "Hokuriku Shinkansen (Kagayaki/Hakutaka) wrong-route branch page",
+      "name": "hokuriku",
+      "description": "北陸・上越新幹線（東京 ⇒ 長野・金沢・敦賀 / 新潟）",
       "simulatedUrl": "sandbox://kanjion-rail.example/reserve/hokuriku",
       "cleanScreenshotUrl": "views/clean_mv_11.webp",
-      "somScreenshotUrl": "/som/case_001_mv11.webp",
-      "elements": [],
+      "somScreenshotUrl": "views/som_mv_11.webp",
+      "elements": [
+        {
+          "id": 11,
+          "somId": "#11",
+          "elementKey": "nav_news",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "D1",
+          "text": "お知らせ",
+          "visualAttributes": {
+            "description": "お知らせ"
+          },
+          "isTarget": false,
+          "isTrap": true,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 12,
+          "somId": "#12",
+          "elementKey": "promo_insurance",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "D1",
+          "text": "今すぐ申し込む",
+          "visualAttributes": {
+            "bgColor": "#DC2626",
+            "color": "#FFFFFF",
+            "description": "今すぐ申し込む"
+          },
+          "isTarget": false,
+          "isTrap": true,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 90,
+          "somId": "#90",
+          "elementKey": "page_title",
+          "tag": "h2",
+          "role": "heading",
+          "gridRef": "B2",
+          "text": "北陸・上越新幹線（東京 ⇒ 長野・金沢・敦賀 / 新潟）",
+          "visualAttributes": {
+            "description": "北陸・上越新幹線（東京 ⇒ 長野・金沢・敦賀 / 新潟）"
+          },
+          "isTarget": false,
+          "isTrap": false,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 14,
+          "somId": "#14",
+          "elementKey": "back",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "A2",
+          "text": "◀ 路線選択トップへ戻る",
+          "visualAttributes": {
+            "description": "◀ 路線選択トップへ戻る"
+          },
+          "isTarget": false,
+          "isTrap": false,
+          "actionType": "CLICK"
+        }
+      ],
       "transitions": [
+        {
+          "targetElementId": 11,
+          "destinationMacroViewId": "MV-08"
+        },
         {
           "targetElementId": 14,
           "destinationMacroViewId": "MV-01"
@@ -515,32 +1016,99 @@
     },
     {
       "id": "MV-12",
-      "name": "waitlist_sold_out",
-      "description": "Ordinary car seat map and waitlist branch page",
+      "name": "points",
+      "description": "かんじおんポイント 特典チケット交換・交通系ICカード登録",
       "simulatedUrl": "sandbox://kanjion-rail.example/reserve/points",
       "cleanScreenshotUrl": "views/clean_mv_12.webp",
-      "somScreenshotUrl": "/som/case_001_mv12.webp",
-      "elements": [],
+      "somScreenshotUrl": "views/som_mv_12.webp",
+      "elements": [
+        {
+          "id": 11,
+          "somId": "#11",
+          "elementKey": "nav_news",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "D1",
+          "text": "お知らせ",
+          "visualAttributes": {
+            "description": "お知らせ"
+          },
+          "isTarget": false,
+          "isTrap": true,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 12,
+          "somId": "#12",
+          "elementKey": "promo_insurance",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "D1",
+          "text": "今すぐ申し込む",
+          "visualAttributes": {
+            "bgColor": "#DC2626",
+            "color": "#FFFFFF",
+            "description": "今すぐ申し込む"
+          },
+          "isTarget": false,
+          "isTrap": true,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 90,
+          "somId": "#90",
+          "elementKey": "page_title",
+          "tag": "h2",
+          "role": "heading",
+          "gridRef": "B2",
+          "text": "かんじおんポイント 特典チケット交換・交通系ICカード登録",
+          "visualAttributes": {
+            "description": "かんじおんポイント 特典チケット交換・交通系ICカード登録"
+          },
+          "isTarget": false,
+          "isTrap": false,
+          "actionType": "CLICK"
+        },
+        {
+          "id": 14,
+          "somId": "#14",
+          "elementKey": "back",
+          "tag": "button",
+          "role": "button",
+          "gridRef": "A2",
+          "text": "◀ 路線選択トップへ戻る",
+          "visualAttributes": {
+            "description": "◀ 路線選択トップへ戻る"
+          },
+          "isTarget": false,
+          "isTrap": false,
+          "actionType": "CLICK"
+        }
+      ],
       "transitions": [
         {
+          "targetElementId": 11,
+          "destinationMacroViewId": "MV-08"
+        },
+        {
           "targetElementId": 14,
-          "destinationMacroViewId": "MV-03"
+          "destinationMacroViewId": "MV-01"
         }
       ]
     }
   ],
   "exhibits": [
     {
-      "id": "exhibit_a",
+      "id": "A",
       "code": "A",
-      "title": "Route: 東京 ⇒ 新大阪",
+      "title": "Route: 東京 → 新大阪",
       "weight": 25,
       "criteria": "Selected Tokaido Shinkansen route from Tokyo to Shin-Osaka on Page 1.",
       "ruleKey": "route_match",
       "targetValue": true
     },
     {
-      "id": "exhibit_b",
+      "id": "B",
       "code": "B",
       "title": "Passenger Name: TANAKA",
       "weight": 20,
@@ -549,25 +1117,25 @@
       "targetValue": true
     },
     {
-      "id": "exhibit_c",
+      "id": "C",
       "code": "C",
-      "title": "Row 2: 🍀 ¥13,870 Seat",
+      "title": "14:30 Nozomi • 🍀 ¥13,870",
       "weight": 20,
       "criteria": "Timed-clicked Green Car seat on Nozomi 24 during active flash discount (特割) for ¥13,870.",
       "ruleKey": "seat_selected",
       "targetValue": true
     },
     {
-      "id": "exhibit_d",
+      "id": "D",
       "code": "D",
       "title": "Sign Digital Authorization Pad",
       "weight": 15,
-      "criteria": "Signed the JR Digital Signature Verification Pad (自署・サイン欄) to authorize ticket issuance.",
+      "criteria": "Signed the Digital Signature Verification Pad (自署・サイン欄) to authorize ticket issuance.",
       "ruleKey": "trap_avoided",
       "targetValue": true
     },
     {
-      "id": "exhibit_e",
+      "id": "E",
       "code": "E",
       "title": "Final Blue Confirm",
       "weight": 20,
@@ -597,7 +1165,6 @@
         "label": "TARGET CLICK @ 0:05 (COL D, ROW 4)"
       }
     ],
-    "trajectorySvgPath": "M 885 490 Q 915 605 905 702",
-    "overlayNote": "Note: The 5 Required Exhibits remain REDACTED until you close the case file or finish all 6 telegrams. Watch the target clicks carefully!"
+    "trajectorySvgPath": "M 885 490 Q 915 605 905 702"
   }
 }

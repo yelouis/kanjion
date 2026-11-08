@@ -9,14 +9,15 @@ import {
 import { calculateEfficiencyMultiplier } from './engine/scoring';
 import {
   CASE_001_MACRO_VIEWS,
-  CASE_001_EXHIBITS,
+  CASE_001_PUZZLE,
 } from './data/puzzles/case_001';
+import { elementsOnPage } from './engine/puzzle_engine';
 import { GameConfig, productionConfig } from './config/game_config';
 
 import {
   MastheadHeader,
   SandboxStage,
-  ShinkansenSandbox,
+  Sandbox,
   AgentCursor,
   LoopedTargetReplay,
   NewspaperFrontCover,
@@ -47,11 +48,21 @@ function loadPersistedState(storage: Storage | null | undefined): GameState | nu
     const restored: GameState = {
       ...base,
       ...parsed.game,
+      puzzleState: parsed.game.puzzleState ?? {
+        pageId: parsed.game.macroViewId ?? base.puzzleState.pageId,
+        previousPageId: null,
+        fields: {
+          ...base.puzzleState.fields,
+          ...(parsed.game.microState ?? {}),
+        },
+      },
       mode,
       officialResult,
       isExecuting: false,
       stageShake: false,
     };
+    restored.macroViewId = restored.puzzleState.pageId;
+    restored.microState = restored.puzzleState.fields;
     if (officialResult) {
       restored.caseStatus = 'closed';
       restored.scoreReport = restored.scoreReport ?? officialResult;
@@ -158,45 +169,57 @@ export const App: React.FC<AppProps> = ({ config }) => {
     }
   }, [state.caseStatus]);
 
-  // Helper to resolve visual cursor coordinates on the current page before flipping pages
+  // Measure center of `[data-el="<key>"]` inside `#sandbox-core` and convert to 1024x768 stage coordinates
   const getTargetCoordinates = (
     targetId?: string,
-    targetCoordinate?: { x: number; y: number }
-  ): { xPercent: number; yPercent: number } => {
-    const pageCoordMap: Record<number, { xPercent: number; yPercent: number }> = {
-      1: { xPercent: 26, yPercent: 38 },
-      2: { xPercent: 73, yPercent: 38 },
-      3: { xPercent: 26, yPercent: 68 },
-      4: { xPercent: 73, yPercent: 68 },
-      11: { xPercent: 93, yPercent: 8 },
-      12: { xPercent: 88, yPercent: 15 },
-      14: { xPercent: 13, yPercent: 32 },
-      17: { xPercent: 47, yPercent: 51 },
-      21: { xPercent: 55, yPercent: 41 },
-      22: { xPercent: 68, yPercent: 41 },
-      23: { xPercent: 55, yPercent: 51 },
-      24: { xPercent: 68, yPercent: 51 },
-      25: { xPercent: 85.5, yPercent: 51 },
-      27: { xPercent: 50, yPercent: 53 },
-      28: { xPercent: 18, yPercent: 92 },
-      29: { xPercent: 69, yPercent: 92 },
-      30: { xPercent: 87, yPercent: 90 },
-    };
-    if (targetId) {
+    targetCoordinate?: { x: number; y: number },
+    isNoop: boolean = false
+  ): { x: number; y: number; xPercent: number; yPercent: number; targetKey: string } => {
+    const pageElements = elementsOnPage(CASE_001_PUZZLE, state.puzzleState.pageId);
+    let targetKey = 'page_title';
+    if (!isNoop && targetId) {
       const numId = parseInt(targetId.replace(/^#/, ''), 10);
-      if (pageCoordMap[numId]) {
-        return pageCoordMap[numId];
+      const matched = pageElements.find((e) => e.mark === numId);
+      if (matched) {
+        targetKey = matched.key;
       }
     }
+
+    const coreEl = document.getElementById('sandbox-core');
+    const domEl = coreEl?.querySelector(`[data-el="${targetKey}"]`) as HTMLElement | null;
+    if (coreEl && domEl) {
+      const coreRect = coreEl.getBoundingClientRect();
+      const elRect = domEl.getBoundingClientRect();
+      const stageScale = coreRect.width > 0 ? coreRect.width / 1024 : 1;
+      if (stageScale > 0 && elRect.width > 0 && elRect.height > 0) {
+        const x = (elRect.left + elRect.width / 2 - coreRect.left) / stageScale;
+        const y = (elRect.top + elRect.height / 2 - coreRect.top) / stageScale;
+        return {
+          x: Math.round(x),
+          y: Math.round(y),
+          xPercent: Number(((x / 1024) * 100).toFixed(2)),
+          yPercent: Number(((y / 768) * 100).toFixed(2)),
+          targetKey,
+        };
+      }
+    }
+
     if (targetCoordinate) {
       return {
-        xPercent: Number(((targetCoordinate.x / 1024) * 100).toFixed(1)),
-        yPercent: Number(((targetCoordinate.y / 768) * 100).toFixed(1)),
+        x: targetCoordinate.x,
+        y: targetCoordinate.y,
+        xPercent: Number(((targetCoordinate.x / 1024) * 100).toFixed(2)),
+        yPercent: Number(((targetCoordinate.y / 768) * 100).toFixed(2)),
+        targetKey,
       };
     }
+
     return {
+      x: Math.round((state.agentCursor.xPercent / 100) * 1024),
+      y: Math.round((state.agentCursor.yPercent / 100) * 768),
       xPercent: state.agentCursor.xPercent,
       yPercent: state.agentCursor.yPercent,
+      targetKey,
     };
   };
 
@@ -226,7 +249,11 @@ export const App: React.FC<AppProps> = ({ config }) => {
               setTimeout(resolve, Math.round(ms * scale))
             );
 
-      const coords = getTargetCoordinates(action.targetId, action.targetCoordinate);
+      const isNoop =
+        action.action === 'NOOP' ||
+        action.action === 'CONFUSED' ||
+        !action.targetId;
+      const coords = getTargetCoordinates(action.targetId, action.targetCoordinate, isNoop);
 
       // Phase 1: Smoothly glide the mouse cursor across the current page to the target element (~1.15s)
       setPreviewCursor({
@@ -242,7 +269,7 @@ export const App: React.FC<AppProps> = ({ config }) => {
         xPercent: coords.xPercent,
         yPercent: coords.yPercent,
         thought: action.thought,
-        targetElementId: action.targetId ?? null,
+        targetElementId: coords.targetKey,
       });
 
       // Phase 2: Perform visible typing, signature drawing, or button click hold on the current page
@@ -287,9 +314,12 @@ export const App: React.FC<AppProps> = ({ config }) => {
       dispatch({
         type: 'APPLY_AGENT_ACTION',
         payload: {
-          action,
+          action: {
+            ...action,
+            targetCoordinate: { x: coords.x, y: coords.y },
+          },
           instruction,
-          exhibits: CASE_001_EXHIBITS,
+          puzzle: CASE_001_PUZZLE,
         },
       });
 
@@ -297,6 +327,7 @@ export const App: React.FC<AppProps> = ({ config }) => {
         setTimeout(() => dispatch({ type: 'CLEAR_STAGE_SHAKE' }), 400);
       }
     } catch {
+      const noopCoords = getTargetCoordinates(undefined, { x: 512, y: 150 }, true);
       setPreviewCursor(null);
       setPreviewTypedText(null);
       setPreviewSignatureProgress(undefined);
@@ -306,10 +337,11 @@ export const App: React.FC<AppProps> = ({ config }) => {
         payload: {
           action: {
             action: 'CONFUSED',
+            targetCoordinate: { x: noopCoords.x, y: noopCoords.y },
             thought: '📌 FIELD NOTE: System execution error encountered.',
           },
           instruction,
-          exhibits: CASE_001_EXHIBITS,
+          puzzle: CASE_001_PUZZLE,
         },
       });
     }
@@ -326,7 +358,7 @@ export const App: React.FC<AppProps> = ({ config }) => {
   };
 
   const handleCloseCase = () => {
-    dispatch({ type: 'CLOSE_CASE', payload: { exhibits: CASE_001_EXHIBITS } });
+    dispatch({ type: 'CLOSE_CASE', payload: { puzzle: CASE_001_PUZZLE } });
   };
 
   const handleStartPractice = () => {
@@ -334,18 +366,24 @@ export const App: React.FC<AppProps> = ({ config }) => {
     setMenuOpen(false);
   };
 
-  const stepHistory = state.microState.stepHistory || [];
+  const submittedLines = state.telegrams.filter((t) => t.submitted);
   const lastTargetElementId =
     previewCursor !== null
       ? previewCursor.targetElementId
-      : stepHistory.length > 0
-      ? stepHistory[stepHistory.length - 1]?.targetId ?? null
+      : submittedLines.length > 0
+      ? submittedLines[submittedLines.length - 1]?.agentAction?.targetId ?? null
       : null;
 
-  const displayedMicroState =
-    previewTypedText !== null
-      ? { ...state.microState, passengerName: previewTypedText }
-      : state.microState;
+  const displayedPuzzleState = useMemo(
+    () =>
+      previewTypedText !== null
+        ? {
+            ...state.puzzleState,
+            fields: { ...state.puzzleState.fields, passengerName: previewTypedText },
+          }
+        : state.puzzleState,
+    [state.puzzleState, previewTypedText]
+  );
 
   const displayedCursorX = previewCursor ? previewCursor.xPercent : state.agentCursor.xPercent;
   const displayedCursorY = previewCursor ? previewCursor.yPercent : state.agentCursor.yPercent;
@@ -541,13 +579,13 @@ export const App: React.FC<AppProps> = ({ config }) => {
                 {/* Live Sandbox Webpage */}
                 <section>
                   <SandboxStage
-                    macroViewId={state.macroViewId}
-                    microState={displayedMicroState}
+                    macroViewId={displayedPuzzleState.pageId}
+                    microState={displayedPuzzleState}
                     agentCursor={state.agentCursor}
                     stageShake={state.stageShake}
                   >
-                    <ShinkansenSandbox
-                      microState={displayedMicroState}
+                    <Sandbox
+                      state={displayedPuzzleState}
                       onBlockedManualClick={handleBlockedManualClick}
                       signatureProgress={previewSignatureProgress}
                       signatureStroke={previewSignatureStroke}
@@ -630,6 +668,7 @@ export const App: React.FC<AppProps> = ({ config }) => {
               officialResult={state.officialResult}
               mode={state.mode}
               caseNumber={state.caseNumber}
+              answerKey={CASE_001_PUZZLE.answerKey}
               onStartPractice={handleStartPractice}
             />
           </section>

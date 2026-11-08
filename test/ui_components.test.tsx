@@ -154,7 +154,7 @@ describe('5. ShinkansenSandbox Component', () => {
       ...mv03State,
       macroViewId: 'MV-04' as const,
       greenCarSelected: true,
-      insuranceCheckboxChecked: true,
+      insuranceAttached: true,
       finalConfirmed: false,
     };
 

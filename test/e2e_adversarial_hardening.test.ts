@@ -486,7 +486,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       expect(calculateFinalScore(-50, 1.5)).toBe(0);
     });
 
-    it('3.3 verifies trap flag is permanent and unsigned Exhibit D is MISSED (85% closeness)', () => {
+    it('3.3 verifies trap flag and unsigned Exhibit D is MISSED (85% closeness)', () => {
       let state = createInitialGameState({
         initialMicroState: {
           ...CASE_001_INITIAL_MICRO_STATE,
@@ -506,7 +506,8 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
         },
       });
 
-      expect(state.microState.insuranceTrapHit).toBe(true);
+      expect(state.microState.insuranceAttached).toBe(true);
+      expect(state.macroViewId).toBe('MV-03');
 
       // Step 2: Select Green Car (#25) to reach MV-04, then untoggle Checkbox #28
       state = gameReducer(state, {
@@ -521,9 +522,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
         },
       });
 
-      // Trap hit remains true permanently
-      expect(state.microState.insuranceCheckboxChecked).toBe(false);
-      expect(state.microState.insuranceTrapHit).toBe(true);
+      expect(state.microState.insuranceAttached).toBe(false);
 
       // Step 3: Perform Confirm (#30) without signing #27 and close case
       state = gameReducer(state, {
@@ -534,7 +533,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
 
       // Exhibit D must be MISSED (unsigned), capped at 85% closeness
       expect(state.scoreReport?.closenessScore).toBe(85);
-      const exD = state.scoreReport?.exhibitEvaluations.find((e) => e.id === 'exhibit_d');
+      const exD = state.scoreReport?.exhibitEvaluations.find((e) => e.id === 'D');
       expect(exD?.status).toBe('MISSED');
       expect(exD?.awardedPoints).toBe(0);
     });

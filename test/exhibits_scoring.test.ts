@@ -22,16 +22,17 @@ import {
   calculateScoreReport,
 } from '../src/engine/scoring';
 import { CASE_001_EXHIBITS, CASE_001_INITIAL_MICRO_STATE } from '../src/data/puzzles/case_001';
-import { ShinkansenMicroState } from '../src/types/engine';
+import { FieldValue } from '../src/types/puzzle_data';
 import { ExhibitEvaluation } from '../src/types/game';
 
 describe('Scoring & Exhibit Evaluation Engine', () => {
   describe('Rubber Ink Stamp Evaluations & Rotation Angles', () => {
     it('evaluates target condition satisfaction with [VERIFIED ✓] badge', () => {
-      const winningState: ShinkansenMicroState = {
+      const winningState: Record<string, FieldValue> = {
         ...CASE_001_INITIAL_MICRO_STATE,
         greenCarSelected: true,
         trainName: 'Nozomi 24',
+        seatClass: 'green_car',
         fare: 13870,
       };
       const evalC = evaluateExhibit(CASE_001_EXHIBITS[2], winningState, 2);
@@ -41,7 +42,7 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
     });
 
     it('evaluates signed digital authorization pad with [VERIFIED ✓ +15%] badge', () => {
-      const signedState: ShinkansenMicroState = {
+      const signedState: Record<string, FieldValue> = {
         ...CASE_001_INITIAL_MICRO_STATE,
         signatureStroke: 'SHAPE:signature',
       };
@@ -52,9 +53,9 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
     });
 
     it('evaluates unsigned digital authorization pad with [MISSED ✗ +0%] badge and 0 points', () => {
-      const unsignedState: ShinkansenMicroState = {
+      const unsignedState: Record<string, FieldValue> = {
         ...CASE_001_INITIAL_MICRO_STATE,
-        signatureStroke: undefined,
+        signatureStroke: '',
       };
       const evalD = evaluateExhibit(CASE_001_EXHIBITS[3], unsignedState, 3);
       expect(evalD.status).toBe('MISSED');
@@ -63,7 +64,7 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
     });
 
     it('evaluates unsatisfied condition with [MISSED ✗] badge and 0 points', () => {
-      const missedState: ShinkansenMicroState = {
+      const missedState: Record<string, FieldValue> = {
         ...CASE_001_INITIAL_MICRO_STATE,
         finalConfirmed: false,
       };
@@ -83,17 +84,16 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
 
   describe('Closeness Percentage Calculations', () => {
     it('calculates 100% closeness for perfect solution path', () => {
-      const perfectState: ShinkansenMicroState = {
+      const perfectState: Record<string, FieldValue> = {
         ...CASE_001_INITIAL_MICRO_STATE,
         selectedRoute: 'tokyo_osaka',
-        departureTime: '14:30',
         passengerName: 'TANAKA',
         greenCarSelected: true,
         trainName: 'Nozomi 24',
+        seatClass: 'green_car',
         fare: 13870,
         signatureStroke: 'SHAPE:signature',
-        insuranceTrapHit: false,
-        insuranceCheckboxChecked: false,
+        insuranceAttached: false,
         finalConfirmed: true,
       };
       const evals = evaluateAllExhibits(CASE_001_EXHIBITS, perfectState);
@@ -102,15 +102,15 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
     });
 
     it('calculates 85% closeness when signature pad is unsigned (Exhibit D missed)', () => {
-      const unsignedState: ShinkansenMicroState = {
+      const unsignedState: Record<string, FieldValue> = {
         ...CASE_001_INITIAL_MICRO_STATE,
         selectedRoute: 'tokyo_osaka',
-        departureTime: '14:30',
         passengerName: 'TANAKA',
         greenCarSelected: true,
         trainName: 'Nozomi 24',
+        seatClass: 'green_car',
         fare: 13870,
-        signatureStroke: undefined,
+        signatureStroke: '',
         finalConfirmed: true,
       };
       const evals = evaluateAllExhibits(CASE_001_EXHIBITS, unsignedState);
@@ -120,10 +120,9 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
 
     it('calculates 45% closeness after route and passenger name before green car and confirm', () => {
       // Exhibit A (25) + Exhibit B (20) = 45
-      const mv03State: ShinkansenMicroState = {
+      const mv03State: Record<string, FieldValue> = {
         ...CASE_001_INITIAL_MICRO_STATE,
         selectedRoute: 'tokyo_osaka',
-        departureTime: '14:30',
         passengerName: 'TANAKA',
       };
       const evals = evaluateAllExhibits(CASE_001_EXHIBITS, mv03State);
@@ -132,12 +131,11 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
     });
 
     it('calculates 0% closeness when all conditions are failed or contaminated', () => {
-      const worstState: ShinkansenMicroState = {
+      const worstState: Record<string, FieldValue> = {
         ...CASE_001_INITIAL_MICRO_STATE,
         selectedRoute: 'nagoya_kyoto',
-        departureTime: '08:00',
         greenCarSelected: false,
-        insuranceTrapHit: true,
+        insuranceAttached: true,
         finalConfirmed: false,
       };
       const evals = evaluateAllExhibits(CASE_001_EXHIBITS, worstState);
@@ -236,17 +234,16 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
 
   describe('Integrated ScoreReport Generator', () => {
     it('produces complete ScoreReport for winning 4-line execution', () => {
-      const winningState: ShinkansenMicroState = {
+      const winningState: Record<string, FieldValue> = {
         ...CASE_001_INITIAL_MICRO_STATE,
         selectedRoute: 'tokyo_osaka',
-        departureTime: '14:30',
         passengerName: 'TANAKA',
         greenCarSelected: true,
         trainName: 'Nozomi 24',
+        seatClass: 'green_car',
         fare: 13870,
         signatureStroke: 'SHAPE:signature',
-        insuranceTrapHit: false,
-        insuranceCheckboxChecked: false,
+        insuranceAttached: false,
         finalConfirmed: true,
       };
 

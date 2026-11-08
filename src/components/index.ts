@@ -9,8 +9,8 @@ export type { ExtendedMastheadProps } from './MastheadHeader';
 
 export { SandboxStage } from './SandboxStage';
 
-export { ShinkansenSandbox } from './ShinkansenSandbox';
-export type { ShinkansenSandboxProps } from './ShinkansenSandbox';
+export { Sandbox, ShinkansenSandbox } from '../data/puzzles/case_001/Sandbox';
+export type { SandboxProps, ShinkansenSandboxProps } from '../data/puzzles/case_001/Sandbox';
 
 export { AgentCursor } from './AgentCursor';
 export type { AgentCursorProps } from './AgentCursor';

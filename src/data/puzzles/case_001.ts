@@ -1,16 +1,12 @@
 /**
  * src/data/puzzles/case_001.ts
  *
- * Canonical data fixtures for Case File #001: Tokyo–Osaka Shinkansen (かんじおん鉄道).
- * Contains:
- * - Puzzle metadata & initial micro-state
- * - All 9 discrete Macro-Views with transitions
- * - Exact 11 interactive Set-of-Mark elements for Macro-View 3 (seat_matrix)
- * - 5 sealed Required Exhibits with deterministic evaluation functions
- * - Target Ghost Replay visual trajectory definition
+ * Adapter module re-exporting Case File #001 from `src/data/puzzles/case_001/puzzle.ts`.
+ * No bounding boxes live in case data; element coordinates are measured from the live DOM
+ * at runtime or via the capture pipeline.
  */
 
-import { ShinkansenMicroState } from '../../types/engine';
+import { GridCoordinate, AgentActionType } from '../../types/engine';
 import {
   PuzzleManifest,
   MacroView,
@@ -18,443 +14,155 @@ import {
   ExhibitDefinition,
   TargetGhostReplayDefinition,
 } from '../../types/puzzle';
-import { tupleToBoundingBox } from '../../utils/coordinate_projector';
+import { ElementDef, FieldValue } from '../../types/puzzle_data';
+import { evaluateExhibitDef, elementsOnPage } from '../../engine/puzzle_engine';
+import { CASE_001_PUZZLE } from './case_001/puzzle';
+
+export { CASE_001_PUZZLE };
 
 /**
- * Initial micro-state for Case File #001 at Macro-View 1 (route_select).
+ * Initial state fields for Case File #001 at Macro-View 1 (route_select).
  */
-export const CASE_001_INITIAL_MICRO_STATE: ShinkansenMicroState = {
-  macroViewId: 'MV-01',
-  selectedRoute: 'none',
-  departureTime: 'none',
-  passengerName: '',
-  trainName: 'none',
-  seatClass: 'none',
-  fare: 0,
-  greenCarSelected: false,
-  insuranceTrapHit: false,
-  insuranceCheckboxChecked: false,
-  finalConfirmed: false,
-  activeModal: 'none',
-  departureDate: '2026-11-05',
-  passengerCount: { adults: 1, children: 0 },
-  stepHistory: [],
+export const CASE_001_INITIAL_MICRO_STATE: Record<string, FieldValue> = {
+  macroViewId: CASE_001_PUZZLE.initialPageId,
+  ...CASE_001_PUZZLE.initialFields,
 };
 
+function inferGridRef(el: ElementDef): GridCoordinate {
+  switch (el.mark) {
+    case 1:
+      return 'B2';
+    case 2:
+      return 'C2';
+    case 3:
+      return 'B3';
+    case 4:
+      return 'C3';
+    case 11:
+      return 'D1';
+    case 12:
+      return 'D1';
+    case 14:
+      return 'A2';
+    case 17:
+      return 'B2';
+    case 21:
+      return 'B2';
+    case 22:
+      return 'C2';
+    case 23:
+      return 'B3';
+    case 24:
+      return 'C3';
+    case 25:
+      return 'D3';
+    case 27:
+      return 'C3';
+    case 28:
+      return 'B4';
+    case 29:
+      return 'C4';
+    case 30:
+      return 'D4';
+    case 71:
+      return 'C3';
+    case 72:
+      return 'B3';
+    case 81:
+      return 'A2';
+    default:
+      return 'B2';
+  }
+}
+
+function toSoMElement(el: ElementDef): SoMElement {
+  const actionType = (Object.keys(el.effects)[0] as AgentActionType | undefined) ?? 'CLICK';
+  const colorMap: Record<string, { bgColor?: string; color?: string }> = {
+    green: { bgColor: '#059669', color: '#FFFFFF' },
+    red: { bgColor: '#DC2626', color: '#FFFFFF' },
+    blue: { bgColor: '#2563EB', color: '#FFFFFF' },
+    white: { bgColor: '#FFFFFF', color: '#111111' },
+    gray: { bgColor: '#F5F5F5', color: '#111111' },
+  };
+  const colors = el.visual?.color ? colorMap[el.visual.color] ?? {} : {};
+
+  return {
+    id: el.mark,
+    somId: `#${el.mark}`,
+    elementKey: el.key,
+    tag: el.role === 'input' || el.role === 'checkbox' ? 'input' : el.role === 'heading' ? 'h2' : 'button',
+    role: el.role,
+    gridRef: inferGridRef(el),
+    text: el.label,
+    visualAttributes: {
+      ...colors,
+      glyph: el.visual?.glyphs?.[0],
+      description: el.label,
+    },
+    isTarget: el.mark === 1 || el.mark === 17 || el.mark === 25 || el.mark === 27 || el.mark === 30,
+    isTrap: el.mark === 11 || el.mark === 12 || el.mark === 28,
+    actionType,
+  };
+}
+
 /**
- * The 11 interactive elements present in Macro-View 3 (seat_matrix).
+ * Interactive elements used by legacy offline simulator scoring on MV-03/MV-04.
+ * Page gating in `applyDecision` strictly enforces `elementsOnPage(CASE_001_PUZZLE, state.pageId)`.
  */
 export const CASE_001_MV03_ELEMENTS: SoMElement[] = [
-  {
-    id: 11,
-    somId: '#11',
-    elementKey: 'btn_logout',
-    tag: 'button',
-    role: 'button',
-    boundingBox: tupleToBoundingBox([920, 42, 74, 26]),
-    gridRef: 'D1',
-    text: 'お知らせ',
-    visualAttributes: {
-      bgColor: '#FFFFFF',
-      color: '#171717',
-      description: 'White news button in header',
-    },
-    isTrap: true,
-    actionType: 'CLICK',
-  },
-  {
-    id: 12,
-    somId: '#12',
-    elementKey: 'btn_promo_insurance',
-    tag: 'button',
-    role: 'button',
-    boundingBox: tupleToBoundingBox([780, 94, 214, 30]),
-    gridRef: 'D1',
-    text: '今すぐ申し込む',
-    visualAttributes: {
-      bgColor: '#DC2626',
-      color: '#FFFFFF',
-      description: 'Promotional insurance banner red CTA button',
-    },
-    isTrap: true,
-    actionType: 'CLICK',
-  },
-  {
-    id: 14,
-    somId: '#14',
-    elementKey: 'btn_back_conditions',
-    tag: 'button',
-    role: 'button',
-    boundingBox: tupleToBoundingBox([26, 230, 204, 28]),
-    gridRef: 'A2',
-    text: '◀ 条件変更へ戻る',
-    visualAttributes: {
-      bgColor: '#FFFFFF',
-      color: '#111111',
-      description: 'Return to search conditions button',
-    },
-    actionType: 'CLICK',
-  },
-  {
-    id: 21,
-    somId: '#21',
-    elementKey: 'btn_seat_hikari_free',
-    tag: 'button',
-    role: 'button',
-    boundingBox: tupleToBoundingBox([370, 260, 110, 32]),
-    gridRef: 'B2',
-    text: '◯ ¥13,870',
-    visualAttributes: {
-      bgColor: '#F5F5F5',
-      color: '#111111',
-      glyph: '◯',
-      description: 'Hikari 515 Non-reserved Seat',
-    },
-    actionType: 'CLICK',
-  },
-  {
-    id: 22,
-    somId: '#22',
-    elementKey: 'btn_seat_hikari_res',
-    tag: 'button',
-    role: 'button',
-    boundingBox: tupleToBoundingBox([580, 260, 110, 32]),
-    gridRef: 'C2',
-    text: '△ ¥14,520',
-    visualAttributes: {
-      bgColor: '#F5F5F5',
-      color: '#111111',
-      glyph: '△',
-      description: 'Hikari 515 Reserved Seat',
-    },
-    actionType: 'CLICK',
-  },
-  {
-    id: 23,
-    somId: '#23',
-    elementKey: 'btn_seat_nozomi_free',
-    tag: 'button',
-    role: 'button',
-    boundingBox: tupleToBoundingBox([370, 450, 110, 32]),
-    gridRef: 'B3',
-    text: '◯ ¥13,870',
-    visualAttributes: {
-      bgColor: '#F5F5F5',
-      color: '#111111',
-      glyph: '◯',
-      description: 'Nozomi 24 Non-reserved Seat',
-    },
-    actionType: 'CLICK',
-  },
-  {
-    id: 24,
-    somId: '#24',
-    elementKey: 'btn_seat_nozomi_res',
-    tag: 'button',
-    role: 'button',
-    boundingBox: tupleToBoundingBox([580, 450, 110, 32]),
-    gridRef: 'C3',
-    text: '◯ ¥14,720',
-    visualAttributes: {
-      bgColor: '#F5F5F5',
-      color: '#111111',
-      glyph: '◯',
-      description: 'Nozomi 24 Reserved Seat',
-    },
-    actionType: 'CLICK',
-  },
-  {
-    id: 25,
-    somId: '#25',
-    elementKey: 'btn_seat_nozomi_green',
-    tag: 'button',
-    role: 'button',
-    boundingBox: tupleToBoundingBox([790, 450, 190, 36]),
-    gridRef: 'D3',
-    text: '🍀 ◯ ¥13,870 (特割)',
-    visualAttributes: {
-      bgColor: '#059669',
-      color: '#FFFFFF',
-      glyph: '🍀',
-      description: 'Nozomi 24 Discount Green Car Seat',
-    },
-    isTarget: true,
-    actionType: 'CLICK',
-  },
-  {
-    id: 28,
-    somId: '#28',
-    elementKey: 'chk_insurance_add',
-    tag: 'input',
-    role: 'checkbox',
-    boundingBox: tupleToBoundingBox([270, 706, 260, 24]),
-    gridRef: 'B4',
-    text: '旅行キャンセル保険（¥2,400）を追加',
-    visualAttributes: {
-      description: 'Travel cancellation insurance add-on checkbox',
-    },
-    isTrap: true,
-    actionType: 'CLICK',
-  },
-  {
-    id: 29,
-    somId: '#29',
-    elementKey: 'btn_cancel_booking',
-    tag: 'button',
-    role: 'button',
-    boundingBox: tupleToBoundingBox([640, 704, 130, 32]),
-    gridRef: 'C4',
-    text: '予約を取消 (Cancel)',
-    visualAttributes: {
-      bgColor: '#D4D4D4',
-      color: '#111111',
-      description: 'Cancel reservation button',
-    },
-    actionType: 'CLICK',
-  },
-  {
-    id: 30,
-    somId: '#30',
-    elementKey: 'btn_confirm_booking',
-    tag: 'button',
-    role: 'button',
-    boundingBox: tupleToBoundingBox([810, 704, 190, 32]),
-    gridRef: 'D4',
-    text: '予約内容を確認・確定へ ▶',
-    visualAttributes: {
-      bgColor: '#2563EB',
-      color: '#FFFFFF',
-      glyph: '▶',
-      description: 'Final reservation confirmation button',
-    },
-    isTarget: true,
-    actionType: 'CLICK',
-  },
+  ...elementsOnPage(CASE_001_PUZZLE, 'MV-03').filter((e) => e.mark !== 90).map(toSoMElement),
+  ...elementsOnPage(CASE_001_PUZZLE, 'MV-04')
+    .filter((e) => e.mark === 28 || e.mark === 29 || e.mark === 30)
+    .map(toSoMElement),
 ];
 
 /**
- * All 12 discrete Macro-Views for Case File #001 (JR-East Ekinet Multi-Page Portal).
+ * All 10 discrete pages for Case File #001 derived from `CASE_001_PUZZLE`.
  */
-export const CASE_001_MACRO_VIEWS: MacroView[] = [
-  {
-    id: 'MV-01',
-    name: 'route_select',
-    description: 'Kanjion Rail Portal Home — Shinkansen line and route selection',
-    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/route-select',
-    somImagePath: '/som/case_001_mv01.webp',
-    elements: [],
-    transitions: [
-      { targetElementId: 1, destinationMacroViewId: 'MV-02' },
-      { targetElementId: 2, destinationMacroViewId: 'MV-10' },
-      { targetElementId: 3, destinationMacroViewId: 'MV-11' },
-    ],
-  },
-  {
-    id: 'MV-02',
-    name: 'condition_filter',
-    description: 'Departure time and passenger name (TYPE) filter form',
-    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/passenger',
-    somImagePath: '/som/case_001_mv02.webp',
-    elements: [],
-    transitions: [
-      { targetElementId: 2, destinationMacroViewId: 'MV-03' },
-      { targetElementId: 14, destinationMacroViewId: 'MV-01' },
-    ],
-  },
-  {
-    id: 'MV-03',
-    name: 'seat_matrix',
-    description: 'Primary seat availability, timed flash discount window, and signature authorization',
-    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/seats',
-    somImagePath: '/som/case_001_mv03.webp',
-    elements: CASE_001_MV03_ELEMENTS,
-    transitions: [
-      { targetElementId: 30, destinationMacroViewId: 'MV-05' },
-      { targetElementId: 12, destinationMacroViewId: 'MV-04' },
-      { targetElementId: 14, destinationMacroViewId: 'MV-02' },
-      { targetElementId: 29, destinationMacroViewId: 'MV-07' },
-      { targetElementId: 11, destinationMacroViewId: 'MV-08' },
-      { targetElementId: 21, destinationMacroViewId: 'MV-12' },
-    ],
-  },
-  {
-    id: 'MV-04',
-    name: 'signature_and_seat_map',
-    description: 'Car 8 Green Car seat verification and digital signature pad (DRAW)',
-    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/confirm',
-    somImagePath: '/som/case_001_mv04.webp',
-    elements: [],
-    transitions: [
-      { targetElementId: 41, destinationMacroViewId: 'MV-03' },
-      { targetElementId: 42, destinationMacroViewId: 'MV-05' },
-    ],
-  },
-  {
-    id: 'MV-05',
-    name: 'reservation_confirm',
-    description: 'Final order verification sheet and IC card binding',
-    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/ticket',
-    somImagePath: '/som/case_001_mv05.webp',
-    elements: [],
-    transitions: [
-      { targetElementId: 51, destinationMacroViewId: 'MV-09' },
-      { targetElementId: 52, destinationMacroViewId: 'MV-03' },
-    ],
-  },
-  {
-    id: 'MV-06',
-    name: 'seat_map_modal',
-    description: 'Car seating chart layout dialog',
-    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/seat-map',
-    somImagePath: '/som/case_001_mv06.webp',
-    elements: [],
-    transitions: [{ targetElementId: 61, destinationMacroViewId: 'MV-03' }],
-  },
-  {
-    id: 'MV-07',
-    name: 'cancel_prompt',
-    description: 'Booking cancellation confirmation modal',
-    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/cancel',
-    somImagePath: '/som/case_001_mv07.webp',
-    elements: [],
-    transitions: [
-      { targetElementId: 71, destinationMacroViewId: 'MV-01' },
-      { targetElementId: 72, destinationMacroViewId: 'MV-03' },
-    ],
-  },
-  {
-    id: 'MV-08',
-    name: 'logout_trap',
-    description: 'Account news view',
-    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/news',
-    somImagePath: '/som/case_001_mv08.webp',
-    elements: [],
-    transitions: [{ targetElementId: 81, destinationMacroViewId: 'MV-03' }],
-  },
-  {
-    id: 'MV-09',
-    name: 'booking_complete',
-    description: 'Booking confirmation receipt and QR e-ticket issue',
-    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/ticket',
-    somImagePath: '/som/case_001_mv09.webp',
-    elements: [],
-    transitions: [],
-  },
-  {
-    id: 'MV-10',
-    name: 'tohoku_route_branch',
-    description: 'Tohoku-Hokkaido Shinkansen (Hayabusa/Komachi) wrong-route branch page',
-    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/tohoku',
-    somImagePath: '/som/case_001_mv10.webp',
-    elements: [],
-    transitions: [{ targetElementId: 14, destinationMacroViewId: 'MV-01' }],
-  },
-  {
-    id: 'MV-11',
-    name: 'hokuriku_route_branch',
-    description: 'Hokuriku Shinkansen (Kagayaki/Hakutaka) wrong-route branch page',
-    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/hokuriku',
-    somImagePath: '/som/case_001_mv11.webp',
-    elements: [],
-    transitions: [{ targetElementId: 14, destinationMacroViewId: 'MV-01' }],
-  },
-  {
-    id: 'MV-12',
-    name: 'waitlist_sold_out',
-    description: 'Ordinary car seat map and waitlist branch page',
-    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/points',
-    somImagePath: '/som/case_001_mv12.webp',
-    elements: [],
-    transitions: [{ targetElementId: 14, destinationMacroViewId: 'MV-03' }],
-  },
-];
+export const CASE_001_MACRO_VIEWS: MacroView[] = CASE_001_PUZZLE.pages.map((page) => {
+  const transitions: Array<{ targetElementId: number; destinationMacroViewId: string }> = [];
+  for (const el of page.elements) {
+    for (const effList of Object.values(el.effects)) {
+      for (const eff of effList ?? []) {
+        if (eff.op === 'navigate' && eff.pageId !== '$previous') {
+          transitions.push({
+            targetElementId: el.mark,
+            destinationMacroViewId: eff.pageId,
+          });
+        }
+      }
+    }
+  }
+
+  return {
+    id: page.id,
+    name: page.slug,
+    description: page.title,
+    simulatedUrl: `sandbox://kanjion-rail.example/reserve/${page.slug}`,
+    elements: page.id === 'MV-03' ? CASE_001_MV03_ELEMENTS : page.elements.map(toSoMElement),
+    transitions,
+  };
+});
 
 /**
- * The 5 sealed Required Exhibits summing to 100% base closeness.
- * Every exhibit is a POSITIVE performed action (never "Avoid X").
+ * The 5 Required Exhibits summing to 100% base closeness, derived from `CASE_001_PUZZLE.exhibits`.
  */
-export const CASE_001_EXHIBITS: ExhibitDefinition[] = [
-  {
-    id: 'exhibit_a',
-    code: 'A',
-    title: 'Route: 東京 ⇒ 新大阪',
-    weight: 25,
-    criteria: 'Selected Tokaido Shinkansen route from Tokyo to Shin-Osaka on Page 1.',
-    evaluate: (state: ShinkansenMicroState) => {
-      const verified = state.selectedRoute === 'tokyo_osaka' || state.selectedRoute === 'tokyo_shinosaka';
-      return {
-        status: verified ? 'VERIFIED' : 'MISSED',
-        awardedPoints: verified ? 25 : 0,
-        stampText: verified ? '[VERIFIED ✓ +25%]' : '[MISSED ✗ +0%]',
-      };
-    },
+export const CASE_001_EXHIBITS: ExhibitDefinition[] = CASE_001_PUZZLE.exhibits.map((ex, idx) => ({
+  id: ex.id,
+  code: ex.id,
+  title: ex.title,
+  weight: ex.weight,
+  criteria: ex.criteria,
+  evaluate: (state: Record<string, FieldValue>) => {
+    const res = evaluateExhibitDef(ex, state, idx);
+    return {
+      status: res.status,
+      awardedPoints: res.awardedPoints ?? 0,
+      stampText: res.stampText,
+    };
   },
-  {
-    id: 'exhibit_b',
-    code: 'B',
-    title: 'Passenger Name: TANAKA',
-    weight: 20,
-    criteria: 'Typed the passenger name TANAKA on page 02.',
-    evaluate: (state: ShinkansenMicroState) => {
-      const verified = state.passengerName === 'TANAKA';
-      return {
-        status: verified ? 'VERIFIED' : 'MISSED',
-        awardedPoints: verified ? 20 : 0,
-        stampText: verified ? '[VERIFIED ✓ +20%]' : '[MISSED ✗ +0%]',
-      };
-    },
-  },
-  {
-    id: 'exhibit_c',
-    code: 'C',
-    title: 'Row 2: 🍀 ¥13,870 Seat',
-    weight: 20,
-    criteria: 'Timed-clicked Green Car seat on Nozomi 24 during active flash discount (特割) for ¥13,870.',
-    evaluate: (state: ShinkansenMicroState) => {
-      const verified = state.greenCarSelected && (state.trainName === 'Nozomi 24' || state.fare === 13870);
-      return {
-        status: verified ? 'VERIFIED' : 'MISSED',
-        awardedPoints: verified ? 20 : 0,
-        stampText: verified ? '[VERIFIED ✓ +20%]' : '[MISSED ✗ +0%]',
-      };
-    },
-  },
-  {
-    id: 'exhibit_d',
-    code: 'D',
-    title: 'Sign Digital Authorization Pad',
-    weight: 15,
-    criteria: 'Signed the JR Digital Signature Verification Pad (自署・サイン欄) to authorize ticket issuance.',
-    evaluate: (state: ShinkansenMicroState) => {
-      const verified = typeof state.signatureStroke === 'string' && state.signatureStroke.trim().length > 0;
-      return {
-        status: verified ? 'VERIFIED' : 'MISSED',
-        awardedPoints: verified ? 15 : 0,
-        stampText: verified ? '[VERIFIED ✓ +15%]' : '[MISSED ✗ +0%]',
-      };
-    },
-  },
-  {
-    id: 'exhibit_e',
-    code: 'E',
-    title: 'Final Blue Confirm',
-    weight: 20,
-    criteria: 'Clicked the final confirmation button [予約内容を確認・確定へ ▶] to issue the Shinkansen e-ticket.',
-    evaluate: (state: ShinkansenMicroState) => {
-      const verified = state.finalConfirmed === true;
-      return {
-        status: verified ? 'VERIFIED' : 'MISSED',
-        awardedPoints: verified ? 20 : 0,
-        stampText: verified ? '[VERIFIED ✓ +20%]' : '[MISSED ✗ +0%]',
-      };
-    },
-  },
-];
+}));
 
-/**
- * In-engine 1:1 visual Target Ghost Replay definition.
- * Strictly visual geometry and ruler quadrants — no DOM text spoilers.
- */
 export const CASE_001_GHOST_REPLAY: TargetGhostReplayDefinition = {
   waypoints: [
     {
@@ -477,19 +185,14 @@ export const CASE_001_GHOST_REPLAY: TargetGhostReplayDefinition = {
     },
   ],
   trajectorySvgPath: 'M 885 490 Q 915 605 905 702',
-  overlayNote:
-    'Note: The 5 Required Exhibits remain REDACTED until you close the case file or finish all 6 telegrams. Watch the target clicks carefully!',
 };
 
-/**
- * Complete canonical PuzzleManifest for Case File #001.
- */
 export const CASE_001_MANIFEST: PuzzleManifest = {
-  caseNumber: '#001',
-  title: 'Tokyo–Osaka Shinkansen',
+  caseNumber: CASE_001_PUZZLE.caseNumber,
+  title: CASE_001_PUZZLE.title,
   difficulty: 'HARD',
   themeBadge: '🇯🇵 HARD MODE: TOKYO–OSAKA SHINKANSEN',
-  initialMacroViewId: 'MV-03',
+  initialMacroViewId: CASE_001_PUZZLE.initialPageId,
   initialMicroState: CASE_001_INITIAL_MICRO_STATE,
   macroViews: CASE_001_MACRO_VIEWS,
   exhibits: CASE_001_EXHIBITS,

@@ -10,6 +10,7 @@ import { JSDOM } from 'jsdom';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
+  CASE_001_PUZZLE,
   CASE_001_MANIFEST,
   CASE_001_MV03_ELEMENTS,
   CASE_001_MACRO_VIEWS,
@@ -107,7 +108,7 @@ export function extractElementsOffline(html: string, macroViewId: string): SoMEl
  */
 export function compileOfflineCase001(options: CompilerOptions): PuzzleManifest {
   const manifest = CASE_001_MANIFEST;
-  const validation = validatePuzzleInvariants(manifest);
+  const validation = validatePuzzleInvariants(CASE_001_PUZZLE);
 
   if (!validation.valid) {
     throw new SchemaInvariantError(

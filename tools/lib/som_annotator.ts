@@ -10,6 +10,7 @@ import type { BoundingBox, SoMElement } from '../../src/types/puzzle';
 import {
   STAGE_WIDTH,
   STAGE_HEIGHT,
+  gridToBoundingBox,
 } from '../../src/utils/coordinate_projector';
 import type { BadgeGeometry, ScreenshotCaptureOptions } from './types';
 
@@ -67,7 +68,8 @@ export function generateSvgSomOverlay(
   const badges: string[] = [];
 
   for (const el of elements) {
-    const geo = computeBadgeGeometry(el.boundingBox, el.somId, width, height);
+    const box = el.boundingBox ?? (el.gridRef ? gridToBoundingBox(el.gridRef) : { x: 0, y: 0, width: 100, height: 30 });
+    const geo = computeBadgeGeometry(box, el.somId, width, height);
 
     // Reticle
     reticles.push(
@@ -132,12 +134,13 @@ export async function injectDomSomOverlay(
       `;
 
       for (const el of els) {
+        const box = el.boundingBox ?? { x: 0, y: 0, width: 100, height: 30 };
         const digitCount = el.somId.replace(/\D/g, '').length;
         const bw = digitCount >= 3 ? 36 : 28;
         const bh = 18;
-        let bx = el.boundingBox.x + el.boundingBox.width - 6;
-        let by = el.boundingBox.y - 8;
-        if (el.boundingBox.x + el.boundingBox.width > w - 10) bx = el.boundingBox.x - 2;
+        let bx = box.x + box.width - 6;
+        let by = box.y - 8;
+        if (box.x + box.width > w - 10) bx = box.x - 2;
         bx = Math.max(2, Math.min(bx, w - bw - 2));
         by = Math.max(2, Math.min(by, h - bh - 2));
 
@@ -145,10 +148,10 @@ export async function injectDomSomOverlay(
         reticle.className = 'som-reticle';
         reticle.style.cssText = `
           position: absolute;
-          left: ${el.boundingBox.x}px;
-          top: ${el.boundingBox.y}px;
-          width: ${el.boundingBox.width}px;
-          height: ${el.boundingBox.height}px;
+          left: ${box.x}px;
+          top: ${box.y}px;
+          width: ${box.width}px;
+          height: ${box.height}px;
           border: 2px solid #C026D3;
           border-radius: 2px;
           box-sizing: border-box;

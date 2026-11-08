@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { ExhibitsPanelProps } from '../types/ui';
 import type { StampStatus } from '../types/game';
+import { CASE_001_PUZZLE } from '../data/puzzles/case_001/puzzle';
 
 export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
   caseClosed,
@@ -8,12 +9,14 @@ export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
   officialResult,
   mode = 'official',
   caseNumber = '#001',
+  answerKey,
   onCopyClipping,
   onStartPractice,
   onReopenCase,
 }) => {
   const [copyFeedback, setCopyFeedback] = useState<boolean>(false);
   const handlePractice = onStartPractice ?? onReopenCase;
+  const answerKeyLines = answerKey ?? CASE_001_PUZZLE.answerKey;
 
   // Return null or sealed teaser if case is not closed
   if (!caseClosed || !scoreReport) {
@@ -103,10 +106,12 @@ export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 mb-5 font-mono-clean">
         {exhibitEvaluations.map((ex, index) => {
           const letterCode = ex.code || String.fromCharCode(65 + index); // A, B, C, D, E
+          const cardId = ex.id.startsWith('exhibit_') ? `card-${ex.id}` : `card-exhibit_${letterCode.toLowerCase()}`;
           return (
             <div
               key={ex.id}
-              id={`card-${ex.id}`}
+              id={cardId}
+              data-exhibit-id={ex.id}
               className="bg-dossier-paper border-2 border-dossier-ink p-2.5 shadow-ink flex flex-col justify-between min-h-[130px] transition-transform hover:-translate-y-0.5"
             >
               <div>
@@ -117,6 +122,11 @@ export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
                 <div className="font-bold text-xs mb-2 text-dossier-ink line-clamp-2">
                   {ex.title}
                 </div>
+                {ex.status === 'CONTAMINATED' && ex.contaminatedNote && (
+                  <div className="text-[11px] text-red-900 font-semibold mb-1">
+                    {ex.contaminatedNote}
+                  </div>
+                )}
               </div>
 
               {/* Dynamic Angled Rubber Ink Stamp Badge */}
@@ -152,51 +162,13 @@ export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
             </span>
           </div>
           <ol className="space-y-1.5 text-dossier-ink list-decimal list-inside">
-            <li>
-              <strong>Page 01 (Route Selection):</strong>{' '}
-              <code className="px-1.5 py-0.5 bg-white border border-stone-400 font-bold">
-                &quot;Click the top-left green box&quot;
-              </code>{' '}
-              <span className="text-dossier-muted">
-                → Selects Tokaido Shinkansen (東京 ⇒ 新大阪)
-              </span>
-            </li>
-            <li>
-              <strong>Page 02 (Passenger Name):</strong>{' '}
-              <code className="px-1.5 py-0.5 bg-white border border-stone-400 font-bold">
-                &quot;Type TANAKA in the passenger name box&quot;
-              </code>{' '}
-              <span className="text-dossier-muted">
-                → Enters TANAKA into 搭乗者名 &amp; advances to Page 03
-              </span>
-            </li>
-            <li>
-              <strong>Page 03 (Seat Matrix):</strong>{' '}
-              <code className="px-1.5 py-0.5 bg-white border border-stone-400 font-bold">
-                &quot;Click the green 13,870 button in the 2nd row&quot;
-              </code>{' '}
-              <span className="text-dossier-muted">
-                → Selects Nozomi 24 Green Car (🍀 ¥13,870)
-              </span>
-            </li>
-            <li>
-              <strong>Page 04 (Signature Pad):</strong>{' '}
-              <code className="px-1.5 py-0.5 bg-white border border-stone-400 font-bold">
-                &quot;Draw a signature in the dashed box&quot;
-              </code>{' '}
-              <span className="text-dossier-muted">
-                → Signs &quot;T. Tanaka&quot; in the verification pad
-              </span>
-            </li>
-            <li>
-              <strong>Page 04 (Final Confirmation):</strong>{' '}
-              <code className="px-1.5 py-0.5 bg-white border border-stone-400 font-bold">
-                &quot;Click the blue confirm button at bottom right&quot;
-              </code>{' '}
-              <span className="text-dossier-muted">
-                → Clicks 予約内容を確認・確定へ ▶ to issue the e-ticket
-              </span>
-            </li>
+            {answerKeyLines.map((line, idx) => (
+              <li key={idx}>
+                <code className="px-1.5 py-0.5 bg-white border border-stone-400 font-bold">
+                  &quot;{line}&quot;
+                </code>
+              </li>
+            ))}
           </ol>
         </div>
       )}

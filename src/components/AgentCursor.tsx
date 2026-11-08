@@ -1,48 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-
-const ELEMENT_ID_TO_DOM_SELECTOR: Record<string, string> = {
-  '1': '#btn-route-tokaido',
-  '#1': '#btn-route-tokaido',
-  '2': '#btn-route-tohoku',
-  '#2': '#btn-route-tohoku',
-  '3': '#btn-route-hokuriku',
-  '#3': '#btn-route-hokuriku',
-  '4': '#btn-route-points',
-  '#4': '#btn-route-points',
-  '11': '#btn-logout',
-  '#11': '#btn-logout',
-  '12': '#btn-promo-insurance',
-  '#12': '#btn-promo-insurance',
-  '14': '#btn-back-conditions',
-  '#14': '#btn-back-conditions',
-  '17': '#input-passenger-name',
-  '#17': '#input-passenger-name',
-  '21': '#btn-hikari-free',
-  '#21': '#btn-hikari-free',
-  '22': '#btn-hikari-res',
-  '#22': '#btn-hikari-res',
-  '23': '#btn-nozomi-free',
-  '#23': '#btn-nozomi-free',
-  '24': '#btn-nozomi-res',
-  '#24': '#btn-nozomi-res',
-  '25': '#target-green-btn',
-  '#25': '#target-green-btn',
-  '27': '#signature-canvas',
-  '#27': '#signature-canvas',
-  '28': '#ins-checkbox',
-  '#28': '#ins-checkbox',
-  '29': '#btn-cancel-booking',
-  '#29': '#btn-cancel-booking',
-  '30': '#target-confirm-btn',
-  '#30': '#target-confirm-btn',
-};
+import React, { useMemo } from 'react';
 
 export interface AgentCursorProps {
   /** Left position as a percentage of stage width (0 to 100). */
   xPercent: number;
   /** Top position as a percentage of stage height (0 to 100). */
   yPercent: number;
-  /** Optional target element ID (e.g. '#25' or '#30') so the cursor lands directly on the real DOM button. */
+  /** Optional target element ID or key. */
   targetElementId?: string | null;
   /** Explanatory field note displayed on the pinned yellow sticky note (max 80 chars). */
   thoughtText?: string;
@@ -63,7 +26,6 @@ export interface AgentCursorProps {
 export const AgentCursor: React.FC<AgentCursorProps> = ({
   xPercent,
   yPercent,
-  targetElementId = null,
   thoughtText,
   thought,
   variant = 'idle',
@@ -72,55 +34,6 @@ export const AgentCursor: React.FC<AgentCursorProps> = ({
   cursorStyle = 'crosshair',
   className = '',
 }) => {
-  const cursorRef = useRef<HTMLDivElement>(null);
-  const [measuredCoords, setMeasuredCoords] = useState<{ x: number; y: number } | null>(null);
-
-  // Measure actual DOM button center when running in a real browser (stageRect.width > 0)
-  useEffect(() => {
-    if (!targetElementId) {
-      setMeasuredCoords(null);
-      return;
-    }
-
-    const selector = ELEMENT_ID_TO_DOM_SELECTOR[String(targetElementId).trim()];
-    if (!selector || !cursorRef.current) {
-      setMeasuredCoords(null);
-      return;
-    }
-
-    const stageEl = cursorRef.current.closest('#sandbox-core') as HTMLElement | null;
-    if (!stageEl) {
-      setMeasuredCoords(null);
-      return;
-    }
-
-    const stageRect = stageEl.getBoundingClientRect();
-    // In JSDOM unit tests, getBoundingClientRect().width is 0, so we preserve fallback xPercent/yPercent
-    if (stageRect.width <= 0 || stageRect.height <= 0) {
-      setMeasuredCoords(null);
-      return;
-    }
-
-    const targetEl = stageEl.querySelector(selector) as HTMLElement | null;
-    if (!targetEl) {
-      setMeasuredCoords(null);
-      return;
-    }
-
-    const targetRect = targetEl.getBoundingClientRect();
-    if (targetRect.width <= 0 || targetRect.height <= 0) {
-      setMeasuredCoords(null);
-      return;
-    }
-
-    const exactX = ((targetRect.left + targetRect.width / 2 - stageRect.left) / stageRect.width) * 100;
-    const exactY = ((targetRect.top + targetRect.height / 2 - stageRect.top) / stageRect.height) * 100;
-    setMeasuredCoords({
-      x: Number(exactX.toFixed(2)),
-      y: Number(exactY.toFixed(2)),
-    });
-  }, [targetElementId, xPercent, yPercent]);
-
   // 1. Resolve active text and enforce strict 80-character limit
   const rawText = thought ?? thoughtText ?? '📌 FIELD AGENT: Awaiting instruction...';
   const sanitizedThought = useMemo(() => {
@@ -144,10 +57,8 @@ export const AgentCursor: React.FC<AgentCursorProps> = ({
   }, [isTrap, variant]);
 
   // 3. Coordinate clamping within stage margins
-  const effectiveX = measuredCoords ? measuredCoords.x : xPercent;
-  const effectiveY = measuredCoords ? measuredCoords.y : yPercent;
-  const clampedX = Math.max(2, Math.min(effectiveX, 96));
-  const clampedY = Math.max(2, Math.min(effectiveY, 96));
+  const clampedX = Math.max(2, Math.min(xPercent, 96));
+  const clampedY = Math.max(2, Math.min(yPercent, 96));
 
   // 4. Edge-flipping logic: flip note to left if cursor is near right border
   const isFlippedLeft = clampedX > 72;
@@ -217,7 +128,6 @@ export const AgentCursor: React.FC<AgentCursorProps> = ({
 
   return (
     <div
-      ref={cursorRef}
       id="agent-cursor"
       data-testid="agent-cursor"
       className={`cursor-glide pointer-events-none absolute z-30 ${className}`}

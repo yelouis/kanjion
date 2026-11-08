@@ -5,9 +5,9 @@
  * DispatchPad, SandboxStage, ExhibitsPanel, and MastheadHeader.
  */
 
-import { ShinkansenMicroState } from './engine';
 import { TelegramLine, ScoreReport, AgentCursorState, StampStatus } from './game';
 import { SoMElement } from './puzzle';
+import { FieldValue, PuzzleState } from './puzzle_data';
 
 /**
  * Props for the 6-Line Western Union Telegram Dispatch Pad component.
@@ -40,8 +40,8 @@ export interface DispatchPadProps {
 export interface SandboxStageProps {
   /** Current active Macro-View identifier (e.g. 'MV-01'). */
   macroViewId: string;
-  /** Current sandbox micro-state data. */
-  microState: ShinkansenMicroState;
+  /** Current sandbox state data. */
+  microState: Record<string, FieldValue> | PuzzleState;
   /** Field agent cursor position, thought note, and theme variant. */
   agentCursor: AgentCursorState;
   /** Whether decoy trap shake animation class is applied to the stage. */
@@ -69,6 +69,8 @@ export interface ExhibitsPanelProps {
   mode?: 'official' | 'practice';
   /** Case number string (e.g. '#001'). */
   caseNumber?: string;
+  /** Answer key lines to display in the report. */
+  answerKey?: string[];
   /** Callback to copy shareable plaintext scorecard to clipboard. */
   onCopyClipping?: () => void;
   /** Callback to start unscored practice mode. */

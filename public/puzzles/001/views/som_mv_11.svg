@@ -5,5 +5,25 @@
     </filter>
   </defs>
   <!-- Bounding Reticles -->
+  <rect x="768" y="0" width="256" height="192" fill="none" stroke="#C026D3" stroke-width="2" rx="2" />
+  <rect x="768" y="0" width="256" height="192" fill="none" stroke="#C026D3" stroke-width="2" rx="2" />
+  <rect x="256" y="192" width="256" height="192" fill="none" stroke="#C026D3" stroke-width="2" rx="2" />
+  <rect x="0" y="192" width="256" height="192" fill="none" stroke="#C026D3" stroke-width="2" rx="2" />
   <!-- Set-of-Mark Badges -->
+  <g class="som-badge" data-som-id="#11">
+    <rect x="766" y="2" width="28" height="18" fill="#C026D3" stroke="#FFFFFF" stroke-width="1" rx="2" filter="url(#drop-shadow)" />
+    <text x="780" y="15" fill="#FFFFFF" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="12" font-weight="bold" text-anchor="middle">#11</text>
+  </g>
+  <g class="som-badge" data-som-id="#12">
+    <rect x="766" y="2" width="28" height="18" fill="#C026D3" stroke="#FFFFFF" stroke-width="1" rx="2" filter="url(#drop-shadow)" />
+    <text x="780" y="15" fill="#FFFFFF" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="12" font-weight="bold" text-anchor="middle">#12</text>
+  </g>
+  <g class="som-badge" data-som-id="#90">
+    <rect x="506" y="184" width="28" height="18" fill="#C026D3" stroke="#FFFFFF" stroke-width="1" rx="2" filter="url(#drop-shadow)" />
+    <text x="520" y="197" fill="#FFFFFF" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="12" font-weight="bold" text-anchor="middle">#90</text>
+  </g>
+  <g class="som-badge" data-som-id="#14">
+    <rect x="250" y="184" width="28" height="18" fill="#C026D3" stroke="#FFFFFF" stroke-width="1" rx="2" filter="url(#drop-shadow)" />
+    <text x="264" y="197" fill="#FFFFFF" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="12" font-weight="bold" text-anchor="middle">#14</text>
+  </g>
 </svg>

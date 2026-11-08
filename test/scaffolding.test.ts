@@ -31,7 +31,7 @@ import {
   CASE_001_GHOST_REPLAY,
   CASE_001_MANIFEST,
 } from '../src/data/puzzles/case_001';
-import type { ShinkansenMicroState } from '../src/types/engine';
+import type { FieldValue } from '../src/types/puzzle_data';
 import type { StampStatus } from '../src/types/game';
 
 describe('1. Broadsheet App Shell & Scaffolding', () => {
@@ -71,9 +71,9 @@ describe('1. Broadsheet App Shell & Scaffolding', () => {
     // Exhibits are now unsealed
     expect(screen.getByText(/🔓 UNSEALED \(CASE CLOSED\)/i)).toBeInTheDocument();
     expect(screen.getByText(/FORENSIC AUDIT REPORT • CASE #001/i)).toBeInTheDocument();
-    expect(screen.getByText(/Route: 東京 ⇒ 新大阪/i)).toBeInTheDocument();
+    expect(screen.getByText(/Route: 東京 → 新大阪/i)).toBeInTheDocument();
     expect(screen.getByText(/Passenger Name: TANAKA/i)).toBeInTheDocument();
-    expect(screen.getByText(/Row 2: 🍀 ¥13,870 Seat/i)).toBeInTheDocument();
+    expect(screen.getByText(/14:30 Nozomi • 🍀 ¥13,870/i)).toBeInTheDocument();
     expect(screen.getByText(/Sign Digital Authorization Pad/i)).toBeInTheDocument();
     expect(screen.getByText(/Final Blue Confirm/i)).toBeInTheDocument();
     expect(screen.getAllByText(/\[MISSED ✗ \+0%\]/i).length).toBe(5);
@@ -211,8 +211,8 @@ describe('3. Text Normalizer & Cache Key Generator', () => {
 });
 
 describe('4. Case File #001 Data Integrity & Checkpoint Evaluation', () => {
-  it('contains all 12 discrete macro-views', () => {
-    expect(CASE_001_MACRO_VIEWS).toHaveLength(12);
+  it('contains all 10 discrete macro-views', () => {
+    expect(CASE_001_MACRO_VIEWS).toHaveLength(10);
     const ids = CASE_001_MACRO_VIEWS.map((v) => v.id);
     expect(ids).toEqual([
       'MV-01',
@@ -220,10 +220,8 @@ describe('4. Case File #001 Data Integrity & Checkpoint Evaluation', () => {
       'MV-03',
       'MV-04',
       'MV-05',
-      'MV-06',
       'MV-07',
       'MV-08',
-      'MV-09',
       'MV-10',
       'MV-11',
       'MV-12',
@@ -236,9 +234,9 @@ describe('4. Case File #001 Data Integrity & Checkpoint Evaluation', () => {
     expect(somIds).toEqual([11, 12, 14, 21, 22, 23, 24, 25, 28, 29, 30]);
   });
 
-  it('verifies that each MV-03 element bounding box projects to its assigned gridRef', () => {
+  it('verifies that each MV-03 element gridRef projects to its cell bounding box', () => {
     for (const el of CASE_001_MV03_ELEMENTS) {
-      const calculatedGrid = boxToGrid(el.boundingBox);
+      const calculatedGrid = boxToGrid(el.boundingBox ?? gridToBoundingBox(el.gridRef));
       expect(calculatedGrid).toBe(el.gridRef);
     }
   });
@@ -278,7 +276,7 @@ describe('4. Case File #001 Data Integrity & Checkpoint Evaluation', () => {
   });
 
   it('evaluates winning micro-state to 100% closeness', () => {
-    const winningState: ShinkansenMicroState = {
+    const winningState: Record<string, FieldValue> = {
       ...CASE_001_INITIAL_MICRO_STATE,
       selectedRoute: 'tokyo_osaka',
       departureTime: '14:30',
@@ -288,8 +286,7 @@ describe('4. Case File #001 Data Integrity & Checkpoint Evaluation', () => {
       fare: 13870,
       greenCarSelected: true,
       signatureStroke: 'SHAPE:signature',
-      insuranceTrapHit: false,
-      insuranceCheckboxChecked: false,
+      insuranceAttached: false,
       finalConfirmed: true,
     };
 
@@ -302,12 +299,12 @@ describe('4. Case File #001 Data Integrity & Checkpoint Evaluation', () => {
   });
 
   it('evaluates unsigned signature pad state as MISSED', () => {
-    const unsignedState: ShinkansenMicroState = {
+    const unsignedState: Record<string, FieldValue> = {
       ...CASE_001_INITIAL_MICRO_STATE,
-      signatureStroke: undefined,
+      signatureStroke: '',
     };
 
-    const exhibitD = CASE_001_EXHIBITS.find((e) => e.id === 'exhibit_d');
+    const exhibitD = CASE_001_EXHIBITS.find((e) => e.id === 'D');
     const result = exhibitD?.evaluate(unsignedState);
     expect(result?.status).toBe('MISSED');
     expect(result?.awardedPoints).toBe(0);
@@ -331,8 +328,8 @@ describe('4. Case File #001 Data Integrity & Checkpoint Evaluation', () => {
   it('verifies top-level puzzle manifest', () => {
     expect(CASE_001_MANIFEST.caseNumber).toBe('#001');
     expect(CASE_001_MANIFEST.difficulty).toBe('HARD');
-    expect(CASE_001_MANIFEST.initialMacroViewId).toBe('MV-03');
-    expect(CASE_001_MANIFEST.macroViews).toHaveLength(12);
+    expect(CASE_001_MANIFEST.initialMacroViewId).toBe('MV-01');
+    expect(CASE_001_MANIFEST.macroViews).toHaveLength(10);
     expect(CASE_001_MANIFEST.exhibits).toHaveLength(5);
   });
 });

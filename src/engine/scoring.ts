@@ -7,9 +7,10 @@
  * and formats shareable forensic clipping scorecards for clipboard export.
  */
 
-import { ShinkansenMicroState } from '../types/engine';
 import { ExhibitEvaluation, ScoreReport } from '../types/game';
 import { ExhibitDefinition } from '../types/puzzle';
+import { ExhibitDef, FieldValue, PuzzleData, PuzzleState } from '../types/puzzle_data';
+import { evaluateExhibitDef, evaluateExhibits, extractFields } from './puzzle_engine';
 
 /**
  * Maximum telegram lines allowed in the dispatch ledger.
@@ -22,21 +23,19 @@ export const MAX_TELEGRAM_LINES = 6;
 export const EFFICIENCY_BONUS_PER_UNUSED_LINE = 0.2;
 
 /**
- * Evaluates a single exhibit checkpoint against the given micro-state.
+ * Evaluates a single exhibit checkpoint against the given state.
  * Assigns tactile rubber stamp rotation angles (-4deg or +3deg).
- *
- * @param exhibit Checkpoint definition to evaluate.
- * @param microState The current or final Shinkansen sandbox micro-state.
- * @param index Ordinal index of the exhibit card (0 to 4) for alternating tilt.
  */
 export function evaluateExhibit(
-  exhibit: ExhibitDefinition,
-  microState: ShinkansenMicroState,
+  exhibit: ExhibitDef | ExhibitDefinition,
+  state: PuzzleState | Record<string, FieldValue>,
   index: number = 0
 ): ExhibitEvaluation {
-  const result = exhibit.evaluate(microState);
-
-  // Archival tactile stamp rotation: alternating -4deg and +3deg
+  if ('verified' in exhibit) {
+    return evaluateExhibitDef(exhibit, state, index);
+  }
+  const fields = extractFields(state);
+  const result = exhibit.evaluate(fields);
   const rotationDeg = index % 2 === 0 ? -4 : 3;
 
   return {
@@ -52,16 +51,16 @@ export function evaluateExhibit(
 }
 
 /**
- * Evaluates all exhibits against the provided micro-state.
- *
- * @param exhibits Array of exhibit definitions.
- * @param microState Final Shinkansen sandbox micro-state.
+ * Evaluates all exhibits against the provided state.
  */
 export function evaluateAllExhibits(
-  exhibits: ExhibitDefinition[],
-  microState: ShinkansenMicroState
+  puzzleOrExhibits: PuzzleData | Array<ExhibitDef | ExhibitDefinition>,
+  state: PuzzleState | Record<string, FieldValue>
 ): ExhibitEvaluation[] {
-  return exhibits.map((exhibit, index) => evaluateExhibit(exhibit, microState, index));
+  if (!Array.isArray(puzzleOrExhibits)) {
+    return evaluateExhibits(puzzleOrExhibits, state);
+  }
+  return puzzleOrExhibits.map((exhibit, index) => evaluateExhibit(exhibit, state, index));
 }
 
 /**
@@ -190,12 +189,12 @@ export function generateShareableClipping(params: {
  * @param caseNumber Case file identifier (default: '#001').
  */
 export function calculateScoreReport(
-  exhibits: ExhibitDefinition[],
-  microState: ShinkansenMicroState,
+  puzzleOrExhibits: PuzzleData | Array<ExhibitDef | ExhibitDefinition>,
+  state: PuzzleState | Record<string, FieldValue>,
   linesUsed: number,
   caseNumber: string = '#001'
 ): ScoreReport {
-  const exhibitEvaluations = evaluateAllExhibits(exhibits, microState);
+  const exhibitEvaluations = evaluateAllExhibits(puzzleOrExhibits, state);
   const closenessScore = calculateClosenessScore(exhibitEvaluations);
   const { unusedLines, multiplier } = calculateEfficiencyMultiplier(linesUsed);
   const finalScore = calculateFinalScore(closenessScore, multiplier);

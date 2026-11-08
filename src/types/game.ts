@@ -5,7 +5,8 @@
  * score calculation reports, telegram lines, and immutable game state.
  */
 
-import { AgentAction, ShinkansenMicroState } from './engine';
+import { AgentAction } from './engine';
+import { FieldValue, PuzzleState } from './puzzle_data';
 
 /**
  * Status resulting from evaluating an exhibit checkpoint against the final micro-state:
@@ -35,6 +36,8 @@ export interface ExhibitEvaluation {
   rotationDeg: number;
   /** Actual points awarded (either weight or 0). */
   awardedPoints?: number;
+  /** Optional note explaining why this exhibit was contaminated. */
+  contaminatedNote?: string;
 }
 
 /**
@@ -122,10 +125,12 @@ export interface GameState {
   telegrams: TelegramLine[];
   /** Current value of the typewriter input field (0 to 60 chars). */
   currentInput: string;
-  /** Current active Macro-View ID. */
+  /** Current active Macro-View ID (alias for puzzleState.pageId). */
   macroViewId: string;
-  /** Current sandbox micro-state. */
-  microState: ShinkansenMicroState;
+  /** Current puzzle state (pageId, previousPageId, fields). */
+  puzzleState: PuzzleState;
+  /** Current sandbox fields record (alias for puzzleState.fields). */
+  microState: Record<string, FieldValue>;
   /** Animated field agent cursor position, note, and styling. */
   agentCursor: AgentCursorState;
   /** True when stage error shake animation is active. */

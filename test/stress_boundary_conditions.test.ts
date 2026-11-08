@@ -33,14 +33,14 @@ import {
   CASE_001_MV03_ELEMENTS,
 } from '../src/data/puzzles/case_001';
 import {
-  ShinkansenMicroState,
   LLMDecisionResponse,
 } from '../src/types/engine';
+import type { FieldValue } from '../src/types/puzzle_data';
 import { generateStateHash } from '../src/utils/text_normalizer';
 
 describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
   let offlineEngine: OfflineSimulationEngine;
-  let microState: ShinkansenMicroState;
+  let microState: Record<string, FieldValue>;
 
   beforeEach(() => {
     offlineEngine = new OfflineSimulationEngine();

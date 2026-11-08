@@ -51,6 +51,7 @@ import {
 import {
   pixelToGrid,
   boxToGrid,
+  gridToBoundingBox,
 } from '../src/utils/coordinate_projector';
 
 import {
@@ -547,7 +548,8 @@ describe('Challenger M4: Empirical Adversarial Challenge Suite', () => {
 
     it('confirms Case File #001 MV-03 elements strictly adhere to coordinate grid mappings', () => {
       for (const el of CASE_001_MV03_ELEMENTS) {
-        const computedGrid = boxToGrid(el.boundingBox);
+        const box = el.boundingBox ?? gridToBoundingBox(el.gridRef);
+        const computedGrid = boxToGrid(box);
         expect(computedGrid).toBe(el.gridRef);
       }
     });

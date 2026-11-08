@@ -12,11 +12,11 @@ import {
   CONFIDENCE_THRESHOLD,
 } from '../src/engine/offline_simulator';
 import { CASE_001_INITIAL_MICRO_STATE, CASE_001_MACRO_VIEWS } from '../src/data/puzzles/case_001';
-import { ShinkansenMicroState } from '../src/types/engine';
+import type { FieldValue } from '../src/types/puzzle_data';
 
 describe('Offline Simulation Engine & Multi-Token Heuristic Matcher', () => {
   let engine: OfflineSimulationEngine;
-  let microState: ShinkansenMicroState;
+  let microState: Record<string, FieldValue>;
 
   beforeEach(() => {
     engine = new OfflineSimulationEngine();
@@ -54,7 +54,7 @@ describe('Offline Simulation Engine & Multi-Token Heuristic Matcher', () => {
       expect(action.action).toBe('CLICK');
       expect(action.targetId).toBe('#25');
       expect(action.gridRef).toBe('D3');
-      expect(action.targetCoordinate).toEqual({ x: 885, y: 468 });
+      expect(action.targetCoordinate).toEqual({ x: 896, y: 480 });
       expect(action.isTrap).toBe(false);
       expect(action.thought).toBe('📌 FIELD NOTE: Clicked [🍀 ◯ ¥13,870] at D3');
       expect(action.thought.length).toBeLessThanOrEqual(80);
@@ -65,8 +65,8 @@ describe('Offline Simulation Engine & Multi-Token Heuristic Matcher', () => {
       expect(action.action).toBe('CLICK');
       expect(action.targetId).toBe('#25');
       expect(action.gridRef).toBe('D3');
-      expect(action.targetCoordinate?.x).toBe(885);
-      expect(action.targetCoordinate?.y).toBe(468);
+      expect(action.targetCoordinate?.x).toBe(896);
+      expect(action.targetCoordinate?.y).toBe(480);
       expect(action.thought.length).toBeLessThanOrEqual(80);
     });
 
@@ -89,7 +89,7 @@ describe('Offline Simulation Engine & Multi-Token Heuristic Matcher', () => {
       expect(action.action).toBe('CLICK');
       expect(action.targetId).toBe('#30');
       expect(action.gridRef).toBe('D4');
-      expect(action.targetCoordinate).toEqual({ x: 905, y: 720 });
+      expect(action.targetCoordinate).toEqual({ x: 896, y: 672 });
       expect(action.isTrap).toBe(false);
       expect(action.thought).toBe('📌 FIELD NOTE: Clicked [予約内容を確認・確定へ ▶] at D4');
       expect(action.thought.length).toBeLessThanOrEqual(80);
@@ -116,7 +116,7 @@ describe('Offline Simulation Engine & Multi-Token Heuristic Matcher', () => {
       expect(action.action).toBe('CLICK');
       expect(action.targetId).toBe('#12');
       expect(action.gridRef).toBe('D1');
-      expect(action.targetCoordinate).toEqual({ x: 887, y: 109 });
+      expect(action.targetCoordinate).toEqual({ x: 896, y: 96 });
       expect(action.isTrap).toBe(true);
       expect(action.thought).toBe('📌 FIELD NOTE: Clicked [今すぐ申し込む] at D1');
       expect(action.thought.length).toBeLessThanOrEqual(80);
@@ -135,16 +135,16 @@ describe('Offline Simulation Engine & Multi-Token Heuristic Matcher', () => {
       expect(action.action).toBe('CLICK');
       expect(action.targetId).toBe('#28');
       expect(action.gridRef).toBe('B4');
-      expect(action.targetCoordinate).toEqual({ x: 400, y: 718 });
+      expect(action.targetCoordinate).toEqual({ x: 384, y: 672 });
       expect(action.isTrap).toBe(true);
       expect(action.thought).toBe('📌 FIELD NOTE: Checked [旅行キャンセル保険を追加] at B4');
       expect(action.thought.length).toBeLessThanOrEqual(80);
     });
 
     it('handles insurance toggle note when already checked', () => {
-      const checkedState: ShinkansenMicroState = {
+      const checkedState: Record<string, FieldValue> = {
         ...microState,
-        insuranceCheckboxChecked: true,
+        insuranceAttached: true,
       };
       const action = engine.resolveInstruction('MV-03', checkedState, 'check insurance');
       expect(action.action).toBe('CLICK');
@@ -169,7 +169,7 @@ describe('Offline Simulation Engine & Multi-Token Heuristic Matcher', () => {
       expect(action.action).toBe('CLICK');
       expect(action.targetId).toBe('#21');
       expect(action.gridRef).toBe('B2');
-      expect(action.targetCoordinate).toEqual({ x: 425, y: 276 });
+      expect(action.targetCoordinate).toEqual({ x: 384, y: 288 });
       expect(action.thought).toContain('ひかり自由席');
     });
 
@@ -178,7 +178,7 @@ describe('Offline Simulation Engine & Multi-Token Heuristic Matcher', () => {
       expect(action.action).toBe('CLICK');
       expect(action.targetId).toBe('#22');
       expect(action.gridRef).toBe('C2');
-      expect(action.targetCoordinate).toEqual({ x: 635, y: 276 });
+      expect(action.targetCoordinate).toEqual({ x: 640, y: 288 });
       expect(action.thought).toContain('ひかり指定席');
     });
 
@@ -187,7 +187,7 @@ describe('Offline Simulation Engine & Multi-Token Heuristic Matcher', () => {
       expect(action.action).toBe('CLICK');
       expect(action.targetId).toBe('#23');
       expect(action.gridRef).toBe('B3');
-      expect(action.targetCoordinate).toEqual({ x: 425, y: 466 });
+      expect(action.targetCoordinate).toEqual({ x: 384, y: 480 });
       expect(action.thought).toContain('のぞみ自由席');
     });
 
@@ -196,7 +196,7 @@ describe('Offline Simulation Engine & Multi-Token Heuristic Matcher', () => {
       expect(action.action).toBe('CLICK');
       expect(action.targetId).toBe('#24');
       expect(action.gridRef).toBe('C3');
-      expect(action.targetCoordinate).toEqual({ x: 635, y: 466 });
+      expect(action.targetCoordinate).toEqual({ x: 640, y: 480 });
       expect(action.thought).toContain('のぞみ指定席');
     });
 
@@ -205,7 +205,7 @@ describe('Offline Simulation Engine & Multi-Token Heuristic Matcher', () => {
       expect(action.action).toBe('CLICK');
       expect(action.targetId).toBe('#14');
       expect(action.gridRef).toBe('A2');
-      expect(action.targetCoordinate).toEqual({ x: 128, y: 244 });
+      expect(action.targetCoordinate).toEqual({ x: 128, y: 288 });
       expect(action.thought).toContain('条件変更へ戻る');
     });
 
@@ -214,7 +214,7 @@ describe('Offline Simulation Engine & Multi-Token Heuristic Matcher', () => {
       expect(action.action).toBe('CLICK');
       expect(action.targetId).toBe('#29');
       expect(action.gridRef).toBe('C4');
-      expect(action.targetCoordinate).toEqual({ x: 705, y: 720 });
+      expect(action.targetCoordinate).toEqual({ x: 640, y: 672 });
       expect(action.thought).toContain('予約を取消');
     });
   });

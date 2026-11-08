@@ -2,8 +2,8 @@
  * tools/lib/manifest_builder.ts
  *
  * Manifest construction, serialization, and invariant validation for puzzle bundles.
- * Enforces the 8–12 Macro-View FSA rule, 100% exhibit weight sum, stage geometry,
- * and grid alignment.
+ * Reads `PuzzleData` (or `PuzzleManifest`) and enforces the 8–12 page rule,
+ * 100% exhibit weight sum, and navigation integrity.
  */
 
 import type {
@@ -11,6 +11,7 @@ import type {
   ExhibitDefinition,
   PuzzleExhibitDefinition,
 } from '../../src/types/puzzle';
+import type { PuzzleData, ExhibitDef } from '../../src/types/puzzle_data';
 import {
   boxToGrid,
   STAGE_WIDTH,
@@ -24,11 +25,72 @@ export interface InvariantValidationResult {
   errors: string[];
 }
 
+function isPuzzleData(input: PuzzleData | PuzzleManifest): input is PuzzleData {
+  return 'pages' in input && Array.isArray((input as PuzzleData).pages);
+}
+
 /**
- * Validates all structural, geometric, and game-design invariants of a PuzzleManifest.
+ * Validates all structural, geometric, and game-design invariants of a PuzzleData or PuzzleManifest.
  */
-export function validatePuzzleInvariants(manifest: PuzzleManifest): InvariantValidationResult {
+export function validatePuzzleInvariants(
+  puzzleOrManifest: PuzzleData | PuzzleManifest
+): InvariantValidationResult {
   const errors: string[] = [];
+
+  if (isPuzzleData(puzzleOrManifest)) {
+    const puzzle = puzzleOrManifest;
+    if (!puzzle.pages || !Array.isArray(puzzle.pages)) {
+      errors.push('Macro-views collection is missing or not an array');
+    } else {
+      const viewCount = puzzle.pages.length;
+      if (viewCount < 8 || viewCount > 12) {
+        errors.push(`Macro-View count violation: expected 8 to 12 views, got ${viewCount}`);
+      }
+    }
+
+    if (!puzzle.exhibits || !Array.isArray(puzzle.exhibits) || puzzle.exhibits.length === 0) {
+      errors.push('No exhibits defined in puzzle manifest');
+    } else {
+      const totalWeight = puzzle.exhibits.reduce((sum, ex) => sum + (ex.weight || 0), 0);
+      if (totalWeight !== 100) {
+        errors.push(`Exhibit weight violation: weights must sum to 100%, got ${totalWeight}%`);
+      }
+    }
+
+    if (puzzle.pages && Array.isArray(puzzle.pages)) {
+      const pageIds = new Set(puzzle.pages.map((p) => p.id));
+      if (puzzle.initialPageId && !pageIds.has(puzzle.initialPageId)) {
+        errors.push(`Initial macro-view "${puzzle.initialPageId}" does not exist in pages list`);
+      }
+      for (const page of puzzle.pages) {
+        if (!page.id) {
+          errors.push(`Page missing id: ${page.slug || 'unnamed'}`);
+        }
+        for (const el of page.elements || []) {
+          for (const effList of Object.values(el.effects || {})) {
+            for (const eff of effList || []) {
+              if (
+                eff.op === 'navigate' &&
+                eff.pageId !== '$previous' &&
+                !pageIds.has(eff.pageId)
+              ) {
+                errors.push(
+                  `Transition from ${page.id} references non-existent destination "${eff.pageId}"`
+                );
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+    };
+  }
+
+  const manifest = puzzleOrManifest;
 
   // Invariant 1: Macro-View Count (strictly 8 to 12)
   if (!manifest.macroViews || !Array.isArray(manifest.macroViews)) {
@@ -71,11 +133,10 @@ export function validatePuzzleInvariants(manifest: PuzzleManifest): InvariantVal
         }
       }
 
-      // Invariant 4: Element Geometry & Grid Alignment
+      // Invariant 4: Element Geometry & Grid Alignment (when boundingBox is present)
       for (const el of view.elements || []) {
         const b = el.boundingBox;
         if (!b) {
-          errors.push(`Element #${el.id} in view ${view.id} has no boundingBox`);
           continue;
         }
 
@@ -118,28 +179,68 @@ export function validatePuzzleInvariants(manifest: PuzzleManifest): InvariantVal
 /**
  * Maps known exhibit codes or IDs to deterministic declarative ruleKeys.
  */
-function inferExhibitRuleKey(ex: ExhibitDefinition | PuzzleExhibitDefinition): string {
+function inferExhibitRuleKey(
+  ex: ExhibitDef | ExhibitDefinition | PuzzleExhibitDefinition
+): string {
   if ('ruleKey' in ex && ex.ruleKey) return ex.ruleKey;
   const idLower = ex.id.toLowerCase();
-  if (idLower.includes('route') || idLower.includes('exhibit_a')) return 'route_match';
-  if (idLower.includes('departure') || idLower.includes('exhibit_b')) return 'departure_match';
-  if (idLower.includes('seat') || idLower.includes('green') || idLower.includes('exhibit_c')) return 'seat_selected';
-  if (idLower.includes('ins') || idLower.includes('trap') || idLower.includes('exhibit_d')) return 'trap_avoided';
-  if (idLower.includes('confirm') || idLower.includes('order') || idLower.includes('exhibit_e')) return 'order_confirmed';
+  if (idLower === 'a' || idLower.includes('route') || idLower.includes('exhibit_a')) return 'route_match';
+  if (idLower === 'b' || idLower.includes('departure') || idLower.includes('exhibit_b')) return 'departure_match';
+  if (idLower === 'c' || idLower.includes('seat') || idLower.includes('green') || idLower.includes('exhibit_c')) return 'seat_selected';
+  if (idLower === 'd' || idLower.includes('ins') || idLower.includes('trap') || idLower.includes('exhibit_d')) return 'trap_avoided';
+  if (idLower === 'e' || idLower.includes('confirm') || idLower.includes('order') || idLower.includes('exhibit_e')) return 'order_confirmed';
   return 'custom_rule';
 }
 
 /**
- * Builds a JSON-serializable declarative representation of the puzzle manifest.
- * Strips function closures and enriches stage geometry metadata.
+ * Builds a JSON-serializable declarative representation of a PuzzleData or PuzzleManifest.
  */
-export function buildDeclarativeManifest(manifest: PuzzleManifest): Record<string, unknown> {
+export function buildDeclarativeManifest(
+  puzzleOrManifest: PuzzleData | PuzzleManifest
+): Record<string, unknown> {
+  if (isPuzzleData(puzzleOrManifest)) {
+    const puzzle = puzzleOrManifest;
+    return {
+      caseNumber: puzzle.caseNumber,
+      id: puzzle.id,
+      slug: `case_${puzzle.id}`,
+      title: puzzle.title,
+      stage: {
+        width: STAGE_WIDTH,
+        height: STAGE_HEIGHT,
+        rulers: {
+          cols: [...GRID_COLUMNS],
+          rows: [...GRID_ROWS],
+        },
+      },
+      initialMacroViewId: puzzle.initialPageId,
+      initialMicroState: puzzle.initialFields,
+      macroViews: puzzle.pages.map((p) => ({
+        id: p.id,
+        name: p.slug,
+        description: p.title,
+        elements: p.elements,
+      })),
+      exhibits: puzzle.exhibits.map((ex) => ({
+        id: ex.id,
+        code: ex.id,
+        title: ex.title,
+        weight: ex.weight,
+        criteria: ex.criteria,
+        ruleKey: inferExhibitRuleKey(ex),
+        targetValue: true,
+      })),
+    };
+  }
+
+  const manifest = puzzleOrManifest;
   const declarativeExhibits = manifest.exhibits.map((ex) => {
     return {
       id: ex.id,
-      code: 'code' in ex && typeof (ex as any).code === 'string'
-        ? String((ex as any).code)
-        : ex.id.slice(-1).toUpperCase(),
+      code:
+        'code' in ex && typeof (ex as { code?: unknown }).code === 'string'
+          ? String((ex as { code?: unknown }).code)
+          : ex.id.slice(-1).toUpperCase(),
       title: ex.title,
       weight: ex.weight,
       criteria: 'criteria' in ex ? ex.criteria : '',
@@ -164,15 +265,19 @@ export function buildDeclarativeManifest(manifest: PuzzleManifest): Record<strin
         rows: [...GRID_ROWS],
       },
     },
-    initialMacroViewId: manifest.initialMacroViewId || 'MV-03',
+    initialMacroViewId: manifest.initialMacroViewId || 'MV-01',
     initialMicroState: manifest.initialMicroState,
     macroViews: manifest.macroViews.map((view) => ({
       id: view.id,
       name: view.name,
       description: view.description,
       simulatedUrl: view.simulatedUrl,
-      cleanScreenshotUrl: view.cleanScreenshotUrl || `views/clean_${view.id.toLowerCase().replace('-', '_')}.webp`,
-      somScreenshotUrl: view.somScreenshotUrl || view.somImagePath || `views/som_${view.id.toLowerCase().replace('-', '_')}.webp`,
+      cleanScreenshotUrl:
+        view.cleanScreenshotUrl || `views/clean_${view.id.toLowerCase().replace('-', '_')}.webp`,
+      somScreenshotUrl:
+        view.somScreenshotUrl ||
+        view.somImagePath ||
+        `views/som_${view.id.toLowerCase().replace('-', '_')}.webp`,
       elements: view.elements,
       transitions: view.transitions || [],
     })),
@@ -211,16 +316,13 @@ export function validatePositiveExhibitsOnly(
 }
 
 /**
- * Daily pipeline difficulty scorer that biases candidate real websites toward:
- * - 12-page multi-page traversal depth (+30)
- * - Multi-modal tasks beyond clicking: TYPE text input (+25), DRAW signature/canvas (+25), TIMED_CLICK moving UI (+20)
- * - Strictly positive exhibits and verified solvability by gemini-2.5-flash-lite.
+ * Daily pipeline difficulty scorer.
  */
 export function scoreCandidateSiteDifficulty(profile: SiteDifficultyProfile): number {
   if (!profile.positiveExhibitsOnly || !profile.solvableByGeminiFlashLite) {
     return 0;
   }
-  let score = Math.min(30, Math.round((profile.pageCount / 12) * 30));
+  let score = Math.min(30, Math.round((profile.pageCount / 10) * 30));
   if (profile.hasTypeTask) score += 25;
   if (profile.hasDrawTask) score += 25;
   if (profile.hasTimedClickTask) score += 20;

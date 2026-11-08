@@ -15,8 +15,9 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   gameReducer,
   createInitialGameState,
-  reduceShinkansenMicroState,
 } from '../src/engine/game_reducer';
+import { applyDecision } from '../src/engine/puzzle_engine';
+import { CASE_001_PUZZLE } from '../src/data/puzzles/case_001/puzzle';
 import { GameState } from '../src/types/game';
 import { AgentAction } from '../src/types/engine';
 import { CASE_001_EXHIBITS } from '../src/data/puzzles/case_001';
@@ -60,17 +61,17 @@ describe('Game State Reducer & Micro-State Transitions', () => {
       }
     });
 
-    it('directly mutates micro-state using reduceShinkansenMicroState from MV-03', () => {
+    it('directly mutates puzzle state using applyDecision from MV-03', () => {
       const mv03State = advanceToMv03(initialState);
-      const res = reduceShinkansenMicroState(mv03State.microState, {
+      const res = applyDecision(CASE_001_PUZZLE, mv03State.puzzleState, {
         action: 'CLICK',
-        targetId: '#25',
+        mark: 25,
         thought: 'direct test',
       });
-      expect(res.nextState.greenCarSelected).toBe(true);
-      expect(res.summary).toBe('Agent clicked [🍀 ◯ ¥13,870]');
-      expect(res.isTrap).toBe(false);
-      expect(res.nextMacroViewId).toBe('MV-04');
+      expect(res.next.fields.greenCarSelected).toBe(true);
+      expect(res.summary).toBe('Agent clicked [🍀 ◯ ¥13,870 (特割)]');
+      expect(res.shake).toBe(false);
+      expect(res.next.pageId).toBe('MV-04');
     });
   });
 
@@ -161,7 +162,7 @@ describe('Game State Reducer & Micro-State Transitions', () => {
       expect(next.activeLineIndex).toBe(3);
       expect(next.telegrams[2].submitted).toBe(true);
       expect(next.telegrams[2].text).toBe('click green clover 13870 button in 2nd row');
-      expect(next.telegrams[2].actionSummary).toBe('Agent clicked [🍀 ◯ ¥13,870]');
+      expect(next.telegrams[2].actionSummary).toBe('Agent clicked [🍀 ◯ ¥13,870 (特割)]');
       expect(next.telegrams[2].exhibitRedactedStatus).toBe('SEALED');
 
       // 4. Input & lifecycle
@@ -172,7 +173,7 @@ describe('Game State Reducer & Micro-State Transitions', () => {
   });
 
   describe('APPLY_AGENT_ACTION: Decoy Traps (#12 Promo Banner & #11 Logout)', () => {
-    it('handles #12 red promo banner click: sets insuranceTrapHit and triggers stage shake', () => {
+    it('handles #12 red promo banner click: sets insuranceAttached and triggers stage shake', () => {
       const bannerAction: AgentAction = {
         action: 'CLICK',
         targetId: '#12',
@@ -187,8 +188,7 @@ describe('Game State Reducer & Micro-State Transitions', () => {
         payload: { action: bannerAction, instruction: 'click red button' },
       });
 
-      expect(next.microState.insuranceTrapHit).toBe(true);
-      expect(next.microState.insuranceCheckboxChecked).toBe(true);
+      expect(next.microState.insuranceAttached).toBe(true);
       expect(next.stageShake).toBe(true);
       expect(next.agentCursor.variant).toBe('trap');
       expect(next.agentCursor.isShaking).toBe(true);
@@ -218,7 +218,7 @@ describe('Game State Reducer & Micro-State Transitions', () => {
         payload: { action: chkAction, instruction: 'check insurance' },
       });
 
-      expect(next.microState.insuranceCheckboxChecked).toBe(true);
+      expect(next.microState.insuranceAttached).toBe(true);
       expect(next.telegrams[3].actionSummary).toBe('Agent checked [旅行キャンセル保険を追加]');
 
       // Toggle off
@@ -226,7 +226,7 @@ describe('Game State Reducer & Micro-State Transitions', () => {
         type: 'APPLY_AGENT_ACTION',
         payload: { action: chkAction, instruction: 'check insurance' },
       });
-      expect(next2.microState.insuranceCheckboxChecked).toBe(false);
+      expect(next2.microState.insuranceAttached).toBe(false);
       expect(next2.telegrams[4].actionSummary).toBe('Agent unchecked [旅行キャンセル保険を追加]');
     });
   });

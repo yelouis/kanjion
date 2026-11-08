@@ -1,18 +1,40 @@
 import { describe, it, expect } from 'vitest';
-import { reduceShinkansenMicroState, createInitialGameState, gameReducer } from '../src/engine/game_reducer';
+import { createInitialGameState, gameReducer } from '../src/engine/game_reducer';
+import { applyDecision, createInitialPuzzleState } from '../src/engine/puzzle_engine';
+import { CASE_001_PUZZLE } from '../src/data/puzzles/case_001/puzzle';
 import { OfflineSimulationEngine } from '../src/engine/offline_simulator';
 import { BrowserGeminiNanoTransport, CloudVisionConnector } from '../src/engine/cloud_connector';
 import { CASE_001_INITIAL_MICRO_STATE, CASE_001_EXHIBITS, CASE_001_MACRO_VIEWS } from '../src/data/puzzles/case_001';
 import { calculateScoreReport } from '../src/engine/scoring';
-import type { ShinkansenMicroState } from '../src/types/engine';
+import type { AgentAction } from '../src/types/engine';
+import type { PuzzleState } from '../src/types/puzzle_data';
 
-function createBrowserStartState(): ShinkansenMicroState {
+function createBrowserStartState(): PuzzleState {
+  return createInitialPuzzleState(CASE_001_PUZZLE);
+}
+
+function stepPuzzle(state: PuzzleState, action: Partial<AgentAction> & { action: AgentAction['action'] }) {
+  const markNum = action.targetId ? Number.parseInt(String(action.targetId).replace(/^#/, ''), 10) : NaN;
+  const mappedAction =
+    action.action === 'TYPE'
+      ? 'TYPE'
+      : action.action === 'DRAW'
+        ? 'DRAW'
+        : action.action === 'TIMED_CLICK'
+          ? 'TIMED_CLICK'
+          : action.action === 'CLICK'
+            ? 'CLICK'
+            : 'NOOP';
+  const res = applyDecision(CASE_001_PUZZLE, state, {
+    action: mappedAction,
+    mark: Number.isFinite(markNum) ? markNum : null,
+    text: action.textValue ?? undefined,
+    thought: action.thought ?? '',
+  });
   return {
-    ...CASE_001_INITIAL_MICRO_STATE,
-    macroViewId: 'MV-01',
-    selectedRoute: 'none',
-    departureTime: 'none',
-    passengerName: '',
+    nextState: res.next,
+    summary: res.summary,
+    shake: res.shake,
   };
 }
 
@@ -21,7 +43,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
 
   it('CUJ 1: Zero-Action Immediate Close awards 0% (no free points for Exhibit B or D)', () => {
     const startState = createBrowserStartState();
-    const report = calculateScoreReport(CASE_001_EXHIBITS, startState, 0, '#001');
+    const report = calculateScoreReport(CASE_001_EXHIBITS, startState.fields, 0, '#001');
     expect(report.closenessScore).toBe(0);
     expect(report.finalScore).toBe(0);
     for (const ex of report.exhibitEvaluations) {
@@ -33,7 +55,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
   it('CUJ 2: Casual Visual English Prompts traverse all 5 pages to 100% x 1.2x = 120 PTS', () => {
     let game = createInitialGameState({
       caseNumber: '#001',
-      initialMicroState: createBrowserStartState(),
+      initialMicroState: { ...CASE_001_INITIAL_MICRO_STATE },
     });
 
     const prompts = [
@@ -53,7 +75,6 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     }
 
     expect(game.macroViewId).toBe('MV-05');
-    expect(game.microState.macroViewId).toBe('MV-05');
     expect(game.microState.selectedRoute).toBe('tokyo_osaka');
     expect(game.microState.passengerName).toBe('TANAKA');
     expect(game.microState.greenCarSelected).toBe(true);
@@ -70,126 +91,126 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     let state = createBrowserStartState();
 
     // Detour to Tohoku (#2 -> MV-10)
-    const a1 = engine.resolveInstruction(state.macroViewId, state, 'click second card on top right');
-    state = reduceShinkansenMicroState(state, a1).nextState;
-    expect(state.macroViewId).toBe('MV-10');
+    const a1 = engine.resolveInstruction(state.pageId, state.fields, 'click second card on top right');
+    state = stepPuzzle(state, a1).nextState;
+    expect(state.pageId).toBe('MV-10');
 
     // Back (#14 -> MV-01)
-    const a2 = engine.resolveInstruction(state.macroViewId, state, 'click back button');
-    state = reduceShinkansenMicroState(state, a2).nextState;
-    expect(state.macroViewId).toBe('MV-01');
+    const a2 = engine.resolveInstruction(state.pageId, state.fields, 'click back button');
+    state = stepPuzzle(state, a2).nextState;
+    expect(state.pageId).toBe('MV-01');
 
     // Detour to Hokuriku (#3 -> MV-11)
-    const a3 = engine.resolveInstruction(state.macroViewId, state, 'click third card at bottom left');
-    state = reduceShinkansenMicroState(state, a3).nextState;
-    expect(state.macroViewId).toBe('MV-11');
+    const a3 = engine.resolveInstruction(state.pageId, state.fields, 'click third card at bottom left');
+    state = stepPuzzle(state, a3).nextState;
+    expect(state.pageId).toBe('MV-11');
 
     // Back (#14 -> MV-01)
-    const a4 = engine.resolveInstruction(state.macroViewId, state, 'click back button');
-    state = reduceShinkansenMicroState(state, a4).nextState;
-    expect(state.macroViewId).toBe('MV-01');
+    const a4 = engine.resolveInstruction(state.pageId, state.fields, 'click back button');
+    state = stepPuzzle(state, a4).nextState;
+    expect(state.pageId).toBe('MV-01');
 
     // Detour to JRE Points (#4 -> MV-12)
-    const a5 = engine.resolveInstruction(state.macroViewId, state, 'click fourth card at bottom right');
-    state = reduceShinkansenMicroState(state, a5).nextState;
-    expect(state.macroViewId).toBe('MV-12');
+    const a5 = engine.resolveInstruction(state.pageId, state.fields, 'click fourth card at bottom right');
+    state = stepPuzzle(state, a5).nextState;
+    expect(state.pageId).toBe('MV-12');
 
     // Back (#14 -> MV-01)
-    const a6 = engine.resolveInstruction(state.macroViewId, state, 'click back button');
-    state = reduceShinkansenMicroState(state, a6).nextState;
-    expect(state.macroViewId).toBe('MV-01');
+    const a6 = engine.resolveInstruction(state.pageId, state.fields, 'click back button');
+    state = stepPuzzle(state, a6).nextState;
+    expect(state.pageId).toBe('MV-01');
   });
 
   it('CUJ 5: Out-of-Order Premature Command Guard prevents teleporting across pages', () => {
     const startState = createBrowserStartState();
-    const res1 = reduceShinkansenMicroState(startState, {
+    const res1 = stepPuzzle(startState, {
       action: 'CLICK',
       targetId: '#30',
       thought: 'Attempt confirm on Page 01',
     });
-    expect(res1.nextState.macroViewId).toBe('MV-01');
-    expect(res1.nextState.finalConfirmed).toBe(false);
-    expect(res1.summary).toMatch(/not on Page 01/i);
+    expect(res1.nextState.pageId).toBe('MV-01');
+    expect(res1.nextState.fields.finalConfirmed).toBe(false);
+    expect(res1.summary).toMatch(/isn't on this page/i);
   });
 
   it('CUJ 6: Skipping Digital Signature on Page 04 yields 85% (Exhibit D MISSED)', () => {
     let state = createBrowserStartState();
-    state = reduceShinkansenMicroState(state, { action: 'CLICK', targetId: '#1', thought: 'Route' }).nextState;
-    state = reduceShinkansenMicroState(state, {
+    state = stepPuzzle(state, { action: 'CLICK', targetId: '#1', thought: 'Route' }).nextState;
+    state = stepPuzzle(state, {
       action: 'TYPE',
       targetId: '#17',
       textValue: 'TANAKA',
       thought: 'Type TANAKA',
     }).nextState;
-    state = reduceShinkansenMicroState(state, { action: 'TIMED_CLICK', targetId: '#25', thought: 'Green' }).nextState;
-    expect(state.macroViewId).toBe('MV-04');
+    state = stepPuzzle(state, { action: 'TIMED_CLICK', targetId: '#25', thought: 'Green' }).nextState;
+    expect(state.pageId).toBe('MV-04');
 
     // Confirm without signing #27
-    state = reduceShinkansenMicroState(state, { action: 'CLICK', targetId: '#30', thought: 'Confirm' }).nextState;
-    expect(state.macroViewId).toBe('MV-05');
+    state = stepPuzzle(state, { action: 'CLICK', targetId: '#30', thought: 'Confirm' }).nextState;
+    expect(state.pageId).toBe('MV-05');
 
-    const report = calculateScoreReport(CASE_001_EXHIBITS, state, 4, '#001');
+    const report = calculateScoreReport(CASE_001_EXHIBITS, state.fields, 4, '#001');
     expect(report.closenessScore).toBe(85);
-    const exD = report.exhibitEvaluations.find((e) => e.id === 'exhibit_d');
+    const exD = report.exhibitEvaluations.find((e) => e.id === 'D');
     expect(exD?.status).toBe('MISSED');
   });
 
   it('CUJ 7: Typing Wrong Passenger Name (YAMADA) misses Exhibit B until fixed to TANAKA', () => {
     let state = createBrowserStartState();
-    state = reduceShinkansenMicroState(state, { action: 'CLICK', targetId: '#1', thought: 'Route' }).nextState;
-    const typeYamada = engine.resolveInstruction(state.macroViewId, state, 'type YAMADA in passenger name');
-    state = reduceShinkansenMicroState(state, typeYamada).nextState;
-    expect(state.passengerName).toBe('YAMADA');
-    expect(state.macroViewId).toBe('MV-03');
+    state = stepPuzzle(state, { action: 'CLICK', targetId: '#1', thought: 'Route' }).nextState;
+    const typeYamada = engine.resolveInstruction(state.pageId, state.fields, 'type YAMADA in passenger name');
+    state = stepPuzzle(state, typeYamada).nextState;
+    expect(state.fields.passengerName).toBe('YAMADA');
+    expect(state.pageId).toBe('MV-03');
 
     // If evaluated with YAMADA, Exhibit B is MISSED
-    const reportWrong = calculateScoreReport(CASE_001_EXHIBITS, state, 2, '#001');
-    expect(reportWrong.exhibitEvaluations.find((e) => e.id === 'exhibit_b')?.status).toBe('MISSED');
+    const reportWrong = calculateScoreReport(CASE_001_EXHIBITS, state.fields, 2, '#001');
+    expect(reportWrong.exhibitEvaluations.find((e) => e.id === 'B')?.status).toBe('MISSED');
 
     // Go back (#14) to Page 02 and fix to TANAKA
-    state = reduceShinkansenMicroState(state, { action: 'CLICK', targetId: '#14', thought: 'Back' }).nextState;
-    expect(state.macroViewId).toBe('MV-02');
-    const typeTanaka = engine.resolveInstruction(state.macroViewId, state, 'type TANAKA in passenger name');
-    state = reduceShinkansenMicroState(state, typeTanaka).nextState;
-    expect(state.passengerName).toBe('TANAKA');
-    const reportFixed = calculateScoreReport(CASE_001_EXHIBITS, state, 4, '#001');
-    expect(reportFixed.exhibitEvaluations.find((e) => e.id === 'exhibit_b')?.status).toBe('VERIFIED');
+    state = stepPuzzle(state, { action: 'CLICK', targetId: '#14', thought: 'Back' }).nextState;
+    expect(state.pageId).toBe('MV-02');
+    const typeTanaka = engine.resolveInstruction(state.pageId, state.fields, 'type TANAKA in passenger name');
+    state = stepPuzzle(state, typeTanaka).nextState;
+    expect(state.fields.passengerName).toBe('TANAKA');
+    const reportFixed = calculateScoreReport(CASE_001_EXHIBITS, state.fields, 4, '#001');
+    expect(reportFixed.exhibitEvaluations.find((e) => e.id === 'B')?.status).toBe('VERIFIED');
   });
 
   it('CUJ 12: Page 03 Seat Disambiguation (Ambiguous ¥13,870 tie & Wrong Seat #24 recovery)', () => {
     let state = createBrowserStartState();
-    state = reduceShinkansenMicroState(state, { action: 'CLICK', targetId: '#1', thought: 'Route' }).nextState;
-    state = reduceShinkansenMicroState(state, {
+    state = stepPuzzle(state, { action: 'CLICK', targetId: '#1', thought: 'Route' }).nextState;
+    state = stepPuzzle(state, {
       action: 'TYPE',
       targetId: '#17',
       textValue: 'TANAKA',
       thought: 'Type TANAKA',
     }).nextState;
-    expect(state.macroViewId).toBe('MV-03');
+    expect(state.pageId).toBe('MV-03');
 
     // Ambiguous "click 13,870" triggers NOOP and stays on MV-03
-    const ambigAction = engine.resolveInstruction(state.macroViewId, state, 'click 13,870');
+    const ambigAction = engine.resolveInstruction(state.pageId, state.fields, 'click 13,870');
     expect(ambigAction.action).toBe('NOOP');
-    state = reduceShinkansenMicroState(state, ambigAction).nextState;
-    expect(state.macroViewId).toBe('MV-03');
+    state = stepPuzzle(state, ambigAction).nextState;
+    expect(state.pageId).toBe('MV-03');
 
     // Selecting #24 (Nozomi Reserved ¥14,720) stays on MV-03 and does not set greenCarSelected
-    state = reduceShinkansenMicroState(state, { action: 'CLICK', targetId: '#24', thought: 'Reserved' }).nextState;
-    expect(state.macroViewId).toBe('MV-03');
-    expect(state.greenCarSelected).toBe(false);
-    expect(state.seatClass).toBe('ordinary_reserved');
+    state = stepPuzzle(state, { action: 'CLICK', targetId: '#24', thought: 'Reserved' }).nextState;
+    expect(state.pageId).toBe('MV-03');
+    expect(state.fields.greenCarSelected).toBe(false);
+    expect(state.fields.seatClass).toBe('ordinary_reserved');
 
     // Selecting #25 (Green Car ¥13,870) advances to MV-04 and sets greenCarSelected=true
-    const greenAction = engine.resolveInstruction(state.macroViewId, state, 'click green 13,870');
-    state = reduceShinkansenMicroState(state, greenAction).nextState;
-    expect(state.macroViewId).toBe('MV-04');
-    expect(state.greenCarSelected).toBe(true);
+    const greenAction = engine.resolveInstruction(state.pageId, state.fields, 'click green 13,870');
+    state = stepPuzzle(state, greenAction).nextState;
+    expect(state.pageId).toBe('MV-04');
+    expect(state.fields.greenCarSelected).toBe(true);
   });
 
   it('CUJ 13: 6-Line Exhaustion Auto-Closes Case File with 1.0x multiplier', () => {
     let game = createInitialGameState({
       caseNumber: '#001',
-      initialMicroState: createBrowserStartState(),
+      initialMicroState: { ...CASE_001_INITIAL_MICRO_STATE },
     });
 
     const sixPrompts = [
@@ -244,7 +265,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
 
     try {
       const startState = createBrowserStartState();
-      const actionNano = await connector.resolveInstruction('MV-01', startState, 'click top left green card');
+      const actionNano = await connector.resolveInstruction('MV-01', startState.fields, 'click top left green card');
       expect(promptCalled).toBe(true);
       expect(actionNano.action).toBe('CLICK');
       expect(actionNano.targetId).toBe('#1');
@@ -254,7 +275,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
 
     // 2. Without window.LanguageModel (e.g. mobile Safari), still resolves 100% client-side with zero network calls
     const startState2 = createBrowserStartState();
-    const actionLocal = await connector.resolveInstruction('MV-02', startState2, 'type TANAKA in the passenger name box');
+    const actionLocal = await connector.resolveInstruction('MV-02', startState2.fields, 'type TANAKA in the passenger name box');
     expect(actionLocal.action).toBe('TYPE');
     expect(actionLocal.targetId).toBe('#17');
     expect(actionLocal.textValue).toBe('TANAKA');
@@ -269,7 +290,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
 
     let game = createInitialGameState({
       caseNumber: '#001',
-      initialMicroState: createBrowserStartState(),
+      initialMicroState: { ...CASE_001_INITIAL_MICRO_STATE },
     });
 
     const userPrompts = [

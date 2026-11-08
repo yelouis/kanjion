@@ -274,7 +274,7 @@ describe('Adversarial Coordinate Mapping & Projection Stress Suite', () => {
 
     it('verifies bounding box, center, and gridRef projection for every element', () => {
       for (const el of CASE_001_MV03_ELEMENTS) {
-        const box = el.boundingBox;
+        const box = el.boundingBox ?? gridToBoundingBox(el.gridRef);
 
         // 1. Box dimensions must be strictly positive and fit stage
         expect(box.x).toBeGreaterThanOrEqual(0);
@@ -307,48 +307,42 @@ describe('Adversarial Coordinate Mapping & Projection Stress Suite', () => {
       const el25 = CASE_001_MV03_ELEMENTS.find((el) => el.id === 25);
       expect(el25).toBeDefined();
       expect(el25!.gridRef).toBe('D3');
-      expect(el25!.boundingBox.x).toBe(790);
-      expect(el25!.boundingBox.y).toBe(450);
-      expect(el25!.boundingBox.width).toBe(190);
-      expect(el25!.boundingBox.height).toBe(36);
-      const center25 = getBoxCenter(el25!.boundingBox);
-      expect(center25).toEqual({ x: 885, y: 468 });
+      const center25 = gridToCenter(el25!.gridRef);
+      expect(center25).toEqual({ x: 896, y: 480 });
       expect(pixelToGrid(center25.x, center25.y)).toBe('D3');
 
       // Target #30: Final confirmation button
       const el30 = CASE_001_MV03_ELEMENTS.find((el) => el.id === 30);
       expect(el30).toBeDefined();
       expect(el30!.gridRef).toBe('D4');
-      expect(el30!.boundingBox.x).toBe(810);
-      expect(el30!.boundingBox.y).toBe(704);
-      expect(el30!.boundingBox.width).toBe(190);
-      expect(el30!.boundingBox.height).toBe(32);
-      const center30 = getBoxCenter(el30!.boundingBox);
-      expect(center30).toEqual({ x: 905, y: 720 });
+      const center30 = gridToCenter(el30!.gridRef);
+      expect(center30).toEqual({ x: 896, y: 672 });
       expect(pixelToGrid(center30.x, center30.y)).toBe('D4');
     });
 
     it('analyzes boundary span for wide elements (e.g. Checkbox #28)', () => {
-      // Element #28: [270, 706, 260, 24]
+      // Synthetic wide element [270, 706, 260, 24]
       const el28 = CASE_001_MV03_ELEMENTS.find((el) => el.id === 28);
       expect(el28).toBeDefined();
       expect(el28!.gridRef).toBe('B4');
 
+      const wideBox = tupleToBoundingBox([270, 706, 260, 24]);
+
       // Left edge is at x=270 (in Column B: 256..512)
-      expect(pixelToGrid(el28!.boundingBox.x, el28!.boundingBox.y)).toBe('B4');
+      expect(pixelToGrid(wideBox.x, wideBox.y)).toBe('B4');
 
       // Center is at x=400 (in Column B)
-      const center28 = getBoxCenter(el28!.boundingBox);
+      const center28 = getBoxCenter(wideBox);
       expect(center28.x).toBe(400);
       expect(pixelToGrid(center28.x, center28.y)).toBe('B4');
 
       // Right edge is at x=530 (crosses into Column C: 512..768)
-      const rightX = el28!.boundingBox.x + el28!.boundingBox.width;
+      const rightX = wideBox.x + wideBox.width;
       expect(rightX).toBe(530);
       expect(pixelToGrid(rightX, center28.y)).toBe('C4');
 
       // Demonstrates that boxToGrid uses centroid projection to resolve multi-cell elements deterministically
-      expect(boxToGrid(el28!.boundingBox)).toBe('B4');
+      expect(boxToGrid(wideBox)).toBe('B4');
     });
   });
 

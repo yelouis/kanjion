@@ -1,62 +1,59 @@
 import { describe, it, expect } from 'vitest';
-import { reduceShinkansenMicroState } from '../src/engine/game_reducer';
-import { calculateScoreReport } from '../src/engine/scoring';
 import {
-  CASE_001_INITIAL_MICRO_STATE,
-  CASE_001_EXHIBITS,
-} from '../src/data/puzzles/case_001';
-import type { AgentAction, ShinkansenMicroState } from '../src/types/engine';
+  applyDecision,
+  createInitialPuzzleState,
+  elementsOnPage,
+  evaluateExhibits,
+} from '../src/engine/puzzle_engine';
+import { calculateClosenessScore } from '../src/engine/scoring';
+import { CASE_001_PUZZLE } from '../src/data/puzzles/case_001/puzzle';
+import type { ActionKind, PuzzleState } from '../src/types/puzzle_data';
 
-function serializeMicroState(s: ShinkansenMicroState): string {
+function serializePuzzleState(s: PuzzleState): string {
+  const orderedKeys = Object.keys(CASE_001_PUZZLE.initialFields).sort();
   return JSON.stringify([
-    s.macroViewId,
-    s.selectedRoute,
-    s.departureTime,
-    s.passengerName ?? '',
-    s.seatClass,
-    s.trainName,
-    s.fare,
-    s.greenCarSelected,
-    s.timedWindowHit,
-    (s as unknown as { signatureSigned?: boolean }).signatureSigned ?? false,
-    s.signatureStroke ?? '',
-    s.insuranceTrapHit,
-    s.insuranceCheckboxChecked,
-    s.finalConfirmed,
+    s.pageId,
+    s.previousPageId,
+    ...orderedKeys.map((k) => s.fields[k]),
   ]);
 }
 
-function candidateActionsForPage(macroViewId: string): AgentAction[] {
-  const candidates: AgentAction[] = [];
-  const idsByPage: Record<string, number[]> = {
-    'MV-01': [1, 2, 3, 4, 11, 12],
-    'MV-02': [17, 14, 11, 12],
-    'MV-03': [21, 22, 23, 24, 25, 28, 29, 30, 14, 11, 12],
-    'MV-04': [27, 28, 29, 30, 14, 11, 12],
-    'MV-10': [14, 11, 12],
-    'MV-11': [14, 11, 12],
-    'MV-12': [14, 11, 12],
-  };
-  const ids = idsByPage[macroViewId] ?? [];
-  for (const id of ids) {
-    const targetId = `#${id}`;
-    candidates.push({ action: 'CLICK', targetId, thought: 'bfs click' });
-    if (id === 17) {
-      candidates.push({ action: 'TYPE', targetId, textValue: 'TANAKA', thought: 'bfs type TANAKA' });
-      candidates.push({ action: 'TYPE', targetId, textValue: 'X', thought: 'bfs type X' });
-    }
-    if (id === 27) {
-      candidates.push({ action: 'DRAW', targetId, textValue: 'SHAPE:signature', thought: 'bfs draw' });
+function candidateDecisionsForPage(pageId: string): Array<{
+  pageId: string;
+  mark: number;
+  action: ActionKind;
+  text?: string;
+  stroke?: string;
+}> {
+  const candidates: Array<{
+    pageId: string;
+    mark: number;
+    action: ActionKind;
+    text?: string;
+    stroke?: string;
+  }> = [];
+
+  for (const el of elementsOnPage(CASE_001_PUZZLE, pageId)) {
+    const actions = Object.keys(el.effects) as ActionKind[];
+    for (const action of actions) {
+      if (action === 'TYPE') {
+        candidates.push({ pageId, mark: el.mark, action: 'TYPE', text: 'TANAKA' });
+        candidates.push({ pageId, mark: el.mark, action: 'TYPE', text: 'OTHER' });
+      } else if (action === 'DRAW') {
+        candidates.push({ pageId, mark: el.mark, action: 'DRAW', stroke: 'SHAPE:signature' });
+      } else {
+        candidates.push({ pageId, mark: el.mark, action });
+      }
     }
   }
   return candidates;
 }
 
-describe('Item 3: Solvability BFS', () => {
-  it('★ requires a minimum of 5 actions (matching answerKey.length) to reach closeness 100', () => {
-    const startState: ShinkansenMicroState = { ...CASE_001_INITIAL_MICRO_STATE };
-    const visited = new Set<string>([serializeMicroState(startState)]);
-    const queue: Array<{ state: ShinkansenMicroState; depth: number }> = [
+describe('Item 3 & Item 6: Solvability BFS from Registry', () => {
+  it('★ enumerates actions from puzzle.pages registry and requires a minimum of 5 actions to reach closeness 100', () => {
+    const startState = createInitialPuzzleState(CASE_001_PUZZLE);
+    const visited = new Set<string>([serializePuzzleState(startState)]);
+    const queue: Array<{ state: PuzzleState; depth: number }> = [
       { state: startState, depth: 0 },
     ];
 
@@ -64,27 +61,25 @@ describe('Item 3: Solvability BFS', () => {
 
     while (queue.length > 0) {
       const { state, depth } = queue.shift()!;
-      const report = calculateScoreReport(CASE_001_EXHIBITS, state, depth);
-      if (report.closenessScore === 100) {
+      const evals = evaluateExhibits(CASE_001_PUZZLE, state);
+      const closeness = calculateClosenessScore(evals);
+      if (closeness === 100) {
         minStepsTo100 = depth;
         break;
       }
       if (depth >= 6) continue;
 
-      for (const action of candidateActionsForPage(state.macroViewId)) {
-        const { nextState, nextMacroViewId } = reduceShinkansenMicroState(state, action);
-        const transitioned: ShinkansenMicroState = {
-          ...nextState,
-          macroViewId: nextMacroViewId,
-        };
-        const key = serializeMicroState(transitioned);
+      for (const decision of candidateDecisionsForPage(state.pageId)) {
+        const { next } = applyDecision(CASE_001_PUZZLE, state, decision);
+        const key = serializePuzzleState(next);
         if (!visited.has(key)) {
           visited.add(key);
-          queue.push({ state: transitioned, depth: depth + 1 });
+          queue.push({ state: next, depth: depth + 1 });
         }
       }
     }
 
     expect(minStepsTo100).toBe(5);
+    expect(minStepsTo100).toBe(CASE_001_PUZZLE.answerKey.length);
   });
 });

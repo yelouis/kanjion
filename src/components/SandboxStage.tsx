@@ -120,7 +120,7 @@ export const SandboxStage: React.FC<SandboxStageProps & { children?: React.React
         </div>
 
         {/* 1024x736 Interactive Content Region */}
-        <div className="relative w-full h-[736px] overflow-hidden flex-1">
+        <div className="w-full h-[736px] overflow-hidden flex-1">
           {children}
         </div>
       </div>
