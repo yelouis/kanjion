@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { ExhibitsPanelProps } from '../types/ui';
 import type { StampStatus } from '../types/game';
 import { CASE_001_PUZZLE } from '../data/puzzles/case_001/puzzle';
+import { formatNextCaseStatus, SCHEDULE } from '../data/schedule';
 
 export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
   caseClosed,
@@ -13,10 +14,24 @@ export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
   onCopyClipping,
   onStartPractice,
   onReopenCase,
+  now,
+  schedule = SCHEDULE,
 }) => {
   const [copyFeedback, setCopyFeedback] = useState<boolean>(false);
+  const [liveNow, setLiveNow] = useState<Date>(() => now ?? new Date());
   const handlePractice = onStartPractice ?? onReopenCase;
   const answerKeyLines = answerKey ?? CASE_001_PUZZLE.answerKey;
+
+  useEffect(() => {
+    if (now || !caseClosed) return;
+    const id = setInterval(() => {
+      setLiveNow(new Date());
+    }, 1000);
+    return () => clearInterval(id);
+  }, [now, caseClosed]);
+
+  const effectiveNow = now ?? liveNow;
+  const nextCaseText = formatNextCaseStatus(effectiveNow, schedule);
 
   // Return null or sealed teaser if case is not closed
   if (!caseClosed || !scoreReport) {
@@ -193,6 +208,12 @@ export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
             >
               <span>🔗 This case is inspired by the real JR East booking site, eki-net.com ↗</span>
             </a>
+          </div>
+          <div
+            data-testid="next-case-countdown"
+            className="mt-1 text-xs font-bold text-dossier-muted"
+          >
+            {nextCaseText}
           </div>
         </div>
 

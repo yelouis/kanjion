@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
+import { formatCoverDateHeader } from '../data/schedule';
 
 export interface NewspaperFrontCoverProps {
   caseNumber: string;
   onOpenNewspaper: () => void;
   solvedScore?: number | null;
+  now?: Date;
 }
 
 export const NewspaperFrontCover: React.FC<NewspaperFrontCoverProps> = ({
   caseNumber,
   onOpenNewspaper,
   solvedScore = null,
+  now,
 }) => {
   const [showHowToPlay, setShowHowToPlay] = useState<boolean>(false);
+  const coverDateLine = formatCoverDateHeader(caseNumber || '#001', now ?? new Date());
 
   return (
     <div
@@ -20,7 +24,7 @@ export const NewspaperFrontCover: React.FC<NewspaperFrontCoverProps> = ({
     >
       {/* Top Dateline Strip */}
       <div className="w-full max-w-2xl border-y-2 border-dossier-ink py-1.5 px-3 flex flex-wrap items-center justify-between text-[11px] font-mono-clean uppercase tracking-widest text-dossier-muted">
-        <span>DAILY EDITION • CASE FILE {caseNumber || '#001'}</span>
+        <span data-testid="cover-date-header">{coverDateLine}</span>
         <span className="font-bold text-dossier-ink">THE REDACTED DOSSIER</span>
         <span>6 INSTRUCTIONS MAX</span>
       </div>

@@ -72,8 +72,8 @@ You are an implementor agent with no memory of this project. This file is your s
 
 | Gate | Command | Result on 2026-11-07 |
 |---|---|---|
-| Unit/component | `npm test` | **397 passed / 24 files** (≈ 23.0 s). Runs the shipped multi-page game via `GameConfig` and unified `resolveLine` agent pipeline with cloud tier (items 1–11). |
-| Typecheck + build | `npm run build` | Clean (`tsc -b && vite build`). `dist/assets/index-*.js` 272.68 kB, **84.68 kB gzip** (Firebase lazy-loaded in separate async chunks). CSS 348.08 kB (107.15 kB gzip, includes self-hosted `@fontsource/noto-sans-jp`). |
+| Unit/component | `npm test` | **402 passed / 25 files** (≈ 23.4 s). Runs the shipped multi-page game via `GameConfig` and unified `resolveLine` agent pipeline with cloud tier and daily schedule (items 1–12). |
+| Typecheck + build | `npm run build` | Clean (`tsc -b && vite build`). `dist/assets/index-*.js` 274.18 kB, **85.27 kB gzip** (Firebase lazy-loaded in separate async chunks). CSS 348.08 kB (107.15 kB gzip, includes self-hosted `@fontsource/noto-sans-jp`). |
 | Compiler | `npx tsx tools/compile_puzzle.ts --case 001 --validate` | Exit 0; validates 10 content-hashed 1024×768 SoM PNGs in `public/puzzles/001/som/` and measured boxes in `src/data/puzzles/case_001/manifest.generated.json` (item 9). |
 | E2E | `npm run test:e2e` | **1 passed** (`e2e/smoke.e2e.ts` in `desktop-chromium`). |
 | Lint | — | No lint script exists. |

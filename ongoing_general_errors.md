@@ -107,7 +107,6 @@ Your selection: A
 
 | ID | Severity | Finding | Where | Fixed by |
 |---|---|---|---|---|
-| F-15 | Low | There is no daily schedule or rollover; the one case is hard-coded. | — | Item 12 |
 | F-16 | Low | Phones show the stage at 0.32×, which is too small to read. | `src/components/SandboxStage.tsx:24-59` | Item 13 |
 
 Verify F-1 to F-5 with `npx vitest run test/exploits.test.ts`.
@@ -132,6 +131,7 @@ _(none yet — implementors add entries here as options with a `Your selection:`
 - F-12 — resolved by item 6 (replaced `ShinkansenMicroState` and `reduceShinkansenMicroState` with generic data-driven `PuzzleData` + `applyDecision` in `src/engine/puzzle_engine.ts`, rendered `MV-07` promo modal and `MV-08` news modal in `src/data/puzzles/case_001/Sandbox.tsx`, and deleted dead `MV-06` and `MV-09`)
 - F-13 — resolved by item 6 (deleted `pageCoordMap` and hardcoded bounding boxes from case data, annotated every interactive element and `page_title` with `data-mark` and `data-el`, and measured live DOM centers inside `#sandbox-core` divided by stage scale; item 5 `a8e32aa` updated URL bar to use `currentView.simulatedUrl`)
 - F-14 — resolved by item 2 (renamed Case #042 to Case #001 everywhere, updated share card URL to `https://kanjion-game.web.app`, and rendered lines 1–2 of `scoreReport.shareableClipping` in `ExhibitsPanel.tsx`)
+- F-15 — resolved by item 12 (added `src/data/schedule.ts` with `SCHEDULE`, `PUZZLES`, `todaysPuzzle`, local-date cover header `CASE FILE #{caseNumber} • {date}`, per-puzzle persistence keys, and `Next case in HH:MM:SS` / `Next case: coming soon` countdown in `ExhibitsPanel.tsx`)
 - F-17 — resolved by item 11 (deleted `functions/` and the `functions` block of `firebase.json`; earlier dead code removed in item 1 `5efae7f`, item 2 `a47a14d`, and item 10 `02883e8`)
 - F-18 — resolved by item 5 (blocked `onPaste` and `onDrop` on the instruction input in `DispatchPad.tsx` and updated placeholder to `'Tell your agent what to do (English, max 60 characters)'`)
 - F-19 — resolved by item 9 (named SoM PNG assets with an 8-char SHA-256 content hash `public/puzzles/001/som/<pageId>.<hash8>.png` referenced from `manifest.generated.json`)

@@ -77,6 +77,10 @@ export interface ExhibitsPanelProps {
   onStartPractice?: () => void;
   /** Legacy callback alias to start practice mode. */
   onReopenCase?: () => void;
+  /** Optional current date for schedule countdown formatting. */
+  now?: Date;
+  /** Optional schedule entries for countdown calculation. */
+  schedule?: ReadonlyArray<{ date: string; puzzleId: string }>;
 }
 
 /**

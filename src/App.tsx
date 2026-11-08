@@ -7,6 +7,8 @@ import {
   CASE_001_GENERATED_MANIFEST,
   CASE_001_PUZZLE,
 } from './data/puzzles/case_001';
+import { todaysPuzzle, SCHEDULE, PUZZLES, type ScheduleEntry } from './data/schedule';
+import type { PuzzleData } from './types/puzzle_data';
 import { elementsOnPage } from './engine/puzzle_engine';
 import { waitForColumn, waitForColumnNot } from './engine/flash_clock';
 import { GameConfig, productionConfig } from './config/game_config';
@@ -26,20 +28,28 @@ export type MobileActivePage = 'agent' | 'replay';
 
 export interface AppProps {
   config?: Partial<GameConfig>;
+  now?: Date;
+  schedule?: ReadonlyArray<ScheduleEntry>;
+  puzzleRegistry?: Record<string, PuzzleData>;
 }
 
-const STORAGE_KEY_CASE_001 = 'kanjion:v1:case:001';
+export function getCaseStorageKey(puzzleId: string): string {
+  return `kanjion:v1:case:${puzzleId}`;
+}
 
-function loadPersistedState(storage: Storage | null | undefined): GameState | null {
+export function loadPersistedState(
+  storage: Storage | null | undefined,
+  puzzle: PuzzleData = CASE_001_PUZZLE
+): GameState | null {
   if (!storage) return null;
   try {
-    const raw = storage.getItem(STORAGE_KEY_CASE_001);
+    const raw = storage.getItem(getCaseStorageKey(puzzle.id));
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed || parsed.v !== 1 || !parsed.game || typeof parsed.game !== 'object') {
       return null;
     }
-    const base = createInitialGameState({ caseNumber: '#001' });
+    const base = createInitialGameState({ caseNumber: puzzle.caseNumber, puzzle });
     const officialResult = parsed.officialResult ?? parsed.game.officialResult ?? null;
     const mode = parsed.mode === 'practice' ? 'practice' : 'official';
     const restored: GameState = {
@@ -70,7 +80,11 @@ function loadPersistedState(storage: Storage | null | undefined): GameState | nu
   }
 }
 
-function savePersistedState(storage: Storage | null | undefined, state: GameState): void {
+export function savePersistedState(
+  storage: Storage | null | undefined,
+  state: GameState,
+  puzzleId: string = '001'
+): void {
   if (!storage) return;
   try {
     const { isExecuting: _exec, stageShake: _shake, ...gameWithoutEphemeral } = state;
@@ -80,16 +94,21 @@ function savePersistedState(storage: Storage | null | undefined, state: GameStat
       game: gameWithoutEphemeral,
       officialResult: state.officialResult,
     };
-    storage.setItem(STORAGE_KEY_CASE_001, JSON.stringify(payload));
+    storage.setItem(getCaseStorageKey(puzzleId), JSON.stringify(payload));
   } catch {
     // Ignore storage errors
   }
 }
 
-export const App: React.FC<AppProps> = ({ config }) => {
+export const App: React.FC<AppProps> = ({ config, now, schedule = SCHEDULE, puzzleRegistry = PUZZLES }) => {
   const resolvedConfig = useMemo(
     () => ({ ...productionConfig(), ...config }),
     [config]
+  );
+
+  const activePuzzle = useMemo(
+    () => todaysPuzzle(now ?? new Date(), schedule, puzzleRegistry),
+    [now, schedule, puzzleRegistry]
   );
 
   // 1. Every game starts on Line 01 with all 6 instruction slots available (or restores persisted state on boot)
@@ -101,15 +120,16 @@ export const App: React.FC<AppProps> = ({ config }) => {
         action.type === 'CLOSE_CASE' ||
         action.type === 'START_PRACTICE'
       ) {
-        savePersistedState(resolvedConfig.storage, next);
+        savePersistedState(resolvedConfig.storage, next, activePuzzle.id);
       }
       return next;
     },
     undefined,
     () =>
-      loadPersistedState(resolvedConfig.storage) ??
+      loadPersistedState(resolvedConfig.storage, activePuzzle) ??
       createInitialGameState({
-        caseNumber: '#001',
+        caseNumber: activePuzzle.caseNumber,
+        puzzle: activePuzzle,
       })
   );
 
@@ -524,6 +544,7 @@ export const App: React.FC<AppProps> = ({ config }) => {
           /* --- INITIAL STATE: FRONT PAGE OF THE NEWSPAPER (Krillion Style) --- */
           <NewspaperFrontCover
             caseNumber={state.caseNumber}
+            now={now}
             onOpenNewspaper={() => setIsNewspaperOpen(true)}
             solvedScore={state.officialResult?.finalScore ?? null}
           />
@@ -691,8 +712,10 @@ export const App: React.FC<AppProps> = ({ config }) => {
               officialResult={state.officialResult}
               mode={state.mode}
               caseNumber={state.caseNumber}
-              answerKey={CASE_001_PUZZLE.answerKey}
+              answerKey={activePuzzle.answerKey}
               onStartPractice={handleStartPractice}
+              now={now}
+              schedule={schedule}
             />
           </section>
         </div>
