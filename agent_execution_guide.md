@@ -1,4 +1,4 @@
-# Kanjion — Agent Execution Guide · Active Build: Integrity Fixes + Free-Model Agent · 2026-11-07
+# Kanjion — Agent Execution Guide · Queue Complete · 2026-11-07
 
 You are an implementor agent with no memory of this project. This file is your single entry point. Read it top to bottom before you touch code. Then work the queue in §2 one item at a time, using **THE LOOP** at the end.
 
@@ -72,10 +72,10 @@ You are an implementor agent with no memory of this project. This file is your s
 
 | Gate | Command | Result on 2026-11-07 |
 |---|---|---|
-| Unit/component | `npm test` | **402 passed / 25 files** (≈ 23.4 s). Runs the shipped multi-page game via `GameConfig` and unified `resolveLine` agent pipeline with cloud tier and daily schedule (items 1–12). |
-| Typecheck + build | `npm run build` | Clean (`tsc -b && vite build`). `dist/assets/index-*.js` 274.18 kB, **85.27 kB gzip** (Firebase lazy-loaded in separate async chunks). CSS 348.08 kB (107.15 kB gzip, includes self-hosted `@fontsource/noto-sans-jp`). |
+| Unit/component | `npm test` | **402 passed / 25 files** (≈ 23.0 s). Runs the shipped multi-page game via `GameConfig` and unified `resolveLine` agent pipeline with cloud tier, daily schedule, and phone zoom (items 1–13). |
+| Typecheck + build | `npm run build` | Clean (`tsc -b && vite build`). `dist/assets/index-*.js` 275.75 kB, **85.76 kB gzip** (Firebase lazy-loaded in separate async chunks). CSS 348.25 kB (107.20 kB gzip, includes self-hosted `@fontsource/noto-sans-jp`). |
 | Compiler | `npx tsx tools/compile_puzzle.ts --case 001 --validate` | Exit 0; validates 10 content-hashed 1024×768 SoM PNGs in `public/puzzles/001/som/` and measured boxes in `src/data/puzzles/case_001/manifest.generated.json` (item 9). |
-| E2E | `npm run test:e2e` | **1 passed** (`e2e/smoke.e2e.ts` in `desktop-chromium`). |
+| E2E | `npm run test:e2e` | **2 passed** (`e2e/smoke.e2e.ts` in `desktop-chromium` and `mobile-chromium`). |
 | Lint | — | No lint script exists. |
 | Exploit suite | `npx vitest run test/exploits.test.ts` | **11 passed**; F-1, F-2, F-3, F-4, F-5, unpinned answer-key solvability, 100-sample determinism, and goal blindness all verified (item 10). |
 
@@ -1165,10 +1165,10 @@ Then go on to the next item.
 
 ## Definition of Done
 
-- [ ] Items 1–13 are committed, each with its ★ tests passing.
-- [ ] `npm test`, `npm run build` and `npm run test:e2e` are green, and the main JS is ≤ 120 kB gzip.
-- [ ] `test/exploits.test.ts` and `test/solvability.test.ts` are green.
-- [ ] Every F-entry is under Resolved. Every Blocked entry is either answered by the owner or still listed with its options.
-- [ ] `concepts_brief.md` matches the shipped behavior.
-- [ ] §1 shows the final numbers, and the title says **Queue Complete**.
-- [ ] **Queue empty → stop. Don't invent work.** The only legitimate triggers for more work are a message from the owner, an answered Blocked entry, or a DEF-n trigger firing.
+- [x] Items 1–13 are committed, each with its ★ tests passing.
+- [x] `npm test`, `npm run build` and `npm run test:e2e` are green, and the main JS is ≤ 120 kB gzip.
+- [x] `test/exploits.test.ts` and `test/solvability.test.ts` are green.
+- [x] Every F-entry is under Resolved. Every Blocked entry is either answered by the owner or still listed with its options.
+- [x] `concepts_brief.md` matches the shipped behavior.
+- [x] §1 shows the final numbers, and the title says **Queue Complete**.
+- [x] **Queue empty → stop. Don't invent work.** The only legitimate triggers for more work are a message from the owner, an answered Blocked entry, or a DEF-n trigger firing.

@@ -52,6 +52,10 @@ export interface SandboxStageProps {
   somElements?: SoMElement[];
   /** Callback for interactive element clicks (if in manual/practice mode). */
   onElementClick?: (elementId: number | string) => void;
+  /** Whether phone 2x zoom mode is active. */
+  isZoomed?: boolean;
+  /** Optional trigger counter to re-center scroll after a dispatched line. */
+  scrollTrigger?: number;
 }
 
 /**

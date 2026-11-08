@@ -81,4 +81,10 @@
   .newspaper-unfold-anim {
     animation: newspaperUnfold 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
+
+  @media (max-width: 767px) {
+    .newspaper-unfold-anim {
+      animation: none;
+    }
+  }
 }

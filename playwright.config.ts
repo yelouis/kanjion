@@ -9,9 +9,20 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop-chromium',
+      grepInvert: /phone zoom/,
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1440, height: 900 },
+      },
+    },
+    {
+      name: 'mobile-chromium',
+      grep: /phone zoom/,
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 375, height: 812 },
+        isMobile: true,
+        hasTouch: true,
       },
     },
   ],

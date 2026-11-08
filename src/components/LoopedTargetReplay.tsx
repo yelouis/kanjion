@@ -12,6 +12,8 @@ export interface LoopedTargetReplayProps {
   isExpanded?: boolean;
   /** Callback to toggle expanded/compact replay size */
   onToggleExpand?: () => void;
+  /** Whether phone 2x zoom mode is active */
+  isZoomed?: boolean;
   /** Whether the replay automatically loops */
   autoplay?: boolean;
   /** Optional puzzle override (defaults to CASE_001_PUZZLE) */
@@ -252,6 +254,7 @@ export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({
   className = '',
   isExpanded = false,
   onToggleExpand,
+  isZoomed = false,
   autoplay = true,
   puzzle = CASE_001_PUZZLE,
 }) => {
@@ -273,7 +276,7 @@ export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({
   useEffect(() => {
     const updateScale = () => {
       if (outerRef.current) {
-        const w = outerRef.current.clientWidth;
+        const w = Math.max(outerRef.current.clientWidth, outerRef.current.offsetWidth);
         if (w > 0) {
           setScale(Math.min(1, w / 1024));
         }
@@ -293,6 +296,8 @@ export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({
       observer?.disconnect();
     };
   }, [isExpanded]);
+
+  const effectiveScale = isZoomed ? Math.min(1, 2 * scale) : scale;
 
   // Advance replay-local clock when autoplay is enabled and not paused
   useEffect(() => {
@@ -498,10 +503,15 @@ export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({
               : 'Click to expand demo replay'
             : undefined
         }
-        className={`w-full overflow-hidden bg-stone-900 relative group ${
+        className={`w-full max-w-full ${
+          isZoomed ? 'overflow-auto' : 'overflow-hidden'
+        } bg-stone-900 relative group ${
           onToggleExpand ? 'cursor-zoom-in' : ''
         }`}
-        style={{ height: `${scaledHeight}px` }}
+        style={{
+          height: `${scaledHeight}px`,
+          touchAction: isZoomed ? 'pan-x pan-y' : undefined,
+        }}
       >
         {onToggleExpand && (
           <div className="absolute bottom-2 right-2 z-40 px-2 py-0.5 bg-stone-900/85 text-amber-300 border border-amber-400/70 font-mono-clean font-bold text-[10px] uppercase tracking-wider pointer-events-none shadow-sm">
@@ -509,56 +519,68 @@ export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({
           </div>
         )}
         <div
-          ref={stageRef}
-          style={{
-            width: '1024px',
-            height: '768px',
-            transform: `scale(${scale})`,
-            transformOrigin: 'top left',
-          }}
-          className="relative pointer-events-none select-none bg-white overflow-hidden"
+          style={
+            isZoomed
+              ? {
+                  width: `${Math.round(1024 * effectiveScale)}px`,
+                  height: `${Math.round(768 * effectiveScale)}px`,
+                  overflow: 'hidden',
+                }
+              : undefined
+          }
         >
-          {/* Exact 1:1 Unredacted Multi-Page Shinkansen Webpage */}
-          <Sandbox
-            state={replayState}
-            activeFlashColumn={activeFlashColumn}
-            signatureProgress={sigProgress}
-          />
-
-          {/* Animated Mouse Cursor + Click Glow Only (No Text Callouts) */}
           <div
-            data-testid="replay-cursor"
+            ref={stageRef}
             style={{
-              left: `${(cursorX / 1024) * 100}%`,
-              top: `${(cursorY / 768) * 100}%`,
+              width: '1024px',
+              height: '768px',
+              transform: `scale(${effectiveScale})`,
+              transformOrigin: 'top left',
             }}
-            className="absolute z-30 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-all duration-75 ease-linear"
+            className="relative pointer-events-none select-none bg-white overflow-hidden"
           >
-            {/* Glowing Click / Draw Ripple */}
-            {isClicking && (
-              <>
-                <div className="absolute -inset-6 rounded-full border-4 border-amber-400 bg-amber-300/40 animate-ping" />
-                <div className="absolute -inset-4 rounded-full border-2 border-red-600 bg-amber-400/50 shadow-[0_0_24px_rgba(250,204,21,0.95)]" />
-              </>
-            )}
+            {/* Exact 1:1 Unredacted Multi-Page Shinkansen Webpage */}
+            <Sandbox
+              state={replayState}
+              activeFlashColumn={activeFlashColumn}
+              signatureProgress={sigProgress}
+            />
 
-            {/* High-Contrast Pointer Arrow */}
-            <svg
-              width="34"
-              height="34"
-              viewBox="0 0 28 28"
-              className={`drop-shadow-[0_3px_6px_rgba(0,0,0,0.65)] transition-transform duration-100 ${
-                isClicking ? 'scale-90' : 'scale-100'
-              }`}
+            {/* Animated Mouse Cursor + Click Glow Only (No Text Callouts) */}
+            <div
+              data-testid="replay-cursor"
+              style={{
+                left: `${(cursorX / 1024) * 100}%`,
+                top: `${(cursorY / 768) * 100}%`,
+              }}
+              className="absolute z-30 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-all duration-75 ease-linear"
             >
-              <path
-                d="M4 2 L4 22 L9.5 17 L13.5 25 L17 23.5 L13 15.5 L21 15.5 Z"
-                fill="#FACC15"
-                stroke="#111111"
-                strokeWidth="2.2"
-                strokeLinejoin="round"
-              />
-            </svg>
+              {/* Glowing Click / Draw Ripple */}
+              {isClicking && (
+                <>
+                  <div className="absolute -inset-6 rounded-full border-4 border-amber-400 bg-amber-300/40 animate-ping" />
+                  <div className="absolute -inset-4 rounded-full border-2 border-red-600 bg-amber-400/50 shadow-[0_0_24px_rgba(250,204,21,0.95)]" />
+                </>
+              )}
+
+              {/* High-Contrast Pointer Arrow */}
+              <svg
+                width="34"
+                height="34"
+                viewBox="0 0 28 28"
+                className={`drop-shadow-[0_3px_6px_rgba(0,0,0,0.65)] transition-transform duration-100 ${
+                  isClicking ? 'scale-90' : 'scale-100'
+                }`}
+              >
+                <path
+                  d="M4 2 L4 22 L9.5 17 L13.5 25 L17 23.5 L13 15.5 L21 15.5 Z"
+                  fill="#FACC15"
+                  stroke="#111111"
+                  strokeWidth="2.2"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
           </div>
         </div>
       </div>

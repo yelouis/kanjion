@@ -140,6 +140,8 @@ export const App: React.FC<AppProps> = ({ config, now, schedule = SCHEDULE, puzz
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [mobilePage, setMobilePage] = useState<MobileActivePage>('agent');
   const [isReplayExpanded, setIsReplayExpanded] = useState<boolean>(false);
+  const [isAgentZoomed, setIsAgentZoomed] = useState<boolean>(false);
+  const [isReplayZoomed, setIsReplayZoomed] = useState<boolean>(false);
 
   // Live pre-commit choreography states so mouse movement, typing, and drawing feel unhurried & player-controlled
   const [previewCursor, setPreviewCursor] = useState<{
@@ -606,7 +608,7 @@ export const App: React.FC<AppProps> = ({ config, now, schedule = SCHEDULE, puzz
                  ------------------------------------------------------------- */}
               <div
                 data-testid="newspaper-left-page"
-                className={`${
+                className={`min-w-0 ${
                   isReplayExpanded ? 'lg:col-span-5' : 'lg:col-span-8'
                 } lg:pr-5 lg:border-r-4 lg:border-double lg:border-dossier-ink space-y-3 transition-all duration-300 ${
                   mobilePage === 'replay' ? 'hidden lg:block' : 'block'
@@ -618,6 +620,14 @@ export const App: React.FC<AppProps> = ({ config, now, schedule = SCHEDULE, puzz
                     <span className="px-1.5 py-0.5 bg-dossier-ink text-dossier-paper">LEFT PAGE</span>
                     <span>YOUR AGENT&apos;S WEBPAGE</span>
                   </span>
+                  <button
+                    type="button"
+                    data-testid="btn-agent-zoom"
+                    onClick={() => setIsAgentZoomed((prev) => !prev)}
+                    className="md:hidden px-2 py-0.5 bg-dossier-card border border-dossier-ink font-mono-clean font-bold text-xs cursor-pointer"
+                  >
+                    {isAgentZoomed ? '↙ Fit' : '🔍 Zoom'}
+                  </button>
                 </div>
 
                 {/* Live Sandbox Webpage */}
@@ -625,8 +635,14 @@ export const App: React.FC<AppProps> = ({ config, now, schedule = SCHEDULE, puzz
                   <SandboxStage
                     macroViewId={displayedPuzzleState.pageId}
                     microState={displayedPuzzleState}
-                    agentCursor={state.agentCursor}
+                    agentCursor={{
+                      ...state.agentCursor,
+                      xPercent: displayedCursorX,
+                      yPercent: displayedCursorY,
+                    }}
                     stageShake={state.stageShake}
+                    isZoomed={isAgentZoomed}
+                    scrollTrigger={state.telegrams.length}
                   >
                     <Sandbox
                       state={displayedPuzzleState}
@@ -654,7 +670,7 @@ export const App: React.FC<AppProps> = ({ config, now, schedule = SCHEDULE, puzz
                  ------------------------------------------------------------- */}
               <div
                 data-testid="newspaper-right-page"
-                className={`${
+                className={`min-w-0 ${
                   isReplayExpanded ? 'lg:col-span-7' : 'lg:col-span-4'
                 } lg:pl-5 space-y-3 transition-all duration-300 ${
                   mobilePage === 'agent' ? 'hidden lg:block' : 'block'
@@ -668,6 +684,14 @@ export const App: React.FC<AppProps> = ({ config, now, schedule = SCHEDULE, puzz
                     </span>
                     <span>TARGET REPLAY (CLICK TO {isReplayExpanded ? 'SHRINK' : 'EXPAND'})</span>
                   </span>
+                  <button
+                    type="button"
+                    data-testid="btn-replay-zoom"
+                    onClick={() => setIsReplayZoomed((prev) => !prev)}
+                    className="md:hidden px-2 py-0.5 bg-dossier-card border border-dossier-ink font-mono-clean font-bold text-xs cursor-pointer"
+                  >
+                    {isReplayZoomed ? '↙ Fit' : '🔍 Zoom'}
+                  </button>
                 </div>
 
                 {/* Continuous Looped Target Video (1:1 Unredacted Copy of the Site) */}
@@ -675,6 +699,7 @@ export const App: React.FC<AppProps> = ({ config, now, schedule = SCHEDULE, puzz
                   <LoopedTargetReplay
                     isExpanded={isReplayExpanded}
                     onToggleExpand={() => setIsReplayExpanded((prev) => !prev)}
+                    isZoomed={isReplayZoomed}
                     autoplay={resolvedConfig.replayAutoplay}
                   />
                 </section>
