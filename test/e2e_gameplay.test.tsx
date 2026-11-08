@@ -56,8 +56,7 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
 
       // Header Branding & Metadata
       expect(screen.getByText('KANJION')).toBeInTheDocument();
-      expect(screen.getByText(/CASE FILE #042/i)).toBeInTheDocument();
-      expect(screen.getByText(/COPY-PASTE DISABLED/i)).toBeInTheDocument();
+      expect(screen.getByText(/CASE FILE #001/i)).toBeInTheDocument();
 
       // Sealed status pill active
       const sealedPill = container.querySelector('#sealed-status-pill');
@@ -215,7 +214,7 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
 
       expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1);
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-        expect.stringContaining('KANJION #042 🇯🇵 — 100% × 1.2x = 120 PTS\n🟩🟩🟩🟩🟩 (5/6 Telegrams Sent)')
+        'KANJION #001 🇯🇵 — 100% × 1.2x = 120 PTS\n🟩🟩🟩🟩🟩 (5/6 Telegrams Sent)\nhttps://kanjion-game.web.app'
       );
       expect(screen.getByText(/✓ DISPATCH CLIPPING COPIED!/i)).toBeInTheDocument();
 
@@ -234,58 +233,6 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       // Dispatch pad restored at Line 06
       expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 06 / 06');
       expect(container.querySelector('#telegram-input')).toBeInTheDocument();
-    });
-  });
-
-  // =========================================================================
-  // SUITE 2: Target Ghost Replay Toggle & Anti-Leak Redaction Mask
-  // =========================================================================
-  describe('Suite 2: Target Ghost Replay Overlay & Redaction Integrity', () => {
-    it('toggles vector trajectory and masks all text behind 14 solid black redaction bars', async () => {
-      const { container } = render(
-        <App config={{ startOnCover: false, animationScale: 0, replayAutoplay: false }} />
-      );
-
-      const ghostToggleBtn = screen.getByRole('button', { name: /Target Ghost Replay/i });
-      expect(ghostToggleBtn).toHaveTextContent(/Target Ghost Replay: OFF/i);
-      expect(container.querySelector('#ghost-trace-overlay')).not.toBeInTheDocument();
-
-      // Toggle ON
-      await act(async () => {
-        fireEvent.click(ghostToggleBtn);
-      });
-
-      expect(ghostToggleBtn).toHaveTextContent(/Target Ghost Replay: ON/i);
-      const overlay = container.querySelector('#ghost-trace-overlay');
-      expect(overlay).toBeInTheDocument();
-
-      // Vector Trajectory SVG path
-      const trajectoryPath = container.querySelector('#ghost-trajectory-paths path');
-      expect(trajectoryPath).toBeInTheDocument();
-
-      // Waypoints at (885, 468) and (905, 720)
-      expect(screen.getByText(/TARGET CLICK @ 0:03 \(COL D, ROW 3\)/i)).toBeInTheDocument();
-      expect(screen.getByText(/TARGET CLICK @ 0:05 \(COL D, ROW 4\)/i)).toBeInTheDocument();
-
-      // Redaction Marker Mask: Exactly 14 solid black redaction bars
-      const redactionMask = container.querySelector('#redaction-marker-mask');
-      expect(redactionMask).toBeInTheDocument();
-      const rects = redactionMask?.querySelectorAll('rect');
-      expect(rects?.length).toBe(14);
-
-      // Verify no plain Japanese fare text is leaked in the overlay
-      expect(overlay?.textContent).not.toContain('¥13,870');
-      expect(overlay?.textContent).not.toContain('ひかり 515号');
-      expect(overlay?.textContent).not.toContain('のぞみ 24号');
-
-      // Dismiss overlay via close button
-      const closeOverlayBtn = screen.getByRole('button', { name: /✕ RETURN TO DOSSIER/i });
-      await act(async () => {
-        fireEvent.click(closeOverlayBtn);
-      });
-
-      expect(container.querySelector('#ghost-trace-overlay')).not.toBeInTheDocument();
-      expect(ghostToggleBtn).toHaveTextContent(/Target Ghost Replay: OFF/i);
     });
   });
 
@@ -415,26 +362,6 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       });
 
       expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 02 / 06');
-    });
-  });
-
-  // =========================================================================
-  // SUITE 6: Dual-Mode Backend Toggle
-  // =========================================================================
-  describe('Suite 6: Dual-Mode Execution & Set-of-Mark Overlay', () => {
-    it('toggles backend execution mode between Offline and Cloud Vision', async () => {
-      const { container } = render(
-        <App config={{ startOnCover: false, animationScale: 0, replayAutoplay: false }} />
-      );
-
-      const modeBtn = container.querySelector('#btn-mode-toggle') as HTMLButtonElement;
-      expect(modeBtn).toHaveTextContent(/Mode: Cloud Vision/i);
-
-      await act(async () => {
-        fireEvent.click(modeBtn);
-      });
-
-      expect(modeBtn).toHaveTextContent(/Mode: Offline/i);
     });
   });
 });

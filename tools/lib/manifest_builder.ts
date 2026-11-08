@@ -149,9 +149,9 @@ export function buildDeclarativeManifest(manifest: PuzzleManifest): Record<strin
   });
 
   return {
-    caseNumber: manifest.caseNumber || '#042',
-    id: manifest.id || (manifest.caseNumber ? manifest.caseNumber.replace(/^#/, '') : '042'),
-    slug: manifest.slug || 'case_042_shinkansen',
+    caseNumber: manifest.caseNumber || '#001',
+    id: manifest.id || (manifest.caseNumber ? manifest.caseNumber.replace(/^#/, '') : '001'),
+    slug: manifest.slug || 'case_001_shinkansen',
     title: manifest.title,
     difficulty: manifest.difficulty,
     locale: manifest.locale || 'ja',

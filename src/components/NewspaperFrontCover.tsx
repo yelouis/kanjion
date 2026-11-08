@@ -18,8 +18,7 @@ export const NewspaperFrontCover: React.FC<NewspaperFrontCoverProps> = ({
     >
       {/* Top Dateline Strip */}
       <div className="w-full max-w-2xl border-y-2 border-dossier-ink py-1.5 px-3 flex flex-wrap items-center justify-between text-[11px] font-mono-clean uppercase tracking-widest text-dossier-muted">
-        <span>DAILY EDITION • CASE FILE #001</span>
-        <span className="sr-only">CASE {caseNumber}</span>
+        <span>DAILY EDITION • CASE FILE {caseNumber || '#001'}</span>
         <span className="font-bold text-dossier-ink">THE REDACTED DOSSIER</span>
         <span>6 INSTRUCTIONS MAX</span>
       </div>

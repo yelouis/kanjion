@@ -4,16 +4,13 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import {
   SandboxStage,
   ShinkansenSandbox,
-  CoordinateRulers,
-  GhostReplay,
   ExhibitsPanel,
   DispatchPad,
 } from '../src/components';
 import {
-  CASE_042_INITIAL_MICRO_STATE,
-  CASE_042_GHOST_REPLAY,
-  CASE_042_EXHIBITS,
-} from '../src/data/puzzles/case_042';
+  CASE_001_INITIAL_MICRO_STATE,
+  CASE_001_EXHIBITS,
+} from '../src/data/puzzles/case_001';
 import {
   calculateScoreReport,
   evaluateAllExhibits,
@@ -21,7 +18,6 @@ import {
   calculateFinalScore,
 } from '../src/engine/scoring';
 import type { ScoreReport, AgentCursorState } from '../src/types/game';
-import { STAGE_WIDTH, STAGE_HEIGHT, COLUMN_WIDTH, ROW_HEIGHT } from '../src/utils/coordinate_projector';
 
 const defaultCursor: AgentCursorState = {
   xPercent: 50,
@@ -67,10 +63,8 @@ describe('Adversarial Challenge 1: Responsive Viewport Scaling & Stage Geometry 
       const { unmount } = render(
         <SandboxStage
           macroViewId="MV-03"
-          microState={CASE_042_INITIAL_MICRO_STATE}
+          microState={CASE_001_INITIAL_MICRO_STATE}
           agentCursor={defaultCursor}
-          ghostReplayActive={false}
-          somOverlayActive={false}
           stageShake={false}
         />
       );
@@ -131,10 +125,8 @@ describe('Adversarial Challenge 1: Responsive Viewport Scaling & Stage Geometry 
       const { unmount } = render(
         <SandboxStage
           macroViewId="MV-03"
-          microState={CASE_042_INITIAL_MICRO_STATE}
+          microState={CASE_001_INITIAL_MICRO_STATE}
           agentCursor={defaultCursor}
-          ghostReplayActive={false}
-          somOverlayActive={false}
           stageShake={false}
         />
       );
@@ -177,10 +169,8 @@ describe('Adversarial Challenge 1: Responsive Viewport Scaling & Stage Geometry 
     render(
       <SandboxStage
         macroViewId="MV-03"
-        microState={CASE_042_INITIAL_MICRO_STATE}
+        microState={CASE_001_INITIAL_MICRO_STATE}
         agentCursor={defaultCursor}
-        ghostReplayActive={false}
-        somOverlayActive={false}
         stageShake={false}
       />
     );
@@ -211,10 +201,8 @@ describe('Adversarial Challenge 1: Responsive Viewport Scaling & Stage Geometry 
     render(
       <SandboxStage
         macroViewId="MV-03"
-        microState={CASE_042_INITIAL_MICRO_STATE}
+        microState={CASE_001_INITIAL_MICRO_STATE}
         agentCursor={defaultCursor}
-        ghostReplayActive={false}
-        somOverlayActive={false}
         stageShake={false}
         scaleFactor={0.5}
       />
@@ -240,10 +228,8 @@ describe('Adversarial Challenge 1: Responsive Viewport Scaling & Stage Geometry 
     const { unmount } = render(
       <SandboxStage
         macroViewId="MV-03"
-        microState={CASE_042_INITIAL_MICRO_STATE}
+        microState={CASE_001_INITIAL_MICRO_STATE}
         agentCursor={defaultCursor}
-        ghostReplayActive={false}
-        somOverlayActive={false}
         stageShake={false}
       />
     );
@@ -254,74 +240,13 @@ describe('Adversarial Challenge 1: Responsive Viewport Scaling & Stage Geometry 
   });
 });
 
-describe('Adversarial Challenge 2: Coordinate Rulers Framing & Responsive Collapse', () => {
-  it('mathematically aligns 4 columns to 256px each and 4 rows to 192px each', () => {
-    expect(STAGE_WIDTH).toBe(1024);
-    expect(STAGE_HEIGHT).toBe(768);
-    expect(COLUMN_WIDTH).toBe(256);
-    expect(ROW_HEIGHT).toBe(192);
-    expect(COLUMN_WIDTH * 4).toBe(STAGE_WIDTH);
-    expect(ROW_HEIGHT * 4).toBe(STAGE_HEIGHT);
-
-    render(
-      <CoordinateRulers>
-        <div data-testid="stage-slot">MOCK STAGE</div>
-      </CoordinateRulers>
-    );
-
-    // Verify top horizontal ruler contains all 4 column boundaries
-    expect(screen.getByText(/COL A \(LEFT: 0–256\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/COL B \(CENTER-LEFT: 256–512\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/COL C \(CENTER-RIGHT: 512–768\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/COL D \(RIGHT: 768–1024\)/i)).toBeInTheDocument();
-
-    // Verify left row ruler contains all 4 rows
-    expect(screen.getByText('ROW 1')).toBeInTheDocument();
-    expect(screen.getByText('ROW 2')).toBeInTheDocument();
-    expect(screen.getByText('ROW 3')).toBeInTheDocument();
-    expect(screen.getByText('ROW 4')).toBeInTheDocument();
-  });
-
-  it('enforces responsive collapse class "hidden sm:flex" on left row ruler', () => {
-    const { container } = render(
-      <CoordinateRulers>
-        <div>STAGE</div>
-      </CoordinateRulers>
-    );
-
-    const rowRulerContainer = container.querySelector('.hidden.sm\\:flex');
-    expect(rowRulerContainer).toBeInTheDocument();
-    expect(rowRulerContainer).toHaveClass('w-16', 'shrink-0', 'border-r-2', 'border-dossier-ink');
-  });
-
-  it('gracefully formats custom columns and row identifiers', () => {
-    render(
-      <CoordinateRulers
-        columns={['W', 'X', 'Y', 'Z']}
-        rows={['10', '20']}
-      >
-        <div>CUSTOM RULER CONTENT</div>
-      </CoordinateRulers>
-    );
-
-    expect(screen.getByText(/COL W/i)).toBeInTheDocument();
-    expect(screen.getByText(/COL X/i)).toBeInTheDocument();
-    expect(screen.getByText(/COL Y/i)).toBeInTheDocument();
-    expect(screen.getByText(/COL Z/i)).toBeInTheDocument();
-    expect(screen.getByText('ROW 10')).toBeInTheDocument();
-    expect(screen.getByText('ROW 20')).toBeInTheDocument();
-  });
-});
-
 describe('Adversarial Challenge 3: Anti-Copy & Clipboard Tamper Lockout', () => {
   it('intercepts all 5 prohibited events (copy, cut, paste, dragstart, contextmenu) on sandbox stage', () => {
     render(
       <SandboxStage
         macroViewId="MV-03"
-        microState={CASE_042_INITIAL_MICRO_STATE}
+        microState={CASE_001_INITIAL_MICRO_STATE}
         agentCursor={defaultCursor}
-        ghostReplayActive={false}
-        somOverlayActive={false}
         stageShake={false}
       />
     );
@@ -338,7 +263,7 @@ describe('Adversarial Challenge 3: Anti-Copy & Clipboard Tamper Lockout', () => 
 
   it('verifies deep event bubbling protection from child elements within the sandbox', () => {
     const mv03State = {
-      ...CASE_042_INITIAL_MICRO_STATE,
+      ...CASE_001_INITIAL_MICRO_STATE,
       macroViewId: 'MV-03' as const,
       selectedRoute: 'tokyo_shinosaka' as const,
       departureTime: '14:30' as const,
@@ -349,8 +274,6 @@ describe('Adversarial Challenge 3: Anti-Copy & Clipboard Tamper Lockout', () => 
         macroViewId="MV-03"
         microState={mv03State}
         agentCursor={defaultCursor}
-        ghostReplayActive={false}
-        somOverlayActive={true}
         stageShake={false}
       >
         <ShinkansenSandbox microState={mv03State} />
@@ -379,10 +302,8 @@ describe('Adversarial Challenge 3: Anti-Copy & Clipboard Tamper Lockout', () => 
     render(
       <SandboxStage
         macroViewId="MV-03"
-        microState={CASE_042_INITIAL_MICRO_STATE}
+        microState={CASE_001_INITIAL_MICRO_STATE}
         agentCursor={defaultCursor}
-        ghostReplayActive={false}
-        somOverlayActive={false}
         stageShake={false}
       />
     );
@@ -397,108 +318,9 @@ describe('Adversarial Challenge 3: Anti-Copy & Clipboard Tamper Lockout', () => 
   });
 });
 
-describe('Adversarial Challenge 4: Ghost Replay Redaction Integrity & Zero Plaintext Leakage', () => {
-  it('strictly guarantees ZERO plaintext leakage of Japanese characters, fares, or train names in GhostReplay', () => {
-    render(
-      <GhostReplay
-        active={true}
-        onToggle={vi.fn()}
-        trajectory={CASE_042_GHOST_REPLAY}
-      />
-    );
-
-    const overlay = screen.getByTestId('ghost-replay-overlay');
-    const fullText = overlay.textContent || '';
-
-    // 1. Zero Japanese characters (Hiragana, Katakana, CJK Unified Ideographs)
-    const japaneseRegex = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/;
-    expect(fullText).not.toMatch(japaneseRegex);
-
-    // 2. Zero plain currency or fare amounts
-    const fareRegex = /¥|\b13,?870\b|\b14,?520\b|\b14,?720\b|\b2,?400\b|特割/;
-    expect(fullText).not.toMatch(fareRegex);
-
-    // 3. Zero train names
-    const trainNameRegex = /ひかり|のぞみ|Hikari|Nozomi/i;
-    expect(fullText).not.toMatch(trainNameRegex);
-
-    // 4. Zero sensitive Japanese parameters
-    const paramRegex = /グリーン車|自由席|普通車指定席|旅行キャンセル保険/;
-    expect(fullText).not.toMatch(paramRegex);
-  });
-
-  it('renders vector trajectory with 1024x768 viewBox and covers sensitive regions with opaque redaction mask', () => {
-    const { container } = render(
-      <GhostReplay
-        active={true}
-        onToggle={vi.fn()}
-        trajectory={CASE_042_GHOST_REPLAY}
-      />
-    );
-
-    const svg = container.querySelector('svg');
-    expect(svg).toBeInTheDocument();
-    expect(svg).toHaveAttribute('viewBox', '0 0 1024 768');
-
-    // Verify redaction marker mask exists and contains at least 13 redaction bars
-    const mask = container.querySelector('#redaction-marker-mask');
-    expect(mask).toBeInTheDocument();
-    const redactionRects = mask?.querySelectorAll('rect');
-    expect(redactionRects?.length).toBeGreaterThanOrEqual(13);
-
-    // Verify all redaction rects have opaque carbon black fill
-    redactionRects?.forEach((rect) => {
-      expect(rect).toHaveAttribute('fill', '#050505');
-    });
-
-    // Verify vector path is present
-    const pathGroup = container.querySelector('#ghost-trajectory-paths');
-    expect(pathGroup).toBeInTheDocument();
-
-    // Verify waypoints show generic grid coordinates only
-    expect(screen.getByText(/COL D, ROW 3/i)).toBeInTheDocument();
-    expect(screen.getByText(/COL D, ROW 4/i)).toBeInTheDocument();
-  });
-
-  it('handles toggle dismiss callbacks on buttons and direct overlay clicks without bubbling dismiss on children', () => {
-    const toggleFn = vi.fn();
-
-    const { rerender } = render(
-      <GhostReplay
-        active={true}
-        onToggle={toggleFn}
-      />
-    );
-
-    // Header close button
-    const returnBtn = screen.getByRole('button', { name: /RETURN TO DOSSIER/i });
-    fireEvent.click(returnBtn);
-    expect(toggleFn).toHaveBeenCalledTimes(1);
-
-    // Bottom close button
-    const bottomReturnBtn = screen.getByRole('button', { name: /RETURN TO DISPATCH PAD/i });
-    fireEvent.click(bottomReturnBtn);
-    expect(toggleFn).toHaveBeenCalledTimes(2);
-
-    // Backdrop click directly triggers dismiss
-    const overlay = screen.getByTestId('ghost-replay-overlay');
-    fireEvent.click(overlay);
-    expect(toggleFn).toHaveBeenCalledTimes(3);
-
-    // Inactive renders null
-    rerender(
-      <GhostReplay
-        active={false}
-        onToggle={toggleFn}
-      />
-    );
-    expect(screen.queryByTestId('ghost-replay-overlay')).not.toBeInTheDocument();
-  });
-});
-
 describe('Adversarial Challenge 5: Exhibit Stamp Rotation Mathematics & Scoring Engine Oracles', () => {
   it('mathematically alternates stamp tilts: -4 deg (even index) and +3 deg (odd index)', () => {
-    const evaluations = evaluateAllExhibits(CASE_042_EXHIBITS, CASE_042_INITIAL_MICRO_STATE);
+    const evaluations = evaluateAllExhibits(CASE_001_EXHIBITS, CASE_001_INITIAL_MICRO_STATE);
     expect(evaluations).toHaveLength(5);
 
     // Indices 0, 2, 4 must be -4 deg; Indices 1, 3 must be +3 deg
@@ -509,8 +331,8 @@ describe('Adversarial Challenge 5: Exhibit Stamp Rotation Mathematics & Scoring 
     expect(evaluations[4].rotationDeg).toBe(-4);
 
     const scoreReport = calculateScoreReport(
-      CASE_042_EXHIBITS,
-      CASE_042_INITIAL_MICRO_STATE,
+      CASE_001_EXHIBITS,
+      CASE_001_INITIAL_MICRO_STATE,
       3
     );
 
@@ -619,9 +441,9 @@ describe('Adversarial Challenge 5: Exhibit Stamp Rotation Mathematics & Scoring 
     });
 
     const report = calculateScoreReport(
-      CASE_042_EXHIBITS,
+      CASE_001_EXHIBITS,
       {
-        ...CASE_042_INITIAL_MICRO_STATE,
+        ...CASE_001_INITIAL_MICRO_STATE,
         greenCarSelected: true,
         finalConfirmed: true,
       },
@@ -631,9 +453,9 @@ describe('Adversarial Challenge 5: Exhibit Stamp Rotation Mathematics & Scoring 
     // Verify shareable clipping lines
     const lines = report.shareableClipping.split('\n');
     expect(lines).toHaveLength(3);
-    expect(lines[0]).toMatch(/^KANJION #042 🇯🇵 — \d+% × \d\.\dx = \d+ PTS$/);
+    expect(lines[0]).toMatch(/^KANJION #001 🇯🇵 — \d+% × \d\.\dx = \d+ PTS$/);
     expect(lines[1]).toMatch(/^[🟩🟥⬜]{5} \(3\/6 Telegrams Sent\)$/u);
-    expect(lines[2]).toBe('https://kanjion.game/c/042');
+    expect(lines[2]).toBe('https://kanjion-game.web.app');
 
     render(
       <ExhibitsPanel

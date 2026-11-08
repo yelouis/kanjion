@@ -109,7 +109,7 @@ export interface AgentCursorState {
  * Complete centralized game state managed by the game reducer.
  */
 export interface GameState {
-  /** Case number identifier (e.g. '#042'). */
+  /** Case number identifier (e.g. '#001'). */
   caseNumber: string;
   /** Current case status: 'active' during play, 'closed' upon submission. */
   caseStatus: 'active' | 'closed';
@@ -125,10 +125,6 @@ export interface GameState {
   microState: ShinkansenMicroState;
   /** Animated field agent cursor position, note, and styling. */
   agentCursor: AgentCursorState;
-  /** True when in-engine visual Target Ghost Replay overlay is toggled ON. */
-  ghostReplayActive: boolean;
-  /** True when backend Set-of-Mark ID tags overlay is toggled ON. */
-  somOverlayActive: boolean;
   /** True when stage error shake animation is active. */
   stageShake: boolean;
   /** True while asynchronous agent instruction resolution is in progress. */

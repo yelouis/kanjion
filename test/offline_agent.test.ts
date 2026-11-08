@@ -2,7 +2,7 @@
  * test/offline_agent.test.ts
  *
  * Automated verification suite for the Standalone Offline Simulation Engine
- * and Multi-Token Heuristic Matcher on Case File #042 (Tokyo–Osaka Shinkansen).
+ * and Multi-Token Heuristic Matcher on Case File #001 (Tokyo–Osaka Shinkansen).
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -11,7 +11,7 @@ import {
   DEFAULT_WEIGHTS,
   CONFIDENCE_THRESHOLD,
 } from '../src/engine/offline_simulator';
-import { CASE_042_INITIAL_MICRO_STATE, CASE_042_MACRO_VIEWS } from '../src/data/puzzles/case_042';
+import { CASE_001_INITIAL_MICRO_STATE, CASE_001_MACRO_VIEWS } from '../src/data/puzzles/case_001';
 import { ShinkansenMicroState } from '../src/types/engine';
 
 describe('Offline Simulation Engine & Multi-Token Heuristic Matcher', () => {
@@ -20,13 +20,13 @@ describe('Offline Simulation Engine & Multi-Token Heuristic Matcher', () => {
 
   beforeEach(() => {
     engine = new OfflineSimulationEngine();
-    microState = { ...CASE_042_INITIAL_MICRO_STATE };
+    microState = { ...CASE_001_INITIAL_MICRO_STATE };
   });
 
   describe('Contract Adherence & Setup', () => {
     it('implements AgentExecutionConnector with custom weights and threshold', () => {
       expect(CONFIDENCE_THRESHOLD).toBe(25);
-      const customEngine = new OfflineSimulationEngine(CASE_042_MACRO_VIEWS, DEFAULT_WEIGHTS, 30);
+      const customEngine = new OfflineSimulationEngine(CASE_001_MACRO_VIEWS, DEFAULT_WEIGHTS, 30);
       expect(customEngine).toBeInstanceOf(OfflineSimulationEngine);
       expect(typeof customEngine.resolveInstruction).toBe('function');
     });
@@ -249,7 +249,7 @@ describe('Offline Simulation Engine & Multi-Token Heuristic Matcher', () => {
 
   describe('Heuristic Scoring Breakdown Diagnostics', () => {
     it('calculates score breakdowns for all elements on "select clover at D3"', () => {
-      const mv03 = CASE_042_MACRO_VIEWS.find((mv) => mv.id === 'MV-03')!;
+      const mv03 = CASE_001_MACRO_VIEWS.find((mv) => mv.id === 'MV-03')!;
       const scores = engine.scoreElements(mv03.elements, 'select clover at D3', microState);
       expect(scores.length).toBe(11);
 

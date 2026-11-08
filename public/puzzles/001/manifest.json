@@ -1,7 +1,7 @@
 {
-  "caseNumber": "#042",
-  "id": "042",
-  "slug": "case_042_shinkansen",
+  "caseNumber": "#001",
+  "id": "001",
+  "slug": "case_001_shinkansen",
   "title": "Tokyo–Osaka Shinkansen",
   "difficulty": "HARD",
   "locale": "ja",
@@ -53,7 +53,7 @@
       "description": "JR Ekinet Portal Home — Shinkansen line and route selection",
       "simulatedUrl": "sandbox://ekinet-jr-sim.jp/reserve/route-select (Macro-View 1 of 12)",
       "cleanScreenshotUrl": "views/clean_mv_01.webp",
-      "somScreenshotUrl": "/som/case_042_mv01.webp",
+      "somScreenshotUrl": "/som/case_001_mv01.webp",
       "elements": [],
       "transitions": [
         {
@@ -76,7 +76,7 @@
       "description": "Departure time and passenger name (TYPE) filter form",
       "simulatedUrl": "sandbox://ekinet-jr-sim.jp/reserve/condition-filter (Macro-View 2 of 12)",
       "cleanScreenshotUrl": "views/clean_mv_02.webp",
-      "somScreenshotUrl": "/som/case_042_mv02.webp",
+      "somScreenshotUrl": "/som/case_001_mv02.webp",
       "elements": [],
       "transitions": [
         {
@@ -95,7 +95,7 @@
       "description": "Primary seat availability, timed flash discount window, and signature authorization",
       "simulatedUrl": "sandbox://ekinet-jr-sim.jp/reserve/seat-matrix (Macro-View 3 of 12)",
       "cleanScreenshotUrl": "views/clean_mv_03.webp",
-      "somScreenshotUrl": "/som/case_042_mv03.webp",
+      "somScreenshotUrl": "/som/case_001_mv03.webp",
       "elements": [
         {
           "id": 11,
@@ -393,7 +393,7 @@
       "description": "Car 8 Green Car seat verification and digital signature pad (DRAW)",
       "simulatedUrl": "sandbox://ekinet-jr-sim.jp/reserve/signature-pad (Macro-View 4 of 12)",
       "cleanScreenshotUrl": "views/clean_mv_04.webp",
-      "somScreenshotUrl": "/som/case_042_mv04.webp",
+      "somScreenshotUrl": "/som/case_001_mv04.webp",
       "elements": [],
       "transitions": [
         {
@@ -412,7 +412,7 @@
       "description": "Final order verification sheet and IC card binding",
       "simulatedUrl": "sandbox://ekinet-jr-sim.jp/reserve/confirm (Macro-View 5 of 12)",
       "cleanScreenshotUrl": "views/clean_mv_05.webp",
-      "somScreenshotUrl": "/som/case_042_mv05.webp",
+      "somScreenshotUrl": "/som/case_001_mv05.webp",
       "elements": [],
       "transitions": [
         {
@@ -431,7 +431,7 @@
       "description": "Car seating chart layout dialog",
       "simulatedUrl": "sandbox://ekinet-jr-sim.jp/reserve/seat-map (Macro-View 6 of 12)",
       "cleanScreenshotUrl": "views/clean_mv_06.webp",
-      "somScreenshotUrl": "/som/case_042_mv06.webp",
+      "somScreenshotUrl": "/som/case_001_mv06.webp",
       "elements": [],
       "transitions": [
         {
@@ -446,7 +446,7 @@
       "description": "Booking cancellation confirmation modal",
       "simulatedUrl": "sandbox://ekinet-jr-sim.jp/reserve/cancel (Macro-View 7 of 12)",
       "cleanScreenshotUrl": "views/clean_mv_07.webp",
-      "somScreenshotUrl": "/som/case_042_mv07.webp",
+      "somScreenshotUrl": "/som/case_001_mv07.webp",
       "elements": [],
       "transitions": [
         {
@@ -465,7 +465,7 @@
       "description": "Account logout view",
       "simulatedUrl": "sandbox://ekinet-jr-sim.jp/reserve/logout (Macro-View 8 of 12)",
       "cleanScreenshotUrl": "views/clean_mv_08.webp",
-      "somScreenshotUrl": "/som/case_042_mv08.webp",
+      "somScreenshotUrl": "/som/case_001_mv08.webp",
       "elements": [],
       "transitions": [
         {
@@ -480,7 +480,7 @@
       "description": "Booking confirmation receipt and QR e-ticket issue",
       "simulatedUrl": "sandbox://ekinet-jr-sim.jp/reserve/complete (Macro-View 9 of 12)",
       "cleanScreenshotUrl": "views/clean_mv_09.webp",
-      "somScreenshotUrl": "/som/case_042_mv09.webp",
+      "somScreenshotUrl": "/som/case_001_mv09.webp",
       "elements": [],
       "transitions": []
     },
@@ -490,7 +490,7 @@
       "description": "Tohoku-Hokkaido Shinkansen (Hayabusa/Komachi) wrong-route branch page",
       "simulatedUrl": "sandbox://ekinet-jr-sim.jp/reserve/tohoku-line (Macro-View 10 of 12)",
       "cleanScreenshotUrl": "views/clean_mv_10.webp",
-      "somScreenshotUrl": "/som/case_042_mv10.webp",
+      "somScreenshotUrl": "/som/case_001_mv10.webp",
       "elements": [],
       "transitions": [
         {
@@ -505,7 +505,7 @@
       "description": "Hokuriku Shinkansen (Kagayaki/Hakutaka) wrong-route branch page",
       "simulatedUrl": "sandbox://ekinet-jr-sim.jp/reserve/hokuriku-line (Macro-View 11 of 12)",
       "cleanScreenshotUrl": "views/clean_mv_11.webp",
-      "somScreenshotUrl": "/som/case_042_mv11.webp",
+      "somScreenshotUrl": "/som/case_001_mv11.webp",
       "elements": [],
       "transitions": [
         {
@@ -520,7 +520,7 @@
       "description": "Ordinary car seat map and waitlist branch page",
       "simulatedUrl": "sandbox://ekinet-jr-sim.jp/reserve/ordinary-seat-map (Macro-View 12 of 12)",
       "cleanScreenshotUrl": "views/clean_mv_12.webp",
-      "somScreenshotUrl": "/som/case_042_mv12.webp",
+      "somScreenshotUrl": "/som/case_001_mv12.webp",
       "elements": [],
       "transitions": [
         {

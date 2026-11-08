@@ -54,10 +54,10 @@ import {
 } from '../src/utils/coordinate_projector';
 
 import {
-  CASE_042_MANIFEST,
-  CASE_042_MACRO_VIEWS,
-  CASE_042_MV03_ELEMENTS,
-} from '../src/data/puzzles/case_042';
+  CASE_001_MANIFEST,
+  CASE_001_MACRO_VIEWS,
+  CASE_001_MV03_ELEMENTS,
+} from '../src/data/puzzles/case_001';
 
 import type { PuzzleManifest } from '../src/types/puzzle';
 
@@ -289,11 +289,11 @@ describe('Challenger M4: Empirical Adversarial Challenge Suite', () => {
   // =========================================================================
   describe('Challenge 2: Deterministic CLI Exit Code Conformance (0 through 7)', () => {
 
-    it('exits with code 0 (EXIT_SUCCESS) on successful compilation of Case File #042', () => {
-      const res = invokeCompilerCli(['--case', '042', '--offline', '--validate']);
+    it('exits with code 0 (EXIT_SUCCESS) on successful compilation of Case File #001', () => {
+      const res = invokeCompilerCli(['--case', '001', '--offline', '--validate']);
       expect(res.status).toBe(EXIT_SUCCESS);
       expect(res.status).toBe(0);
-      expect(res.stdout).toContain('SUCCESS: Puzzle #042 compiled cleanly.');
+      expect(res.stdout).toContain('SUCCESS: Puzzle #001 compiled cleanly.');
     });
 
     it('exits with code 1 (EXIT_INVALID_ARGS) when CLI arguments are missing or invalid', () => {
@@ -304,7 +304,7 @@ describe('Challenger M4: Empirical Adversarial Challenge Suite', () => {
       expect(resBare.stderr).toContain('Must specify an input source');
 
       // 1b. Invalid --som-density value
-      const resDensity = invokeCompilerCli(['--case', '042', '--som-density', 'super_dense']);
+      const resDensity = invokeCompilerCli(['--case', '001', '--som-density', 'super_dense']);
       expect(resDensity.status).toBe(EXIT_INVALID_ARGS);
       expect(resDensity.status).toBe(1);
       expect(resDensity.stderr).toContain('Invalid --som-density');
@@ -398,7 +398,7 @@ describe('Challenger M4: Empirical Adversarial Challenge Suite', () => {
       const overflowDir = fs.mkdtempSync(path.join(os.tmpdir(), 'instruct_overflow_geom_'));
       try {
         const manifestWithOverflow: PuzzleManifest = {
-          ...CASE_042_MANIFEST,
+          ...CASE_001_MANIFEST,
           macroViews: [
             {
               id: 'MV-01',
@@ -422,7 +422,7 @@ describe('Challenger M4: Empirical Adversarial Challenge Suite', () => {
               ],
               transitions: [],
             },
-            ...CASE_042_MACRO_VIEWS.slice(1),
+            ...CASE_001_MACRO_VIEWS.slice(1),
           ],
         };
 
@@ -443,8 +443,8 @@ describe('Challenger M4: Empirical Adversarial Challenge Suite', () => {
       try {
         // 5a. Too few macro-views (less than 8)
         const badViewsManifest = {
-          ...CASE_042_MANIFEST,
-          macroViews: CASE_042_MACRO_VIEWS.slice(0, 4), // Only 4 views
+          ...CASE_001_MANIFEST,
+          macroViews: CASE_001_MACRO_VIEWS.slice(0, 4), // Only 4 views
         };
         fs.writeFileSync(path.join(fixtureDir, 'manifest.json'), JSON.stringify(badViewsManifest));
         const resViews = invokeCompilerCli(['--fixture', fixtureDir, '--offline']);
@@ -454,7 +454,7 @@ describe('Challenger M4: Empirical Adversarial Challenge Suite', () => {
 
         // 5b. Exhibit weights sum to != 100%
         const badWeightsManifest = {
-          ...CASE_042_MANIFEST,
+          ...CASE_001_MANIFEST,
           exhibits: [
             { id: 'ex1', title: 'Ex 1', weight: 40 },
             { id: 'ex2', title: 'Ex 2', weight: 30 }, // Sum = 70%
@@ -484,7 +484,7 @@ describe('Challenger M4: Empirical Adversarial Challenge Suite', () => {
     it('exits with code 7 (EXIT_IO_ERROR) when output directory write fails due to permissions or invalid path', () => {
       // Target an impossible directory path where /dev/null is treated as a folder
       const impossibleOut = '/dev/null/forbidden_output_directory';
-      const resIo = invokeCompilerCli(['--case', '042', '--offline', '--out', impossibleOut]);
+      const resIo = invokeCompilerCli(['--case', '001', '--offline', '--out', impossibleOut]);
 
       expect(resIo.status).toBe(EXIT_IO_ERROR);
       expect(resIo.status).toBe(7);
@@ -545,8 +545,8 @@ describe('Challenger M4: Empirical Adversarial Challenge Suite', () => {
       expect(rightEdge.badgeX).toBeLessThan(1024 - rightEdge.badgeWidth);
     });
 
-    it('confirms Case File #042 MV-03 elements strictly adhere to coordinate grid mappings', () => {
-      for (const el of CASE_042_MV03_ELEMENTS) {
+    it('confirms Case File #001 MV-03 elements strictly adhere to coordinate grid mappings', () => {
+      for (const el of CASE_001_MV03_ELEMENTS) {
         const computedGrid = boxToGrid(el.boundingBox);
         expect(computedGrid).toBe(el.gridRef);
       }
@@ -558,16 +558,16 @@ describe('Challenger M4: Empirical Adversarial Challenge Suite', () => {
   // =========================================================================
   describe('Challenge 4: Manifest Schema Invariants & Serialization', () => {
 
-    it('validates canonical Case File #042 manifest against all compiler invariants', () => {
-      const validation = validatePuzzleInvariants(CASE_042_MANIFEST);
+    it('validates canonical Case File #001 manifest against all compiler invariants', () => {
+      const validation = validatePuzzleInvariants(CASE_001_MANIFEST);
       expect(validation.valid).toBe(true);
       expect(validation.errors).toHaveLength(0);
     });
 
     it('rejects manifest with disconnected transition destinations', () => {
       const badTransitionManifest: PuzzleManifest = {
-        ...CASE_042_MANIFEST,
-        macroViews: CASE_042_MACRO_VIEWS.map((v) =>
+        ...CASE_001_MANIFEST,
+        macroViews: CASE_001_MACRO_VIEWS.map((v) =>
           v.id === 'MV-01'
             ? {
                 ...v,
@@ -584,7 +584,7 @@ describe('Challenger M4: Empirical Adversarial Challenge Suite', () => {
 
     it('rejects manifest missing ghost replay waypoints or trajectory SVG path', () => {
       const badGhostManifest: PuzzleManifest = {
-        ...CASE_042_MANIFEST,
+        ...CASE_001_MANIFEST,
         ghostReplay: {
           waypoints: [],
           trajectorySvgPath: '',
@@ -597,8 +597,8 @@ describe('Challenger M4: Empirical Adversarial Challenge Suite', () => {
     });
 
     it('serializes declarative manifest with inferred ruleKeys and clean JSON structure', () => {
-      const declarative = buildDeclarativeManifest(CASE_042_MANIFEST);
-      expect(declarative.caseNumber).toBe('#042');
+      const declarative = buildDeclarativeManifest(CASE_001_MANIFEST);
+      expect(declarative.caseNumber).toBe('#001');
       expect(declarative.stage).toEqual({
         width: 1024,
         height: 768,

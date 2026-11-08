@@ -24,13 +24,13 @@ import {
   extractGlyphTokens,
 } from '../src/utils/text_normalizer';
 import {
-  CASE_042_INITIAL_MICRO_STATE,
-  CASE_042_MV03_ELEMENTS,
-  CASE_042_MACRO_VIEWS,
-  CASE_042_EXHIBITS,
-  CASE_042_GHOST_REPLAY,
-  CASE_042_MANIFEST,
-} from '../src/data/puzzles/case_042';
+  CASE_001_INITIAL_MICRO_STATE,
+  CASE_001_MV03_ELEMENTS,
+  CASE_001_MACRO_VIEWS,
+  CASE_001_EXHIBITS,
+  CASE_001_GHOST_REPLAY,
+  CASE_001_MANIFEST,
+} from '../src/data/puzzles/case_001';
 import type { ShinkansenMicroState } from '../src/types/engine';
 import type { StampStatus } from '../src/types/game';
 
@@ -40,8 +40,8 @@ describe('1. Broadsheet App Shell & Scaffolding', () => {
   it('mounts the broadsheet layout with masthead header and metadata', () => {
     render(React.createElement(App, { config: testConfig }));
     expect(screen.getByText('KANJION')).toBeInTheDocument();
-    expect(screen.getByText(/CASE FILE #042/i)).toBeInTheDocument();
-    expect(screen.getByText(/6-LINE WESTERN UNION DISPATCH PAD/i)).toBeInTheDocument();
+    expect(screen.getByText(/CASE FILE #001/i)).toBeInTheDocument();
+    expect(screen.getByText(/FILL OUT UP TO 6 INSTRUCTIONS BELOW TO CONTROL THE AGENT/i)).toBeInTheDocument();
   });
 
   it('mounts the two-page newspaper spread with left agent page and right target replay', () => {
@@ -70,7 +70,7 @@ describe('1. Broadsheet App Shell & Scaffolding', () => {
 
     // Exhibits are now unsealed
     expect(screen.getByText(/🔓 UNSEALED \(CASE CLOSED\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/FORENSIC AUDIT REPORT • CASE #042/i)).toBeInTheDocument();
+    expect(screen.getByText(/FORENSIC AUDIT REPORT • CASE #001/i)).toBeInTheDocument();
     expect(screen.getByText(/Route: 東京 ⇒ 新大阪/i)).toBeInTheDocument();
     expect(screen.getByText(/14:30 Departure Slot/i)).toBeInTheDocument();
     expect(screen.getByText(/Row 2: 🍀 ¥13,870 Seat/i)).toBeInTheDocument();
@@ -177,8 +177,8 @@ describe('3. Text Normalizer & Cache Key Generator', () => {
     expect(hashA).toBe(hashB);
     expect(hashA).toHaveLength(8);
 
-    const key = generateCacheKey('case_042', hashA, 'click green clover');
-    expect(key).toBe(`case_042:${hashA}:click green clover`);
+    const key = generateCacheKey('case_001', hashA, 'click green clover');
+    expect(key).toBe(`case_001:${hashA}:click green clover`);
   });
 
   it('computes FNV-1a and SHA-256 hashes properly', async () => {
@@ -210,10 +210,10 @@ describe('3. Text Normalizer & Cache Key Generator', () => {
   });
 });
 
-describe('4. Case File #042 Data Integrity & Checkpoint Evaluation', () => {
+describe('4. Case File #001 Data Integrity & Checkpoint Evaluation', () => {
   it('contains all 12 discrete macro-views', () => {
-    expect(CASE_042_MACRO_VIEWS).toHaveLength(12);
-    const ids = CASE_042_MACRO_VIEWS.map((v) => v.id);
+    expect(CASE_001_MACRO_VIEWS).toHaveLength(12);
+    const ids = CASE_001_MACRO_VIEWS.map((v) => v.id);
     expect(ids).toEqual([
       'MV-01',
       'MV-02',
@@ -231,45 +231,45 @@ describe('4. Case File #042 Data Integrity & Checkpoint Evaluation', () => {
   });
 
   it('defines exactly 11 interactive elements in Macro-View 3 (seat_matrix)', () => {
-    expect(CASE_042_MV03_ELEMENTS).toHaveLength(11);
-    const somIds = CASE_042_MV03_ELEMENTS.map((e) => e.id);
+    expect(CASE_001_MV03_ELEMENTS).toHaveLength(11);
+    const somIds = CASE_001_MV03_ELEMENTS.map((e) => e.id);
     expect(somIds).toEqual([11, 12, 14, 21, 22, 23, 24, 25, 28, 29, 30]);
   });
 
   it('verifies that each MV-03 element bounding box projects to its assigned gridRef', () => {
-    for (const el of CASE_042_MV03_ELEMENTS) {
+    for (const el of CASE_001_MV03_ELEMENTS) {
       const calculatedGrid = boxToGrid(el.boundingBox);
       expect(calculatedGrid).toBe(el.gridRef);
     }
   });
 
   it('identifies key targets (#25, #30) and traps (#11, #12, #28)', () => {
-    const clover = CASE_042_MV03_ELEMENTS.find((e) => e.id === 25);
+    const clover = CASE_001_MV03_ELEMENTS.find((e) => e.id === 25);
     expect(clover?.isTarget).toBe(true);
     expect(clover?.gridRef).toBe('D3');
     expect(clover?.text).toContain('🍀');
 
-    const confirm = CASE_042_MV03_ELEMENTS.find((e) => e.id === 30);
+    const confirm = CASE_001_MV03_ELEMENTS.find((e) => e.id === 30);
     expect(confirm?.isTarget).toBe(true);
     expect(confirm?.gridRef).toBe('D4');
 
-    const promoTrap = CASE_042_MV03_ELEMENTS.find((e) => e.id === 12);
+    const promoTrap = CASE_001_MV03_ELEMENTS.find((e) => e.id === 12);
     expect(promoTrap?.isTrap).toBe(true);
     expect(promoTrap?.gridRef).toBe('D1');
 
-    const insCheckbox = CASE_042_MV03_ELEMENTS.find((e) => e.id === 28);
+    const insCheckbox = CASE_001_MV03_ELEMENTS.find((e) => e.id === 28);
     expect(insCheckbox?.isTrap).toBe(true);
     expect(insCheckbox?.gridRef).toBe('B4');
   });
 
   it('defines 5 Required Exhibits whose weights sum to exactly 100%', () => {
-    expect(CASE_042_EXHIBITS).toHaveLength(5);
-    const totalWeight = CASE_042_EXHIBITS.reduce((sum, ex) => sum + ex.weight, 0);
+    expect(CASE_001_EXHIBITS).toHaveLength(5);
+    const totalWeight = CASE_001_EXHIBITS.reduce((sum, ex) => sum + ex.weight, 0);
     expect(totalWeight).toBe(100);
   });
 
   it('evaluates initial micro-state (MV-01) to 0% closeness (all 5 exhibits missed)', () => {
-    const evals = CASE_042_EXHIBITS.map((ex) => ex.evaluate(CASE_042_INITIAL_MICRO_STATE));
+    const evals = CASE_001_EXHIBITS.map((ex) => ex.evaluate(CASE_001_INITIAL_MICRO_STATE));
     const statuses = evals.map((e) => e.status as StampStatus);
     expect(statuses).toEqual(['MISSED', 'MISSED', 'MISSED', 'MISSED', 'MISSED']);
 
@@ -279,7 +279,7 @@ describe('4. Case File #042 Data Integrity & Checkpoint Evaluation', () => {
 
   it('evaluates winning micro-state to 100% closeness', () => {
     const winningState: ShinkansenMicroState = {
-      ...CASE_042_INITIAL_MICRO_STATE,
+      ...CASE_001_INITIAL_MICRO_STATE,
       selectedRoute: 'tokyo_osaka',
       departureTime: '14:30',
       passengerName: 'TANAKA',
@@ -294,7 +294,7 @@ describe('4. Case File #042 Data Integrity & Checkpoint Evaluation', () => {
       finalConfirmed: true,
     };
 
-    const evals = CASE_042_EXHIBITS.map((ex) => ex.evaluate(winningState));
+    const evals = CASE_001_EXHIBITS.map((ex) => ex.evaluate(winningState));
     const statuses = evals.map((e) => e.status as StampStatus);
     expect(statuses).toEqual(['VERIFIED', 'VERIFIED', 'VERIFIED', 'VERIFIED', 'VERIFIED']);
 
@@ -304,12 +304,12 @@ describe('4. Case File #042 Data Integrity & Checkpoint Evaluation', () => {
 
   it('evaluates contaminated decoy trap state properly', () => {
     const trapState: ShinkansenMicroState = {
-      ...CASE_042_INITIAL_MICRO_STATE,
+      ...CASE_001_INITIAL_MICRO_STATE,
       signatureSigned: true,
       insuranceTrapHit: true,
     };
 
-    const exhibitD = CASE_042_EXHIBITS.find((e) => e.id === 'exhibit_d');
+    const exhibitD = CASE_001_EXHIBITS.find((e) => e.id === 'exhibit_d');
     const result = exhibitD?.evaluate(trapState);
     expect(result?.status).toBe('CONTAMINATED');
     expect(result?.awardedPoints).toBe(0);
@@ -317,8 +317,8 @@ describe('4. Case File #042 Data Integrity & Checkpoint Evaluation', () => {
   });
 
   it('verifies target ghost replay waypoints and trajectory definition', () => {
-    expect(CASE_042_GHOST_REPLAY.waypoints).toHaveLength(2);
-    const [wp1, wp2] = CASE_042_GHOST_REPLAY.waypoints;
+    expect(CASE_001_GHOST_REPLAY.waypoints).toHaveLength(2);
+    const [wp1, wp2] = CASE_001_GHOST_REPLAY.waypoints;
     expect(wp1.gridRef).toBe('D3');
     expect(wp1.x).toBe(885);
     expect(wp1.y).toBe(468);
@@ -327,14 +327,14 @@ describe('4. Case File #042 Data Integrity & Checkpoint Evaluation', () => {
     expect(wp2.x).toBe(905);
     expect(wp2.y).toBe(720);
 
-    expect(CASE_042_GHOST_REPLAY.trajectorySvgPath).toContain('M 885');
+    expect(CASE_001_GHOST_REPLAY.trajectorySvgPath).toContain('M 885');
   });
 
   it('verifies top-level puzzle manifest', () => {
-    expect(CASE_042_MANIFEST.caseNumber).toBe('#042');
-    expect(CASE_042_MANIFEST.difficulty).toBe('HARD');
-    expect(CASE_042_MANIFEST.initialMacroViewId).toBe('MV-03');
-    expect(CASE_042_MANIFEST.macroViews).toHaveLength(12);
-    expect(CASE_042_MANIFEST.exhibits).toHaveLength(5);
+    expect(CASE_001_MANIFEST.caseNumber).toBe('#001');
+    expect(CASE_001_MANIFEST.difficulty).toBe('HARD');
+    expect(CASE_001_MANIFEST.initialMacroViewId).toBe('MV-03');
+    expect(CASE_001_MANIFEST.macroViews).toHaveLength(12);
+    expect(CASE_001_MANIFEST.exhibits).toHaveLength(5);
   });
 });

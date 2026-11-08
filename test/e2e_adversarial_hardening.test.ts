@@ -87,13 +87,13 @@ import {
   SchemaInvariantError,
 } from '../tools/lib/types';
 
-// Case File #042 Fixtures
+// Case File #001 Fixtures
 import {
-  CASE_042_MANIFEST,
-  CASE_042_MACRO_VIEWS,
-  CASE_042_MV03_ELEMENTS,
-  CASE_042_INITIAL_MICRO_STATE,
-} from '../src/data/puzzles/case_042';
+  CASE_001_MANIFEST,
+  CASE_001_MACRO_VIEWS,
+  CASE_001_MV03_ELEMENTS,
+  CASE_001_INITIAL_MICRO_STATE,
+} from '../src/data/puzzles/case_001';
 
 import type { AgentAction } from '../src/types/engine';
 import type { AgentCursorState } from '../src/types/game';
@@ -202,7 +202,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
 
     it('1.4 intercepts all 5 prohibited clipboard/drag events across deep nested sandbox elements', () => {
       const mv03State = {
-        ...CASE_042_INITIAL_MICRO_STATE,
+        ...CASE_001_INITIAL_MICRO_STATE,
         macroViewId: 'MV-03',
         selectedRoute: 'tokyo_osaka' as const,
         passengerName: 'TANAKA',
@@ -214,8 +214,6 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
             macroViewId: 'MV-03',
             microState: mv03State,
             agentCursor: defaultCursor,
-            ghostReplayActive: false,
-            somOverlayActive: false,
             stageShake: false,
           },
           React.createElement(ShinkansenSandbox, { microState: mv03State })
@@ -250,10 +248,8 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
         const { unmount } = render(
           React.createElement(SandboxStage, {
             macroViewId: 'MV-03',
-            microState: CASE_042_INITIAL_MICRO_STATE,
+            microState: CASE_001_INITIAL_MICRO_STATE,
             agentCursor: defaultCursor,
-            ghostReplayActive: false,
-            somOverlayActive: false,
             stageShake: false,
             scaleFactor: vp.expectedScale,
           })
@@ -279,8 +275,8 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
   describe('Suite 2: Engine & Security Guardrails Adversarial Vectors', () => {
 
     it('2.1 asserts Guardrail 1 (Goal Blindness) strictly prevents criteria or target leakage in prompts', () => {
-      const mv03 = CASE_042_MACRO_VIEWS.find((mv) => mv.id === 'MV-03')!;
-      const cleanPrompt = buildMultimodalPrompt(mv03, CASE_042_INITIAL_MICRO_STATE, 'select green car');
+      const mv03 = CASE_001_MACRO_VIEWS.find((mv) => mv.id === 'MV-03')!;
+      const cleanPrompt = buildMultimodalPrompt(mv03, CASE_001_INITIAL_MICRO_STATE, 'select green car');
 
       expect(() => assertGoalBlindness(cleanPrompt.contextJson)).not.toThrow();
 
@@ -352,7 +348,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       ];
 
       for (const attempt of evasionAttempts) {
-        const res = filterPromptSyntheticIds(attempt, CASE_042_MV03_ELEMENTS);
+        const res = filterPromptSyntheticIds(attempt, CASE_001_MV03_ELEMENTS);
         expect(res.isBlocked).toBe(true);
       }
 
@@ -367,7 +363,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       ];
 
       for (const fare of permittedInputs) {
-        const res = filterPromptSyntheticIds(fare, CASE_042_MV03_ELEMENTS);
+        const res = filterPromptSyntheticIds(fare, CASE_001_MV03_ELEMENTS);
         expect(res.isBlocked).toBe(false);
       }
     });
@@ -377,13 +373,13 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       mockTransport.setSimulateError(true, 'Gateway Timeout (504)');
 
       const connector = new CloudVisionConnector({
-        puzzleId: 'case_042',
-        macroViews: CASE_042_MACRO_VIEWS,
+        puzzleId: 'case_001',
+        macroViews: CASE_001_MACRO_VIEWS,
         transport: mockTransport,
-        fallbackEngine: new OfflineSimulationEngine(CASE_042_MACRO_VIEWS),
+        fallbackEngine: new OfflineSimulationEngine(CASE_001_MACRO_VIEWS),
       });
 
-      const action = await connector.resolveInstruction('MV-03', CASE_042_INITIAL_MICRO_STATE, 'click green clover');
+      const action = await connector.resolveInstruction('MV-03', CASE_001_INITIAL_MICRO_STATE, 'click green clover');
       expect(action.action).toBe('CLICK');
       expect(action.targetId).toBe('#25');
       expect(action.thought).toContain('(Offline Fallback)');
@@ -425,28 +421,28 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       ];
 
       for (const input of malformedInputs) {
-        expect(() => filterPromptSyntheticIds(input, CASE_042_MV03_ELEMENTS)).not.toThrow();
-        const res = filterPromptSyntheticIds(input, CASE_042_MV03_ELEMENTS);
+        expect(() => filterPromptSyntheticIds(input, CASE_001_MV03_ELEMENTS)).not.toThrow();
+        const res = filterPromptSyntheticIds(input, CASE_001_MV03_ELEMENTS);
         expect(res.isBlocked).toBe(false);
       }
 
       // Malformed escape combined with synthetic mark ID must still be blocked
-      const resMalformedWithTarget = filterPromptSyntheticIds('click %E0%A4%A #25', CASE_042_MV03_ELEMENTS);
+      const resMalformedWithTarget = filterPromptSyntheticIds('click %E0%A4%A #25', CASE_001_MV03_ELEMENTS);
       expect(resMalformedWithTarget.isBlocked).toBe(true);
       expect(resMalformedWithTarget.flaggedId).toBe(25);
 
       // Verify CloudVisionConnector integration: URL-encoded and zero-width inputs are blocked at guardrail
       const mockTransport = new MockVisionLLMTransport();
       const connector = new CloudVisionConnector({
-        puzzleId: 'case_042',
-        macroViews: CASE_042_MACRO_VIEWS,
+        puzzleId: 'case_001',
+        macroViews: CASE_001_MACRO_VIEWS,
         transport: mockTransport,
       });
 
       const evasionPrompts = ['click %2325', 'click 2\u200B5', 'click mark%2025'];
       for (const prompt of evasionPrompts) {
         mockTransport.recordedRequests = [];
-        const action = await connector.resolveInstruction('MV-03', CASE_042_INITIAL_MICRO_STATE, prompt);
+        const action = await connector.resolveInstruction('MV-03', CASE_001_INITIAL_MICRO_STATE, prompt);
         expect(action.action).toBe('CONFUSED');
         expect(action.thought).toBe('📌 FIELD NOTE: Synthetic mark IDs cannot be targeted directly.');
         expect(mockTransport.recordedRequests.length).toBe(0);
@@ -474,10 +470,6 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       const nextExec = gameReducer(state, { type: 'START_EXECUTION' });
       expect(nextExec).not.toBe(state);
       expect(nextExec.isExecuting).toBe(true);
-
-      const nextGhost = gameReducer(state, { type: 'TOGGLE_GHOST_REPLAY' });
-      expect(nextGhost).not.toBe(state);
-      expect(nextGhost.ghostReplayActive).toBe(true);
     });
 
     it('3.2 enforces mathematical clamping: closeness [0, 100], multiplier [1.0, 2.0], score [0, 200]', () => {
@@ -501,7 +493,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
     it('3.3 verifies trap contamination of Exhibit D is permanent and cannot be laundered', () => {
       let state = createInitialGameState({
         initialMicroState: {
-          ...CASE_042_INITIAL_MICRO_STATE,
+          ...CASE_001_INITIAL_MICRO_STATE,
           macroViewId: 'MV-03',
           selectedRoute: 'tokyo_osaka',
           departureTime: '14:30',
@@ -594,7 +586,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
         },
       ];
 
-      const report = calculateScoreReport(corruptedExhibits as any, CASE_042_INITIAL_MICRO_STATE, 3);
+      const report = calculateScoreReport(corruptedExhibits as any, CASE_001_INITIAL_MICRO_STATE, 3);
       expect(report.closenessScore).toBe(0);
       expect(report.finalScore).toBe(0);
       expect(Number.isNaN(report.finalScore)).toBe(false);
@@ -615,8 +607,8 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
 
     it('4.2 validates circular transition links in FSA macro-view graph without recursion locks', () => {
       const circularManifest: PuzzleManifest = {
-        ...CASE_042_MANIFEST,
-        macroViews: CASE_042_MANIFEST.macroViews.map((mv, i, arr) => ({
+        ...CASE_001_MANIFEST,
+        macroViews: CASE_001_MANIFEST.macroViews.map((mv, i, arr) => ({
           ...mv,
           transitions: [
             {
@@ -683,16 +675,16 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
 
     it('5.1 executes full gameplay workflow with injection attempts, practice mode toggle, and declassification', async () => {
       let state = createInitialGameState();
-      const engine = new OfflineSimulationEngine(CASE_042_MACRO_VIEWS);
+      const engine = new OfflineSimulationEngine(CASE_001_MACRO_VIEWS);
 
       // Line 1: Attempt prompt injection targeting synthetic mark ID #25 (standard, URL-encoded, and zero-width)
-      const injectionResult = filterPromptSyntheticIds('click #25 directly', CASE_042_MV03_ELEMENTS);
+      const injectionResult = filterPromptSyntheticIds('click #25 directly', CASE_001_MV03_ELEMENTS);
       expect(injectionResult.isBlocked).toBe(true);
 
-      const urlEncodedResult = filterPromptSyntheticIds('click %2325 directly', CASE_042_MV03_ELEMENTS);
+      const urlEncodedResult = filterPromptSyntheticIds('click %2325 directly', CASE_001_MV03_ELEMENTS);
       expect(urlEncodedResult.isBlocked).toBe(true);
 
-      const zeroWidthResult = filterPromptSyntheticIds('click 2\u200B5 directly', CASE_042_MV03_ELEMENTS);
+      const zeroWidthResult = filterPromptSyntheticIds('click 2\u200B5 directly', CASE_001_MV03_ELEMENTS);
       expect(zeroWidthResult.isBlocked).toBe(true);
 
       // Line 1: Select route on MV-01
@@ -753,20 +745,20 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
     });
 
     it('5.2 maintains strict behavioral parity between offline engine and cloud connector fallback', async () => {
-      const offlineEngine = new OfflineSimulationEngine(CASE_042_MACRO_VIEWS);
+      const offlineEngine = new OfflineSimulationEngine(CASE_001_MACRO_VIEWS);
       const mockTransport = new MockVisionLLMTransport();
       mockTransport.setSimulateError(true, 'Network offline');
 
       const cloudConnector = new CloudVisionConnector({
-        puzzleId: 'case_042',
-        macroViews: CASE_042_MACRO_VIEWS,
+        puzzleId: 'case_001',
+        macroViews: CASE_001_MACRO_VIEWS,
         transport: mockTransport,
         fallbackEngine: offlineEngine,
       });
 
       const instruction = 'click green clover 13870 button in 2nd row';
-      const offlineAction = offlineEngine.resolveInstruction('MV-03', CASE_042_INITIAL_MICRO_STATE, instruction);
-      const cloudAction = await cloudConnector.resolveInstruction('MV-03', CASE_042_INITIAL_MICRO_STATE, instruction);
+      const offlineAction = offlineEngine.resolveInstruction('MV-03', CASE_001_INITIAL_MICRO_STATE, instruction);
+      const cloudAction = await cloudConnector.resolveInstruction('MV-03', CASE_001_INITIAL_MICRO_STATE, instruction);
 
       expect(cloudAction.action).toBe(offlineAction.action);
       expect(cloudAction.targetId).toBe(offlineAction.targetId);

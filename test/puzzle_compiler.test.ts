@@ -9,7 +9,7 @@
  * 4. HTML/CSS Script Stripping & Security Sanitization
  * 5. Macro-View Bundling & Finite State Machine Invariants
  * 6. Manifest JSON Schema Conformance & Asset Packaging
- * 7. Case File #042 Out-of-the-Box Compilation & Exit Codes
+ * 7. Case File #001 Out-of-the-Box Compilation & Exit Codes
  */
 
 import { describe, it, expect } from 'vitest';
@@ -20,7 +20,7 @@ import {
   parseCliArguments,
   validateHtmlSanitization,
   validatePuzzleInvariants,
-  compileOfflineCase042,
+  compileOfflineCase001,
   compileFixtureOffline,
   extractElementsOffline,
   sanitizePuzzleHtml,
@@ -57,11 +57,11 @@ import {
 } from '../src/utils/coordinate_projector';
 
 import {
-  CASE_042_MANIFEST,
-  CASE_042_MACRO_VIEWS,
-  CASE_042_MV03_ELEMENTS,
-  CASE_042_EXHIBITS,
-} from '../src/data/puzzles/case_042';
+  CASE_001_MANIFEST,
+  CASE_001_MACRO_VIEWS,
+  CASE_001_MV03_ELEMENTS,
+  CASE_001_EXHIBITS,
+} from '../src/data/puzzles/case_001';
 
 import type { PuzzleManifest } from '../src/types/puzzle';
 
@@ -72,40 +72,40 @@ describe('Milestone 4: Puzzle Compilation Tooling Verification Suite', () => {
   // =========================================================================
   describe('Vector 1: CLI Argument Parsing & Option Normalization', () => {
     it('parses valid arguments with defaults', () => {
-      const args = ['--case', '042', '--offline'];
+      const args = ['--case', '001', '--offline'];
       const options = parseCliArguments(args);
 
-      expect(options.caseId).toBe('042');
+      expect(options.caseId).toBe('001');
       expect(options.offline).toBe(true);
       expect(options.somDensity).toBe('standard');
       expect(options.dryRun).toBe(false);
       expect(options.validate).toBe(false);
       expect(options.verbose).toBe(false);
-      expect(options.outDir).toContain(path.normalize('public/puzzles/042'));
+      expect(options.outDir).toContain(path.normalize('public/puzzles/001'));
     });
 
     it('normalizes case ID by stripping leading hash', () => {
-      const options = parseCliArguments(['--case', '#042', '--offline']);
-      expect(options.caseId).toBe('042');
+      const options = parseCliArguments(['--case', '#001', '--offline']);
+      expect(options.caseId).toBe('001');
     });
 
     it('accepts valid custom som-density flags (sparse, dense)', () => {
-      const optSparse = parseCliArguments(['--case', '042', '--som-density', 'sparse']);
+      const optSparse = parseCliArguments(['--case', '001', '--som-density', 'sparse']);
       expect(optSparse.somDensity).toBe('sparse');
 
-      const optDense = parseCliArguments(['--case', '042', '--som-density', 'dense']);
+      const optDense = parseCliArguments(['--case', '001', '--som-density', 'dense']);
       expect(optDense.somDensity).toBe('dense');
     });
 
     it('handles --dry-run and --verbose flags properly', () => {
-      const options = parseCliArguments(['--case', '042', '--dry-run', '--verbose']);
+      const options = parseCliArguments(['--case', '001', '--dry-run', '--verbose']);
       expect(options.dryRun).toBe(true);
       expect(options.verbose).toBe(true);
     });
 
     it('rejects invalid --som-density values with CompilerArgumentError (exit code 1)', () => {
       try {
-        parseCliArguments(['--case', '042', '--som-density', 'invalid_density']);
+        parseCliArguments(['--case', '001', '--som-density', 'invalid_density']);
         expect.unreachable('Should have thrown CompilerArgumentError');
       } catch (err: any) {
         expect(err).toBeInstanceOf(CompilerArgumentError);
@@ -153,7 +153,7 @@ describe('Milestone 4: Puzzle Compilation Tooling Verification Suite', () => {
     });
 
     it('asserts all MV-03 element bounding boxes fit within 1024x768', () => {
-      for (const el of CASE_042_MV03_ELEMENTS) {
+      for (const el of CASE_001_MV03_ELEMENTS) {
         const b = el.boundingBox;
         expect(b.x).toBeGreaterThanOrEqual(0);
         expect(b.y).toBeGreaterThanOrEqual(0);
@@ -209,15 +209,15 @@ describe('Milestone 4: Puzzle Compilation Tooling Verification Suite', () => {
       expect(pixelToGrid(100, 576.0)).toBe('A4');
     });
 
-    it('verifies that all 11 elements in CASE_042_MV03 project to their exact assigned gridRef', () => {
-      for (const el of CASE_042_MV03_ELEMENTS) {
+    it('verifies that all 11 elements in CASE_001_MV03 project to their exact assigned gridRef', () => {
+      for (const el of CASE_001_MV03_ELEMENTS) {
         const projected = boxToGrid(el.boundingBox);
         expect(projected).toBe(el.gridRef);
       }
     });
 
     it('verifies centroid projection for wide elements spanning multiple columns (e.g. Checkbox #28 at B4)', () => {
-      const el28 = CASE_042_MV03_ELEMENTS.find((e) => e.id === 28)!;
+      const el28 = CASE_001_MV03_ELEMENTS.find((e) => e.id === 28)!;
       expect(el28).toBeDefined();
       expect(el28.boundingBox.x).toBe(270);
       expect(el28.boundingBox.width).toBe(260); // 270 + 260 = 530 (spans into Col C)
@@ -331,19 +331,19 @@ describe('Milestone 4: Puzzle Compilation Tooling Verification Suite', () => {
   // Vector 5: Macro-View Bundling & Finite State Machine Invariants
   // =========================================================================
   describe('Vector 5: Macro-View Bundling & Invariant Validation', () => {
-    it('verifies that Case File #042 defines bounded Macro-Views (8 to 12)', () => {
-      expect(CASE_042_MACRO_VIEWS.length).toBeGreaterThanOrEqual(8);
-      expect(CASE_042_MACRO_VIEWS.length).toBeLessThanOrEqual(12);
-      expect(CASE_042_MACRO_VIEWS).toHaveLength(12);
+    it('verifies that Case File #001 defines bounded Macro-Views (8 to 12)', () => {
+      expect(CASE_001_MACRO_VIEWS.length).toBeGreaterThanOrEqual(8);
+      expect(CASE_001_MACRO_VIEWS.length).toBeLessThanOrEqual(12);
+      expect(CASE_001_MACRO_VIEWS).toHaveLength(12);
     });
 
     it('enforces positive-only exhibits and scores candidate sites with multi-modal difficulty bias', () => {
-      const posCheck = validatePositiveExhibitsOnly(CASE_042_EXHIBITS);
+      const posCheck = validatePositiveExhibitsOnly(CASE_001_EXHIBITS);
       expect(posCheck.valid).toBe(true);
       expect(posCheck.offendingTitles).toHaveLength(0);
 
       const negCheck = validatePositiveExhibitsOnly([
-        ...CASE_042_EXHIBITS,
+        ...CASE_001_EXHIBITS,
         {
           title: 'Avoid ¥2,400 Ins. Ad',
           criteria: 'Did not click red trap.',
@@ -354,7 +354,7 @@ describe('Milestone 4: Puzzle Compilation Tooling Verification Suite', () => {
 
       const score = scoreCandidateSiteDifficulty({
         siteUrl: 'https://www.eki-net.com',
-        pageCount: CASE_042_MACRO_VIEWS.length,
+        pageCount: CASE_001_MACRO_VIEWS.length,
         hasTypeTask: true,
         hasDrawTask: true,
         hasTimedClickTask: true,
@@ -365,9 +365,9 @@ describe('Milestone 4: Puzzle Compilation Tooling Verification Suite', () => {
     });
 
     it('verifies all transition destinations resolve to valid macro-view IDs', () => {
-      const viewIds = new Set(CASE_042_MACRO_VIEWS.map((v) => v.id));
+      const viewIds = new Set(CASE_001_MACRO_VIEWS.map((v) => v.id));
 
-      for (const view of CASE_042_MACRO_VIEWS) {
+      for (const view of CASE_001_MACRO_VIEWS) {
         for (const t of view.transitions || []) {
           expect(viewIds.has(t.destinationMacroViewId)).toBe(true);
         }
@@ -375,14 +375,14 @@ describe('Milestone 4: Puzzle Compilation Tooling Verification Suite', () => {
     });
 
     it('verifies Exhibit weights sum to exactly 100%', () => {
-      const sum = CASE_042_EXHIBITS.reduce((acc, ex) => acc + ex.weight, 0);
+      const sum = CASE_001_EXHIBITS.reduce((acc, ex) => acc + ex.weight, 0);
       expect(sum).toBe(100);
     });
 
     it('catches invalid puzzle manifests with view count out of range (< 8 or > 12)', () => {
       const invalidManifest: PuzzleManifest = {
-        ...CASE_042_MANIFEST,
-        macroViews: CASE_042_MACRO_VIEWS.slice(0, 5), // Only 5 views
+        ...CASE_001_MANIFEST,
+        macroViews: CASE_001_MACRO_VIEWS.slice(0, 5), // Only 5 views
       };
 
       const result = validatePuzzleInvariants(invalidManifest);
@@ -392,8 +392,8 @@ describe('Milestone 4: Puzzle Compilation Tooling Verification Suite', () => {
 
     it('catches invalid puzzle manifests with non-100% exhibit weights', () => {
       const invalidManifest: PuzzleManifest = {
-        ...CASE_042_MANIFEST,
-        exhibits: CASE_042_EXHIBITS.slice(0, 3), // Only 65% weight
+        ...CASE_001_MANIFEST,
+        exhibits: CASE_001_EXHIBITS.slice(0, 3), // Only 65% weight
       };
 
       const result = validatePuzzleInvariants(invalidManifest);
@@ -406,9 +406,9 @@ describe('Milestone 4: Puzzle Compilation Tooling Verification Suite', () => {
   // Vector 6: Manifest JSON Schema Conformance & Asset Packaging
   // =========================================================================
   describe('Vector 6: Manifest Schema Conformance & Asset Packaging', () => {
-    it('verifies all required fields exist on Case File #042 manifest', () => {
-      const m = CASE_042_MANIFEST;
-      expect(m.caseNumber).toBe('#042');
+    it('verifies all required fields exist on Case File #001 manifest', () => {
+      const m = CASE_001_MANIFEST;
+      expect(m.caseNumber).toBe('#001');
       expect(m.title).toBe('Tokyo–Osaka Shinkansen');
       expect(m.difficulty).toBe('HARD');
       expect(m.initialMacroViewId).toBe('MV-03');
@@ -419,7 +419,7 @@ describe('Milestone 4: Puzzle Compilation Tooling Verification Suite', () => {
     });
 
     it('verifies target ghost replay trajectory and waypoints (#25 at D3, #30 at D4)', () => {
-      const gr = CASE_042_MANIFEST.ghostReplay!;
+      const gr = CASE_001_MANIFEST.ghostReplay!;
       expect(gr.waypoints).toHaveLength(2);
       expect(gr.waypoints[0].gridRef).toBe('D3');
       expect(gr.waypoints[0].x).toBe(885);
@@ -433,11 +433,11 @@ describe('Milestone 4: Puzzle Compilation Tooling Verification Suite', () => {
     });
 
     it('serializes declarative manifest cleanly without function closures', () => {
-      const declarative = buildDeclarativeManifest(CASE_042_MANIFEST);
+      const declarative = buildDeclarativeManifest(CASE_001_MANIFEST);
       const serialized = JSON.stringify(declarative);
       const parsed = JSON.parse(serialized);
 
-      expect(parsed.caseNumber).toBe('#042');
+      expect(parsed.caseNumber).toBe('#001');
       expect(parsed.exhibits).toHaveLength(5);
       for (const ex of parsed.exhibits) {
         expect(ex.ruleKey).toBeDefined();
@@ -447,7 +447,7 @@ describe('Milestone 4: Puzzle Compilation Tooling Verification Suite', () => {
     });
 
     it('generates high-contrast magenta Set-of-Mark SVG overlay with drop shadows', () => {
-      const svg = generateSvgSomOverlay(CASE_042_MV03_ELEMENTS);
+      const svg = generateSvgSomOverlay(CASE_001_MV03_ELEMENTS);
       expect(svg).toContain('<svg');
       expect(svg).toContain('#C026D3'); // Magenta badge & reticle
       expect(svg).toContain('#FFFFFF'); // White text
@@ -457,9 +457,9 @@ describe('Milestone 4: Puzzle Compilation Tooling Verification Suite', () => {
     });
 
     it('validates dry-run compilation mode without writing to disk', () => {
-      const compiled = compileOfflineCase042({
-        caseId: '042',
-        outDir: '/tmp/instruct_test_dry_run_042',
+      const compiled = compileOfflineCase001({
+        caseId: '001',
+        outDir: '/tmp/instruct_test_dry_run_001',
         somDensity: 'standard',
         offline: true,
         validate: true,
@@ -468,25 +468,25 @@ describe('Milestone 4: Puzzle Compilation Tooling Verification Suite', () => {
       });
 
       expect(compiled).toBeDefined();
-      expect(compiled.caseNumber).toBe('#042');
+      expect(compiled.caseNumber).toBe('#001');
       expect(compiled.macroViews).toHaveLength(12);
       // Ensure target directory was NOT created
-      expect(fs.existsSync('/tmp/instruct_test_dry_run_042')).toBe(false);
+      expect(fs.existsSync('/tmp/instruct_test_dry_run_001')).toBe(false);
     });
   });
 
   // =========================================================================
-  // Vector 7: Case File #042 End-to-End Compilation & Exit Codes
+  // Vector 7: Case File #001 End-to-End Compilation & Exit Codes
   // =========================================================================
-  describe('Vector 7: Case File #042 End-to-End Compilation & Exit Codes', () => {
-    it('compiles Case File #042 cleanly in offline mode and validates invariants', () => {
-      const result = validatePuzzleInvariants(CASE_042_MANIFEST);
+  describe('Vector 7: Case File #001 End-to-End Compilation & Exit Codes', () => {
+    it('compiles Case File #001 cleanly in offline mode and validates invariants', () => {
+      const result = validatePuzzleInvariants(CASE_001_MANIFEST);
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
 
     it('verifies target elements (#25, #30) and trap elements (#11, #12, #28) in MV-03', () => {
-      const mv03 = CASE_042_MACRO_VIEWS.find((v) => v.id === 'MV-03')!;
+      const mv03 = CASE_001_MACRO_VIEWS.find((v) => v.id === 'MV-03')!;
       const clover = mv03.elements.find((e) => e.id === 25)!;
       const confirm = mv03.elements.find((e) => e.id === 30)!;
       const promoTrap = mv03.elements.find((e) => e.id === 12)!;
@@ -534,7 +534,7 @@ describe('Milestone 4: Puzzle Compilation Tooling Verification Suite', () => {
 
     it('throws SchemaInvariantError with exit code 5 when compiling invalid manifest', () => {
       const badManifest: PuzzleManifest = {
-        ...CASE_042_MANIFEST,
+        ...CASE_001_MANIFEST,
         exhibits: [], // 0 exhibits
       };
 

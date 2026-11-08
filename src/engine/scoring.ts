@@ -147,9 +147,9 @@ export function generateEmojiRow(evaluations: ExhibitEvaluation[]): string {
  * Formats a Wordle-style shareable plaintext clipping ready for clipboard export.
  *
  * Example Output:
- * KANJION #042 🇯🇵 — 100% × 1.4x = 140 PTS
+ * KANJION #001 🇯🇵 — 100% × 1.4x = 140 PTS
  * 🟩🟩🟩🟩🟩 (4/6 Telegrams Sent)
- * https://kanjion.game/c/042
+ * https://kanjion-game.web.app
  */
 export function generateShareableClipping(params: {
   caseNumber: string;
@@ -169,16 +169,15 @@ export function generateShareableClipping(params: {
     linesUsed,
     evaluations,
     themeFlag = '🇯🇵',
-    baseUrl = 'https://kanjion.game/c',
+    baseUrl = 'https://kanjion-game.web.app',
   } = params;
 
   const emojiRow = generateEmojiRow(evaluations);
-  const cleanCaseId = caseNumber.replace(/[^0-9a-zA-Z]/g, '');
 
   return [
     `KANJION ${caseNumber} ${themeFlag} — ${closenessScore}% × ${multiplier.toFixed(1)}x = ${finalScore} PTS`,
     `${emojiRow} (${linesUsed}/${MAX_TELEGRAM_LINES} Telegrams Sent)`,
-    `${baseUrl}/${cleanCaseId}`,
+    `${baseUrl}`,
   ].join('\n');
 }
 
@@ -189,13 +188,13 @@ export function generateShareableClipping(params: {
  * @param exhibits Checkpoint exhibit definitions.
  * @param microState Final Shinkansen sandbox micro-state.
  * @param linesUsed Total telegram lines dispatched by player.
- * @param caseNumber Case file identifier (default: '#042').
+ * @param caseNumber Case file identifier (default: '#001').
  */
 export function calculateScoreReport(
   exhibits: ExhibitDefinition[],
   microState: ShinkansenMicroState,
   linesUsed: number,
-  caseNumber: string = '#042'
+  caseNumber: string = '#001'
 ): ScoreReport {
   const exhibitEvaluations = evaluateAllExhibits(exhibits, microState);
   const closenessScore = calculateClosenessScore(exhibitEvaluations);

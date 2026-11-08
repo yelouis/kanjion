@@ -20,7 +20,7 @@
  *    - Subsequent legitimate actions (#25, #30) cannot wash or launder contamination.
  * 4. Exhibit Redaction During Active Play:
  *    - Verification across ALL reducer action branches (SET_INPUT, START_EXECUTION, APPLY_AGENT_ACTION lines 1-5,
- *      TOGGLE_GHOST_REPLAY, TOGGLE_SOM_OVERLAY, CLEAR_STAGE_SHAKE).
+ *      CLEAR_STAGE_SHAKE).
  *    - Assertion that scoreReport is strictly null throughout active play.
  *    - Assertion that all telegram ledger rows maintain exhibitRedactedStatus: 'SEALED'.
  *    - Full JSON state serialization audit: zero leakage of stamp statuses ('VERIFIED', 'CONTAMINATED', 'MISSED', 'CLEAN').
@@ -50,9 +50,9 @@ import {
   reduceShinkansenMicroState,
 } from '../src/engine/game_reducer';
 import {
-  CASE_042_EXHIBITS,
-  CASE_042_INITIAL_MICRO_STATE,
-} from '../src/data/puzzles/case_042';
+  CASE_001_EXHIBITS,
+  CASE_001_INITIAL_MICRO_STATE,
+} from '../src/data/puzzles/case_001';
 import { AgentAction } from '../src/types/engine';
 
 describe('Adversarial Challenge Vector 1: Multiplier Math Edge Cases', () => {
@@ -171,12 +171,12 @@ describe('Adversarial Challenge Vector 2: Floating Point Drift Verification', ()
   });
 
   it('ensures shareable clipping text formats multipliers to exactly one decimal without drift', () => {
-    const mockEvals = evaluateAllExhibits(CASE_042_EXHIBITS, CASE_042_INITIAL_MICRO_STATE);
+    const mockEvals = evaluateAllExhibits(CASE_001_EXHIBITS, CASE_001_INITIAL_MICRO_STATE);
 
     for (let lines = 1; lines <= 6; lines++) {
       const { multiplier } = calculateEfficiencyMultiplier(lines);
       const clipping = generateShareableClipping({
-        caseNumber: '#042',
+        caseNumber: '#001',
         closenessScore: 100,
         multiplier,
         finalScore: calculateFinalScore(100, multiplier),
@@ -194,7 +194,7 @@ describe('Adversarial Challenge Vector 2: Floating Point Drift Verification', ()
 
 describe('Adversarial Challenge Vector 3: Trap Contamination Permanence', () => {
   const mv03PreState = {
-    ...CASE_042_INITIAL_MICRO_STATE,
+    ...CASE_001_INITIAL_MICRO_STATE,
     macroViewId: 'MV-03',
     selectedRoute: 'tokyo_osaka' as const,
     departureTime: '14:30' as const,
@@ -224,7 +224,7 @@ describe('Adversarial Challenge Vector 3: Trap Contamination Permanence', () => 
     expect(state.stageShake).toBe(true);
 
     // Verify Exhibit D is CONTAMINATED at this stage
-    const evalDuring = evaluateExhibit(CASE_042_EXHIBITS[3], state.microState, 3);
+    const evalDuring = evaluateExhibit(CASE_001_EXHIBITS[3], state.microState, 3);
     expect(evalDuring.status).toBe('CONTAMINATED');
     expect(evalDuring.awardedPoints).toBe(0);
 
@@ -247,7 +247,7 @@ describe('Adversarial Challenge Vector 3: Trap Contamination Permanence', () => 
     expect(state.microState.insuranceTrapHit).toBe(true);
 
     // Verify Exhibit D CANNOT be cleaned
-    const evalAfterUntoggle = evaluateExhibit(CASE_042_EXHIBITS[3], state.microState, 3);
+    const evalAfterUntoggle = evaluateExhibit(CASE_001_EXHIBITS[3], state.microState, 3);
     expect(evalAfterUntoggle.status).toBe('CONTAMINATED');
     expect(evalAfterUntoggle.stampText).toBe('[CONTAMINATED ✗ +0%]');
     expect(evalAfterUntoggle.awardedPoints).toBe(0);
@@ -259,7 +259,7 @@ describe('Adversarial Challenge Vector 3: Trap Contamination Permanence', () => 
         payload: { action: untoggleAction, instruction: `toggle ${i}` },
       });
       // Exhibit D MUST REMAIN CONTAMINATED regardless of parity
-      const evalLoop = evaluateExhibit(CASE_042_EXHIBITS[3], state.microState, 3);
+      const evalLoop = evaluateExhibit(CASE_001_EXHIBITS[3], state.microState, 3);
       expect(evalLoop.status).toBe('CONTAMINATED');
       expect(state.microState.insuranceTrapHit).toBe(true);
     }
@@ -271,7 +271,7 @@ describe('Adversarial Challenge Vector 3: Trap Contamination Permanence', () => 
     // Initial check: Exhibit D is clean
     expect(state.microState.insuranceTrapHit).toBe(false);
     expect(state.microState.insuranceCheckboxChecked).toBe(false);
-    const evalInitial = evaluateExhibit(CASE_042_EXHIBITS[3], state.microState, 3);
+    const evalInitial = evaluateExhibit(CASE_001_EXHIBITS[3], state.microState, 3);
     expect(evalInitial.status).toBe('CLEAN');
     expect(evalInitial.awardedPoints).toBe(15);
 
@@ -293,7 +293,7 @@ describe('Adversarial Challenge Vector 3: Trap Contamination Permanence', () => 
     // Must remain poisoned
     expect(state.microState.insuranceTrapHit).toBe(true);
 
-    const evalFinal = evaluateExhibit(CASE_042_EXHIBITS[3], state.microState, 3);
+    const evalFinal = evaluateExhibit(CASE_001_EXHIBITS[3], state.microState, 3);
     expect(evalFinal.status).toBe('CONTAMINATED');
     expect(evalFinal.awardedPoints).toBe(0);
   });
@@ -368,15 +368,7 @@ describe('Adversarial Challenge Vector 4: Exhibit Redaction During Active Play',
       expect(state.caseStatus).toBe('active');
     }
 
-    // 4. TOGGLE_GHOST_REPLAY
-    state = gameReducer(state, { type: 'TOGGLE_GHOST_REPLAY' });
-    expect(state.scoreReport).toBeNull();
-
-    // 5. TOGGLE_SOM_OVERLAY
-    state = gameReducer(state, { type: 'TOGGLE_SOM_OVERLAY' });
-    expect(state.scoreReport).toBeNull();
-
-    // 6. CLEAR_STAGE_SHAKE
+    // 4. CLEAR_STAGE_SHAKE
     state = gameReducer(state, { type: 'CLEAR_STAGE_SHAKE' });
     expect(state.scoreReport).toBeNull();
   });
@@ -591,23 +583,5 @@ describe('Adversarial Challenge Vector 6: Reducer Invariance & Resilient Error H
 
     expect(state.agentCursor.thought.length).toBeLessThanOrEqual(80);
     expect(state.agentCursor.thought).toBe('X'.repeat(80));
-  });
-
-  it('maintains idempotence on rapid toggle actions', () => {
-    let state = createInitialGameState();
-
-    // Ghost replay toggles
-    for (let i = 0; i < 10; i++) {
-      state = gameReducer(state, { type: 'TOGGLE_GHOST_REPLAY' });
-      expect(state.ghostReplayActive).toBe(i % 2 === 0);
-    }
-    expect(state.ghostReplayActive).toBe(false);
-
-    // SoM overlay toggles
-    for (let i = 0; i < 10; i++) {
-      state = gameReducer(state, { type: 'TOGGLE_SOM_OVERLAY' });
-      expect(state.somOverlayActive).toBe(i % 2 === 0);
-    }
-    expect(state.somOverlayActive).toBe(false);
   });
 });

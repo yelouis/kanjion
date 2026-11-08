@@ -26,10 +26,10 @@ import {
 } from '../src/engine/cloud_connector';
 import { OfflineSimulationEngine } from '../src/engine/offline_simulator';
 import {
-  CASE_042_INITIAL_MICRO_STATE,
-  CASE_042_MACRO_VIEWS,
-  CASE_042_MV03_ELEMENTS,
-} from '../src/data/puzzles/case_042';
+  CASE_001_INITIAL_MICRO_STATE,
+  CASE_001_MACRO_VIEWS,
+  CASE_001_MV03_ELEMENTS,
+} from '../src/data/puzzles/case_001';
 import { ShinkansenMicroState, LLMDecisionResponse } from '../src/types/engine';
 import { generateStateHash, generateCacheKey } from '../src/utils/text_normalizer';
 
@@ -40,12 +40,12 @@ describe('Cloud Vision LLM Connector & Security Guardrails', () => {
   let connector: CloudVisionConnector;
 
   beforeEach(() => {
-    microState = { ...CASE_042_INITIAL_MICRO_STATE };
+    microState = { ...CASE_001_INITIAL_MICRO_STATE };
     mockTransport = new MockVisionLLMTransport();
     offlineEngine = new OfflineSimulationEngine();
     connector = new CloudVisionConnector({
-      puzzleId: 'case_042',
-      macroViews: CASE_042_MACRO_VIEWS,
+      puzzleId: 'case_001',
+      macroViews: CASE_001_MACRO_VIEWS,
       transport: mockTransport,
       fallbackEngine: offlineEngine,
     });
@@ -129,9 +129,9 @@ describe('Cloud Vision LLM Connector & Security Guardrails', () => {
         scroll_direction: null,
         thought: 'Cached green car click',
       };
-      cache.set('case_042:hash1:click green car', sample);
-      expect(cache.has('case_042:hash1:click green car')).toBe(true);
-      expect(cache.get('case_042:hash1:click green car')).toEqual(sample);
+      cache.set('case_001:hash1:click green car', sample);
+      expect(cache.has('case_001:hash1:click green car')).toBe(true);
+      expect(cache.get('case_001:hash1:click green car')).toEqual(sample);
     });
 
     it('returns null for non-existent or expired keys', () => {
@@ -167,8 +167,8 @@ describe('Cloud Vision LLM Connector & Security Guardrails', () => {
 
       expect(hash1).not.toBe(hash2);
 
-      const key1 = generateCacheKey('case_042', hash1, 'confirm booking');
-      const key2 = generateCacheKey('case_042', hash2, 'confirm booking');
+      const key1 = generateCacheKey('case_001', hash1, 'confirm booking');
+      const key2 = generateCacheKey('case_001', hash2, 'confirm booking');
       expect(key1).not.toBe(key2);
     });
 
@@ -205,7 +205,7 @@ describe('Cloud Vision LLM Connector & Security Guardrails', () => {
     });
 
     it('sanitizes visible marks by stripping isTarget and isTrap flags', () => {
-      const sanitizedMarks = sanitizeVisibleMarks(CASE_042_MV03_ELEMENTS);
+      const sanitizedMarks = sanitizeVisibleMarks(CASE_001_MV03_ELEMENTS);
       expect(sanitizedMarks.length).toBe(11);
       for (const mark of sanitizedMarks) {
         expect(mark).not.toHaveProperty('isTarget');
@@ -227,7 +227,7 @@ describe('Cloud Vision LLM Connector & Security Guardrails', () => {
     });
 
     it('buildMultimodalPrompt generates prompt bundle without goal leakage', () => {
-      const mv03 = CASE_042_MACRO_VIEWS.find((mv) => mv.id === 'MV-03')!;
+      const mv03 = CASE_001_MACRO_VIEWS.find((mv) => mv.id === 'MV-03')!;
       const bundle = buildMultimodalPrompt(mv03, microState, 'click green car');
 
       expect(bundle.systemPrompt).toContain('You are an autonomous web navigation agent');
@@ -266,67 +266,67 @@ describe('Cloud Vision LLM Connector & Security Guardrails', () => {
 
   describe('Security Guardrail 3: Synthetic ID Prompt Filtering', () => {
     it('blocks explicit synthetic mark references ("click #25", "click mark 25")', () => {
-      const res1 = filterPromptSyntheticIds('click #25', CASE_042_MV03_ELEMENTS);
+      const res1 = filterPromptSyntheticIds('click #25', CASE_001_MV03_ELEMENTS);
       expect(res1.isBlocked).toBe(true);
       expect(res1.flaggedId).toBe(25);
       expect(res1.reason).toContain('references synthetic mark ID #25');
 
-      const res2 = filterPromptSyntheticIds('click mark 25', CASE_042_MV03_ELEMENTS);
+      const res2 = filterPromptSyntheticIds('click mark 25', CASE_001_MV03_ELEMENTS);
       expect(res2.isBlocked).toBe(true);
       expect(res2.flaggedId).toBe(25);
     });
 
     it('blocks standalone synthetic ID guessing ("click 25")', () => {
-      const res = filterPromptSyntheticIds('click 25', CASE_042_MV03_ELEMENTS);
+      const res = filterPromptSyntheticIds('click 25', CASE_001_MV03_ELEMENTS);
       expect(res.isBlocked).toBe(true);
       expect(res.flaggedId).toBe(25);
     });
 
     it('permits numbers that appear visibly in on-screen element text ("click Nozomi 24")', () => {
       // 24 appears in "のぞみ 24号"
-      const res = filterPromptSyntheticIds('click Nozomi 24', CASE_042_MV03_ELEMENTS);
+      const res = filterPromptSyntheticIds('click Nozomi 24', CASE_001_MV03_ELEMENTS);
       expect(res.isBlocked).toBe(false);
     });
 
     it('permits price numerals ("select 13870")', () => {
-      const res = filterPromptSyntheticIds('select 13870', CASE_042_MV03_ELEMENTS);
+      const res = filterPromptSyntheticIds('select 13870', CASE_001_MV03_ELEMENTS);
       expect(res.isBlocked).toBe(false);
     });
 
     it('permits visible comma-formatted currency amounts without colliding with element IDs ("select ¥14,520", "select ¥14,720")', () => {
       // Element #14 exists in MV-03 ("◀ 条件変更へ戻る"), while #22 is "△ ¥14,520" and #24 is "◯ ¥14,720".
       // Formatted prices must not split at commas to falsely flag #14 as synthetic ID.
-      const res1 = filterPromptSyntheticIds('select ¥14,520', CASE_042_MV03_ELEMENTS);
+      const res1 = filterPromptSyntheticIds('select ¥14,520', CASE_001_MV03_ELEMENTS);
       expect(res1.isBlocked).toBe(false);
       expect(res1.filteredInstruction).toBe('select ¥14,520');
 
-      const res2 = filterPromptSyntheticIds('select ¥14,720', CASE_042_MV03_ELEMENTS);
+      const res2 = filterPromptSyntheticIds('select ¥14,720', CASE_001_MV03_ELEMENTS);
       expect(res2.isBlocked).toBe(false);
       expect(res2.filteredInstruction).toBe('select ¥14,720');
 
-      const res3 = filterPromptSyntheticIds('14,520', CASE_042_MV03_ELEMENTS);
+      const res3 = filterPromptSyntheticIds('14,520', CASE_001_MV03_ELEMENTS);
       expect(res3.isBlocked).toBe(false);
 
-      const res4 = filterPromptSyntheticIds('select ¥2,400', CASE_042_MV03_ELEMENTS);
+      const res4 = filterPromptSyntheticIds('select ¥2,400', CASE_001_MV03_ELEMENTS);
       expect(res4.isBlocked).toBe(false);
 
-      const resMultiComma = filterPromptSyntheticIds('select ¥1,000,000', CASE_042_MV03_ELEMENTS);
+      const resMultiComma = filterPromptSyntheticIds('select ¥1,000,000', CASE_001_MV03_ELEMENTS);
       expect(resMultiComma.isBlocked).toBe(false);
 
-      const resFullwidth = filterPromptSyntheticIds('select ¥１４，５２０', CASE_042_MV03_ELEMENTS);
+      const resFullwidth = filterPromptSyntheticIds('select ¥１４，５２０', CASE_001_MV03_ELEMENTS);
       expect(resFullwidth.isBlocked).toBe(false);
     });
 
     it('still blocks synthetic element #14 when targeted explicitly or standalone ("click #14", "click 14", "click 14, then 25")', () => {
-      const resExplicit = filterPromptSyntheticIds('click #14', CASE_042_MV03_ELEMENTS);
+      const resExplicit = filterPromptSyntheticIds('click #14', CASE_001_MV03_ELEMENTS);
       expect(resExplicit.isBlocked).toBe(true);
       expect(resExplicit.flaggedId).toBe(14);
 
-      const resStandalone = filterPromptSyntheticIds('click 14', CASE_042_MV03_ELEMENTS);
+      const resStandalone = filterPromptSyntheticIds('click 14', CASE_001_MV03_ELEMENTS);
       expect(resStandalone.isBlocked).toBe(true);
       expect(resStandalone.flaggedId).toBe(14);
 
-      const resDelimiter = filterPromptSyntheticIds('click 14, then 25', CASE_042_MV03_ELEMENTS);
+      const resDelimiter = filterPromptSyntheticIds('click 14, then 25', CASE_001_MV03_ELEMENTS);
       expect(resDelimiter.isBlocked).toBe(true);
       expect(resDelimiter.flaggedId).toBe(14);
     });
@@ -354,7 +354,7 @@ describe('Cloud Vision LLM Connector & Security Guardrails', () => {
       ];
 
       for (const vector of urlEncodedVectors) {
-        const res = filterPromptSyntheticIds(vector.input, CASE_042_MV03_ELEMENTS);
+        const res = filterPromptSyntheticIds(vector.input, CASE_001_MV03_ELEMENTS);
         expect(res.isBlocked).toBe(true);
         expect(res.flaggedId).toBe(vector.expectedId);
       }
@@ -373,7 +373,7 @@ describe('Cloud Vision LLM Connector & Security Guardrails', () => {
       ];
 
       for (const vector of zeroWidthVectors) {
-        const res = filterPromptSyntheticIds(vector.input, CASE_042_MV03_ELEMENTS);
+        const res = filterPromptSyntheticIds(vector.input, CASE_001_MV03_ELEMENTS);
         expect(res.isBlocked).toBe(true);
         expect(res.flaggedId).toBe(vector.expectedId);
       }
@@ -381,27 +381,27 @@ describe('Cloud Vision LLM Connector & Security Guardrails', () => {
 
     it('handles malformed URL escapes gracefully without throwing exceptions and preserves legitimate text', () => {
       // Malformed escapes must not throw URIError (e.g. decodeURIComponent malformed)
-      expect(() => filterPromptSyntheticIds('select 50% discount', CASE_042_MV03_ELEMENTS)).not.toThrow();
-      expect(() => filterPromptSyntheticIds('get +20% bonus', CASE_042_MV03_ELEMENTS)).not.toThrow();
-      expect(() => filterPromptSyntheticIds('click %ZZ25', CASE_042_MV03_ELEMENTS)).not.toThrow();
-      expect(() => filterPromptSyntheticIds('click %E0%A4%A', CASE_042_MV03_ELEMENTS)).not.toThrow();
-      expect(() => filterPromptSyntheticIds('click %2', CASE_042_MV03_ELEMENTS)).not.toThrow();
-      expect(() => filterPromptSyntheticIds('click %', CASE_042_MV03_ELEMENTS)).not.toThrow();
+      expect(() => filterPromptSyntheticIds('select 50% discount', CASE_001_MV03_ELEMENTS)).not.toThrow();
+      expect(() => filterPromptSyntheticIds('get +20% bonus', CASE_001_MV03_ELEMENTS)).not.toThrow();
+      expect(() => filterPromptSyntheticIds('click %ZZ25', CASE_001_MV03_ELEMENTS)).not.toThrow();
+      expect(() => filterPromptSyntheticIds('click %E0%A4%A', CASE_001_MV03_ELEMENTS)).not.toThrow();
+      expect(() => filterPromptSyntheticIds('click %2', CASE_001_MV03_ELEMENTS)).not.toThrow();
+      expect(() => filterPromptSyntheticIds('click %', CASE_001_MV03_ELEMENTS)).not.toThrow();
 
       // Legitimate percent usage must NOT be blocked
-      expect(filterPromptSyntheticIds('select 50% discount', CASE_042_MV03_ELEMENTS).isBlocked).toBe(false);
-      expect(filterPromptSyntheticIds('get +20% bonus', CASE_042_MV03_ELEMENTS).isBlocked).toBe(false);
-      expect(filterPromptSyntheticIds('click %ZZ25', CASE_042_MV03_ELEMENTS).isBlocked).toBe(false);
-      expect(filterPromptSyntheticIds('click %E0%A4%A', CASE_042_MV03_ELEMENTS).isBlocked).toBe(false);
-      expect(filterPromptSyntheticIds('click %2', CASE_042_MV03_ELEMENTS).isBlocked).toBe(false);
-      expect(filterPromptSyntheticIds('click %', CASE_042_MV03_ELEMENTS).isBlocked).toBe(false);
+      expect(filterPromptSyntheticIds('select 50% discount', CASE_001_MV03_ELEMENTS).isBlocked).toBe(false);
+      expect(filterPromptSyntheticIds('get +20% bonus', CASE_001_MV03_ELEMENTS).isBlocked).toBe(false);
+      expect(filterPromptSyntheticIds('click %ZZ25', CASE_001_MV03_ELEMENTS).isBlocked).toBe(false);
+      expect(filterPromptSyntheticIds('click %E0%A4%A', CASE_001_MV03_ELEMENTS).isBlocked).toBe(false);
+      expect(filterPromptSyntheticIds('click %2', CASE_001_MV03_ELEMENTS).isBlocked).toBe(false);
+      expect(filterPromptSyntheticIds('click %', CASE_001_MV03_ELEMENTS).isBlocked).toBe(false);
 
       // Malformed escapes combined with synthetic mark ID must still be blocked
-      const resMalformedWithMark = filterPromptSyntheticIds('click %E0%A4%A #25', CASE_042_MV03_ELEMENTS);
+      const resMalformedWithMark = filterPromptSyntheticIds('click %E0%A4%A #25', CASE_001_MV03_ELEMENTS);
       expect(resMalformedWithMark.isBlocked).toBe(true);
       expect(resMalformedWithMark.flaggedId).toBe(25);
 
-      const resTrailingPercentWithMark = filterPromptSyntheticIds('click % #25', CASE_042_MV03_ELEMENTS);
+      const resTrailingPercentWithMark = filterPromptSyntheticIds('click % #25', CASE_001_MV03_ELEMENTS);
       expect(resTrailingPercentWithMark.isBlocked).toBe(true);
       expect(resTrailingPercentWithMark.flaggedId).toBe(25);
     });
@@ -455,8 +455,8 @@ describe('Cloud Vision LLM Connector & Security Guardrails', () => {
 
     it('returns CONFUSED if transport fails and no fallback engine configured', async () => {
       const bareConnector = new CloudVisionConnector({
-        puzzleId: 'case_042',
-        macroViews: CASE_042_MACRO_VIEWS,
+        puzzleId: 'case_001',
+        macroViews: CASE_001_MACRO_VIEWS,
         transport: mockTransport,
       });
       mockTransport.setSimulateError(true, 'Fatal cloud timeout');
@@ -483,7 +483,7 @@ describe('Cloud Vision LLM Connector & Security Guardrails', () => {
       });
 
       const response = await httpTransport.requestDecision({
-        puzzleId: 'case_042',
+        puzzleId: 'case_001',
         macroViewId: 'MV-03',
         instruction: 'confirm booking',
         normalizedInstruction: 'confirm booking',

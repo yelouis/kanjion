@@ -1,7 +1,7 @@
 /**
- * src/data/puzzles/case_042.ts
+ * src/data/puzzles/case_001.ts
  *
- * Canonical data fixtures for Case File #042: Tokyo–Osaka Shinkansen (えきねっと風).
+ * Canonical data fixtures for Case File #001: Tokyo–Osaka Shinkansen (えきねっと風).
  * Contains:
  * - Puzzle metadata & initial micro-state
  * - All 9 discrete Macro-Views with transitions
@@ -21,10 +21,9 @@ import {
 import { tupleToBoundingBox } from '../../utils/coordinate_projector';
 
 /**
- * Initial micro-state for Case File #042 at Macro-View 3 (seat_matrix).
- * Pre-seeded with Exhibits A & B satisfied by prior turns in the canonical narrative.
+ * Initial micro-state for Case File #001 at Macro-View 1 (route_select).
  */
-export const CASE_042_INITIAL_MICRO_STATE: ShinkansenMicroState = {
+export const CASE_001_INITIAL_MICRO_STATE: ShinkansenMicroState = {
   macroViewId: 'MV-01',
   selectedRoute: 'none',
   departureTime: 'none',
@@ -46,7 +45,7 @@ export const CASE_042_INITIAL_MICRO_STATE: ShinkansenMicroState = {
 /**
  * The 11 interactive elements present in Macro-View 3 (seat_matrix).
  */
-export const CASE_042_MV03_ELEMENTS: SoMElement[] = [
+export const CASE_001_MV03_ELEMENTS: SoMElement[] = [
   {
     id: 11,
     somId: '#11',
@@ -235,15 +234,15 @@ export const CASE_042_MV03_ELEMENTS: SoMElement[] = [
 ];
 
 /**
- * All 12 discrete Macro-Views for Case File #042 (JR-East Ekinet Multi-Page Portal).
+ * All 12 discrete Macro-Views for Case File #001 (JR-East Ekinet Multi-Page Portal).
  */
-export const CASE_042_MACRO_VIEWS: MacroView[] = [
+export const CASE_001_MACRO_VIEWS: MacroView[] = [
   {
     id: 'MV-01',
     name: 'route_select',
     description: 'JR Ekinet Portal Home — Shinkansen line and route selection',
     simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/route-select (Macro-View 1 of 12)',
-    somImagePath: '/som/case_042_mv01.webp',
+    somImagePath: '/som/case_001_mv01.webp',
     elements: [],
     transitions: [
       { targetElementId: 1, destinationMacroViewId: 'MV-02' },
@@ -256,7 +255,7 @@ export const CASE_042_MACRO_VIEWS: MacroView[] = [
     name: 'condition_filter',
     description: 'Departure time and passenger name (TYPE) filter form',
     simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/condition-filter (Macro-View 2 of 12)',
-    somImagePath: '/som/case_042_mv02.webp',
+    somImagePath: '/som/case_001_mv02.webp',
     elements: [],
     transitions: [
       { targetElementId: 2, destinationMacroViewId: 'MV-03' },
@@ -268,8 +267,8 @@ export const CASE_042_MACRO_VIEWS: MacroView[] = [
     name: 'seat_matrix',
     description: 'Primary seat availability, timed flash discount window, and signature authorization',
     simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/seat-matrix (Macro-View 3 of 12)',
-    somImagePath: '/som/case_042_mv03.webp',
-    elements: CASE_042_MV03_ELEMENTS,
+    somImagePath: '/som/case_001_mv03.webp',
+    elements: CASE_001_MV03_ELEMENTS,
     transitions: [
       { targetElementId: 30, destinationMacroViewId: 'MV-05' },
       { targetElementId: 12, destinationMacroViewId: 'MV-04' },
@@ -284,7 +283,7 @@ export const CASE_042_MACRO_VIEWS: MacroView[] = [
     name: 'signature_and_seat_map',
     description: 'Car 8 Green Car seat verification and digital signature pad (DRAW)',
     simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/signature-pad (Macro-View 4 of 12)',
-    somImagePath: '/som/case_042_mv04.webp',
+    somImagePath: '/som/case_001_mv04.webp',
     elements: [],
     transitions: [
       { targetElementId: 41, destinationMacroViewId: 'MV-03' },
@@ -296,7 +295,7 @@ export const CASE_042_MACRO_VIEWS: MacroView[] = [
     name: 'reservation_confirm',
     description: 'Final order verification sheet and IC card binding',
     simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/confirm (Macro-View 5 of 12)',
-    somImagePath: '/som/case_042_mv05.webp',
+    somImagePath: '/som/case_001_mv05.webp',
     elements: [],
     transitions: [
       { targetElementId: 51, destinationMacroViewId: 'MV-09' },
@@ -308,7 +307,7 @@ export const CASE_042_MACRO_VIEWS: MacroView[] = [
     name: 'seat_map_modal',
     description: 'Car seating chart layout dialog',
     simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/seat-map (Macro-View 6 of 12)',
-    somImagePath: '/som/case_042_mv06.webp',
+    somImagePath: '/som/case_001_mv06.webp',
     elements: [],
     transitions: [{ targetElementId: 61, destinationMacroViewId: 'MV-03' }],
   },
@@ -317,7 +316,7 @@ export const CASE_042_MACRO_VIEWS: MacroView[] = [
     name: 'cancel_prompt',
     description: 'Booking cancellation confirmation modal',
     simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/cancel (Macro-View 7 of 12)',
-    somImagePath: '/som/case_042_mv07.webp',
+    somImagePath: '/som/case_001_mv07.webp',
     elements: [],
     transitions: [
       { targetElementId: 71, destinationMacroViewId: 'MV-01' },
@@ -329,7 +328,7 @@ export const CASE_042_MACRO_VIEWS: MacroView[] = [
     name: 'logout_trap',
     description: 'Account logout view',
     simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/logout (Macro-View 8 of 12)',
-    somImagePath: '/som/case_042_mv08.webp',
+    somImagePath: '/som/case_001_mv08.webp',
     elements: [],
     transitions: [{ targetElementId: 81, destinationMacroViewId: 'MV-03' }],
   },
@@ -338,7 +337,7 @@ export const CASE_042_MACRO_VIEWS: MacroView[] = [
     name: 'booking_complete',
     description: 'Booking confirmation receipt and QR e-ticket issue',
     simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/complete (Macro-View 9 of 12)',
-    somImagePath: '/som/case_042_mv09.webp',
+    somImagePath: '/som/case_001_mv09.webp',
     elements: [],
     transitions: [],
   },
@@ -347,7 +346,7 @@ export const CASE_042_MACRO_VIEWS: MacroView[] = [
     name: 'tohoku_route_branch',
     description: 'Tohoku-Hokkaido Shinkansen (Hayabusa/Komachi) wrong-route branch page',
     simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/tohoku-line (Macro-View 10 of 12)',
-    somImagePath: '/som/case_042_mv10.webp',
+    somImagePath: '/som/case_001_mv10.webp',
     elements: [],
     transitions: [{ targetElementId: 14, destinationMacroViewId: 'MV-01' }],
   },
@@ -356,7 +355,7 @@ export const CASE_042_MACRO_VIEWS: MacroView[] = [
     name: 'hokuriku_route_branch',
     description: 'Hokuriku Shinkansen (Kagayaki/Hakutaka) wrong-route branch page',
     simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/hokuriku-line (Macro-View 11 of 12)',
-    somImagePath: '/som/case_042_mv11.webp',
+    somImagePath: '/som/case_001_mv11.webp',
     elements: [],
     transitions: [{ targetElementId: 14, destinationMacroViewId: 'MV-01' }],
   },
@@ -365,7 +364,7 @@ export const CASE_042_MACRO_VIEWS: MacroView[] = [
     name: 'waitlist_sold_out',
     description: 'Ordinary car seat map and waitlist branch page',
     simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/ordinary-seat-map (Macro-View 12 of 12)',
-    somImagePath: '/som/case_042_mv12.webp',
+    somImagePath: '/som/case_001_mv12.webp',
     elements: [],
     transitions: [{ targetElementId: 14, destinationMacroViewId: 'MV-03' }],
   },
@@ -375,7 +374,7 @@ export const CASE_042_MACRO_VIEWS: MacroView[] = [
  * The 5 sealed Required Exhibits summing to 100% base closeness.
  * Every exhibit is a POSITIVE performed action (never "Avoid X").
  */
-export const CASE_042_EXHIBITS: ExhibitDefinition[] = [
+export const CASE_001_EXHIBITS: ExhibitDefinition[] = [
   {
     id: 'exhibit_a',
     code: 'A',
@@ -482,7 +481,7 @@ export const CASE_042_EXHIBITS: ExhibitDefinition[] = [
  * In-engine 1:1 visual Target Ghost Replay definition.
  * Strictly visual geometry and ruler quadrants — no DOM text spoilers.
  */
-export const CASE_042_GHOST_REPLAY: TargetGhostReplayDefinition = {
+export const CASE_001_GHOST_REPLAY: TargetGhostReplayDefinition = {
   waypoints: [
     {
       stepNumber: 1,
@@ -509,16 +508,16 @@ export const CASE_042_GHOST_REPLAY: TargetGhostReplayDefinition = {
 };
 
 /**
- * Complete canonical PuzzleManifest for Case File #042.
+ * Complete canonical PuzzleManifest for Case File #001.
  */
-export const CASE_042_MANIFEST: PuzzleManifest = {
-  caseNumber: '#042',
+export const CASE_001_MANIFEST: PuzzleManifest = {
+  caseNumber: '#001',
   title: 'Tokyo–Osaka Shinkansen',
   difficulty: 'HARD',
   themeBadge: '🇯🇵 HARD MODE: TOKYO–OSAKA SHINKANSEN',
   initialMacroViewId: 'MV-03',
-  initialMicroState: CASE_042_INITIAL_MICRO_STATE,
-  macroViews: CASE_042_MACRO_VIEWS,
-  exhibits: CASE_042_EXHIBITS,
-  ghostReplay: CASE_042_GHOST_REPLAY,
+  initialMicroState: CASE_001_INITIAL_MICRO_STATE,
+  macroViews: CASE_001_MACRO_VIEWS,
+  exhibits: CASE_001_EXHIBITS,
+  ghostReplay: CASE_001_GHOST_REPLAY,
 };

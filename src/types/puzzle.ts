@@ -195,7 +195,7 @@ export interface GhostTrajectory {
  * Complete compiled puzzle manifest.
  */
 export interface PuzzleManifest {
-  /** Case file identifier (e.g. '#042' or '042'). */
+  /** Case file identifier (e.g. '#001' or '001'). */
   caseNumber?: string;
   id?: string;
   slug?: string;

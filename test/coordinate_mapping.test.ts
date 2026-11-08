@@ -6,7 +6,7 @@
  * - Exact boundary thresholds (x=255.999/256.0, y=191.999/192.0, x=0, y=0, x=1024, y=768)
  * - Out-of-bounds handling (negative values, extreme values >10000, non-finite values)
  * - Natural language coordinate parsing with tricky strings, noise words, false positive hazards
- * - All 11 elements in CASE_042_MV03_ELEMENTS bounding boxes vs assigned gridRef
+ * - All 11 elements in CASE_001_MV03_ELEMENTS bounding boxes vs assigned gridRef
  * - Spatial grid geometric invariants (full coverage, zero overlap, inverse roundtrip)
  */
 
@@ -28,7 +28,7 @@ import {
   GRID_COLUMNS,
   GRID_ROWS,
 } from '../src/utils/coordinate_projector';
-import { CASE_042_MV03_ELEMENTS } from '../src/data/puzzles/case_042';
+import { CASE_001_MV03_ELEMENTS } from '../src/data/puzzles/case_001';
 import { normalizeInstruction } from '../src/utils/text_normalizer';
 import { GridCoordinate } from '../src/types/engine';
 
@@ -267,13 +267,13 @@ describe('Adversarial Coordinate Mapping & Projection Stress Suite', () => {
     });
   });
 
-  describe('4. Verification of All 11 Elements in CASE_042_MV03_ELEMENTS', () => {
+  describe('4. Verification of All 11 Elements in CASE_001_MV03_ELEMENTS', () => {
     it('verifies that exactly 11 elements exist in MV-03', () => {
-      expect(CASE_042_MV03_ELEMENTS).toHaveLength(11);
+      expect(CASE_001_MV03_ELEMENTS).toHaveLength(11);
     });
 
     it('verifies bounding box, center, and gridRef projection for every element', () => {
-      for (const el of CASE_042_MV03_ELEMENTS) {
+      for (const el of CASE_001_MV03_ELEMENTS) {
         const box = el.boundingBox;
 
         // 1. Box dimensions must be strictly positive and fit stage
@@ -304,7 +304,7 @@ describe('Adversarial Coordinate Mapping & Projection Stress Suite', () => {
 
     it('verifies specific coordinates for key target elements', () => {
       // Target #25: Green car discount button
-      const el25 = CASE_042_MV03_ELEMENTS.find((el) => el.id === 25);
+      const el25 = CASE_001_MV03_ELEMENTS.find((el) => el.id === 25);
       expect(el25).toBeDefined();
       expect(el25!.gridRef).toBe('D3');
       expect(el25!.boundingBox.x).toBe(790);
@@ -316,7 +316,7 @@ describe('Adversarial Coordinate Mapping & Projection Stress Suite', () => {
       expect(pixelToGrid(center25.x, center25.y)).toBe('D3');
 
       // Target #30: Final confirmation button
-      const el30 = CASE_042_MV03_ELEMENTS.find((el) => el.id === 30);
+      const el30 = CASE_001_MV03_ELEMENTS.find((el) => el.id === 30);
       expect(el30).toBeDefined();
       expect(el30!.gridRef).toBe('D4');
       expect(el30!.boundingBox.x).toBe(810);
@@ -330,7 +330,7 @@ describe('Adversarial Coordinate Mapping & Projection Stress Suite', () => {
 
     it('analyzes boundary span for wide elements (e.g. Checkbox #28)', () => {
       // Element #28: [270, 706, 260, 24]
-      const el28 = CASE_042_MV03_ELEMENTS.find((el) => el.id === 28);
+      const el28 = CASE_001_MV03_ELEMENTS.find((el) => el.id === 28);
       expect(el28).toBeDefined();
       expect(el28!.gridRef).toBe('B4');
 

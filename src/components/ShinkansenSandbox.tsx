@@ -840,7 +840,7 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                   </div>
                   <div className="text-right font-mono-clean">
                     <div className="text-xs font-bold text-neutral-500">予約番号</div>
-                    <div className="text-lg font-black text-emerald-800">EKI-042-9921</div>
+                    <div className="text-lg font-black text-emerald-800">K001-9921</div>
                   </div>
                 </div>
 

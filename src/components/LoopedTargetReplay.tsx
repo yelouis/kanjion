@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { ShinkansenSandbox } from './ShinkansenSandbox';
-import { CASE_042_INITIAL_MICRO_STATE } from '../data/puzzles/case_042';
+import { CASE_001_INITIAL_MICRO_STATE } from '../data/puzzles/case_001';
 import type { ShinkansenMicroState } from '../types/engine';
 
 export interface LoopedTargetReplayProps {
@@ -266,7 +266,7 @@ export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({
   }, [currentMacroViewId, scale]);
 
   const replayMicroState: ShinkansenMicroState = {
-    ...CASE_042_INITIAL_MICRO_STATE,
+    ...CASE_001_INITIAL_MICRO_STATE,
     macroViewId: currentMacroViewId,
     selectedRoute: routeSelected ? 'tokyo_osaka' : 'none',
     passengerName:

@@ -13,7 +13,7 @@ import {
   ShinkansenMicroState,
 } from '../types/engine';
 import { SoMElement, MacroView } from '../types/puzzle';
-import { CASE_042_MACRO_VIEWS } from '../data/puzzles/case_042';
+import { CASE_001_MACRO_VIEWS } from '../data/puzzles/case_001';
 import { parseGridCoordinate, getBoxCenter } from '../utils/coordinate_projector';
 import { normalizeInstruction, extractSignatureDrawingSpec } from '../utils/text_normalizer';
 
@@ -79,7 +79,7 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
   private confidenceThreshold: number;
 
   constructor(
-    customMacroViews: MacroView[] = CASE_042_MACRO_VIEWS,
+    customMacroViews: MacroView[] = CASE_001_MACRO_VIEWS,
     weights: ScoringWeights = DEFAULT_WEIGHTS,
     confidenceThreshold: number = CONFIDENCE_THRESHOLD
   ) {

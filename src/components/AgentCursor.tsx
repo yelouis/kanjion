@@ -128,13 +128,10 @@ export const AgentCursor: React.FC<AgentCursorProps> = ({
     return trimmed.length > 80 ? trimmed.slice(0, 77) + '...' : trimmed;
   }, [rawText]);
 
-  // Split any trailing " at D3" / " at D4" so it stays in DOM for tests but doesn't clutter visual UI
-  const { visibleThought, hiddenGridSuffix } = useMemo(() => {
+  // Strip any trailing " at D3" / " at D4" grid suffix
+  const visibleThought = useMemo(() => {
     const match = sanitizedThought.match(/^(.*?)(\s+at\s+[A-D][1-4])$/i);
-    if (match) {
-      return { visibleThought: match[1], hiddenGridSuffix: match[2] };
-    }
-    return { visibleThought: sanitizedThought, hiddenGridSuffix: '' };
+    return match ? match[1] : sanitizedThought;
   }, [sanitizedThought]);
 
   // 2. Resolve active theme variant
@@ -327,7 +324,6 @@ export const AgentCursor: React.FC<AgentCursorProps> = ({
           {/* Thought Text (Strictly clamped to <= 80 characters) */}
           <div className="truncate text-xs font-mono tracking-tight leading-snug">
             <span>{visibleThought}</span>
-            {hiddenGridSuffix && <span className="sr-only">{hiddenGridSuffix}</span>}
           </div>
         </div>
       </div>

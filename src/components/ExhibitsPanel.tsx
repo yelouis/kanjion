@@ -5,6 +5,7 @@ import type { StampStatus } from '../types/game';
 export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
   caseClosed,
   scoreReport,
+  caseNumber = '#001',
   onCopyClipping,
   onReopenCase,
 }) => {
@@ -34,11 +35,11 @@ export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
     closenessScore,
     multiplier,
     finalScore,
-    linesUsed,
     exhibitEvaluations,
-    emojiRow,
     shareableClipping,
   } = scoreReport;
+
+  const [shareLine1 = '', shareLine2 = ''] = (shareableClipping || '').split('\n');
 
   const handleCopy = () => {
     if (onCopyClipping) {
@@ -73,8 +74,7 @@ export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
             🔓 CASE FILE UNSEALED — DECLASSIFIED TARGET EXHIBITS
           </span>
           <h2 className="font-gazette font-black text-2xl mt-1 text-dossier-ink">
-            FORENSIC AUDIT REPORT • CASE #001
-            <span className="sr-only"> FORENSIC AUDIT REPORT • CASE #042</span>
+            FORENSIC AUDIT REPORT • CASE {caseNumber}
           </h2>
         </div>
         <div className="text-right">
@@ -199,14 +199,11 @@ export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
       {/* Shareable Dossier Clipping Box */}
       <div className="p-3.5 bg-dossier-paper border-2 border-dossier-ink flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono-clean text-xs">
         <div>
-          <div className="font-black text-sm text-dossier-ink">
-            KANJION #001 🇯🇵 —{' '}
-            <span id="share-summary-txt">
-              {closenessScore}% × {multiplier.toFixed(1)}x = {finalScore} PTS
-            </span>
+          <div className="font-black text-sm text-dossier-ink" id="share-summary-txt">
+            {shareLine1}
           </div>
           <div className="text-base tracking-widest my-1 select-all" id="share-emoji-row">
-            {emojiRow || '🟩🟩🟩🟩⬜'} ({linesUsed}/6 Telegrams Sent)
+            {shareLine2}
           </div>
           <div className="mt-1.5">
             <a

@@ -2,12 +2,12 @@
  * src/types/ui.ts
  *
  * Presentation layer component prop interfaces:
- * DispatchPad, SandboxStage, GhostReplay, ExhibitsPanel, and MastheadHeader.
+ * DispatchPad, SandboxStage, ExhibitsPanel, and MastheadHeader.
  */
 
 import { ShinkansenMicroState } from './engine';
 import { TelegramLine, ScoreReport, AgentCursorState, StampStatus } from './game';
-import { SoMElement, TargetGhostReplayDefinition } from './puzzle';
+import { SoMElement } from './puzzle';
 
 /**
  * Props for the 6-Line Western Union Telegram Dispatch Pad component.
@@ -36,42 +36,22 @@ export interface DispatchPadProps {
 
 /**
  * Props for the 1024x768 Microfiche Sandbox Stage component.
- * Framed by outer rulers (COL A–D, ROW 1–4) with uniform CSS transform scaling.
  */
 export interface SandboxStageProps {
-  /** Current active Macro-View identifier (e.g. 'MV-03'). */
+  /** Current active Macro-View identifier (e.g. 'MV-01'). */
   macroViewId: string;
   /** Current sandbox micro-state data. */
   microState: ShinkansenMicroState;
   /** Field agent cursor position, thought note, and theme variant. */
   agentCursor: AgentCursorState;
-  /** Whether the 1:1 visual Target Ghost Replay overlay is active. */
-  ghostReplayActive: boolean;
-  /** Whether backend Set-of-Mark numbered tags overlay is visible. */
-  somOverlayActive: boolean;
   /** Whether decoy trap shake animation class is applied to the stage. */
   stageShake: boolean;
   /** Uniform scale factor calculated from available viewport width. */
   scaleFactor?: number;
   /** Bounded Set-of-Mark elements registered in this macro-view. */
   somElements?: SoMElement[];
-  /** Ghost replay trajectory definition for rendering overlay. */
-  ghostReplay?: TargetGhostReplayDefinition;
   /** Callback for interactive element clicks (if in manual/practice mode). */
   onElementClick?: (elementId: number | string) => void;
-}
-
-/**
- * Props for the in-engine 1:1 Visual Target Ghost Replay overlay.
- * Renders SVG curved dashed trajectory and timestamp pulses without leaking text.
- */
-export interface GhostReplayProps {
-  /** Whether the overlay scrim is open. */
-  active: boolean;
-  /** Callback to close or toggle the overlay. */
-  onToggle: () => void;
-  /** Trajectory definition containing waypoint coordinates and path. */
-  trajectory?: TargetGhostReplayDefinition;
 }
 
 /**
@@ -83,6 +63,8 @@ export interface ExhibitsPanelProps {
   caseClosed: boolean;
   /** Evaluated score report containing closeness, multiplier, and stamps. */
   scoreReport: ScoreReport | null;
+  /** Case number string (e.g. '#001'). */
+  caseNumber?: string;
   /** Callback to copy shareable plaintext scorecard to clipboard. */
   onCopyClipping?: () => void;
   /** Callback to return to active play in practice/exploration mode. */
@@ -93,32 +75,16 @@ export interface ExhibitsPanelProps {
  * Props for the Broadsheet Masthead Header component.
  */
 export interface MastheadProps {
-  /** Case number string (e.g. '#042'). */
+  /** Case number string (e.g. '#001'). */
   caseNumber: string;
-  /** Case title string (e.g. 'THE INSTRUCT DOSSIER'). */
+  /** Case title string (e.g. 'KANJION'). */
   caseTitle: string;
   /** Theme / difficulty badge text (e.g. '🇯🇵 HARD MODE: TOKYO–OSAKA SHINKANSEN'). */
   difficultyBadge: string;
-  /** Ghost replay overlay toggle state. */
-  ghostReplayActive: boolean;
-  /** Callback to toggle ghost replay overlay. */
-  onToggleGhostReplay: () => void;
-  /** Backend SoM IDs overlay toggle state. */
-  somOverlayActive: boolean;
-  /** Callback to toggle backend SoM IDs. */
-  onToggleSomOverlay: () => void;
   /** Current case status ('active' or 'closed'). */
   caseStatus: 'active' | 'closed';
   /** Total count of sealed/unsealed exhibits (e.g. 5). */
   exhibitCount: number;
-}
-
-/**
- * Framing coordinate rulers props.
- */
-export interface CoordinateRulerProps {
-  columns: string[];
-  rows: string[];
 }
 
 /**

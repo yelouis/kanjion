@@ -19,7 +19,7 @@ import {
 } from '../src/engine/game_reducer';
 import { GameState } from '../src/types/game';
 import { AgentAction } from '../src/types/engine';
-import { CASE_042_EXHIBITS } from '../src/data/puzzles/case_042';
+import { CASE_001_EXHIBITS } from '../src/data/puzzles/case_001';
 
 describe('Game State Reducer & Micro-State Transitions', () => {
   let initialState: GameState;
@@ -341,7 +341,7 @@ describe('Game State Reducer & Micro-State Transitions', () => {
       // Player manually closes case after 5 lines dispatched
       const closedState = gameReducer(s, {
         type: 'CLOSE_CASE',
-        payload: { exhibits: CASE_042_EXHIBITS },
+        payload: { exhibits: CASE_001_EXHIBITS },
       });
 
       expect(closedState.caseStatus).toBe('closed');
@@ -363,18 +363,6 @@ describe('Game State Reducer & Micro-State Transitions', () => {
       expect(reopened.caseStatus).toBe('active');
       expect(reopened.scoreReport).toBeNull();
       expect(reopened.microState).toEqual(closed.microState);
-    });
-
-    it('toggles ghost replay and som overlay', () => {
-      const s1 = gameReducer(initialState, { type: 'TOGGLE_GHOST_REPLAY' });
-      expect(s1.ghostReplayActive).toBe(true);
-      const s2 = gameReducer(s1, { type: 'TOGGLE_GHOST_REPLAY' });
-      expect(s2.ghostReplayActive).toBe(false);
-
-      const s3 = gameReducer(initialState, { type: 'TOGGLE_SOM_OVERLAY' });
-      expect(s3.somOverlayActive).toBe(true);
-      const s4 = gameReducer(s3, { type: 'TOGGLE_SOM_OVERLAY' });
-      expect(s4.somOverlayActive).toBe(false);
     });
 
     it('clears stage shake on CLEAR_STAGE_SHAKE', () => {

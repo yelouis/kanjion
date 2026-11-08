@@ -76,7 +76,7 @@ export interface AgentAction {
 }
 
 /**
- * Case File #042: Tokyo–Osaka Shinkansen Micro-State Model.
+ * Case File #001: Tokyo–Osaka Shinkansen Micro-State Model.
  * Represents all mutable state variables of the sandboxed booking website clone.
  */
 export interface ShinkansenMicroState {
@@ -147,7 +147,7 @@ export interface AgentExecutionConnector {
  * Normalized payload sent to the multimodal vision LLM connector or edge cache.
  */
 export interface LLMDecisionRequest {
-  /** Case puzzle identifier (e.g. 'case_042'). */
+  /** Case puzzle identifier (e.g. 'case_001'). */
   puzzleId: string;
   /** Macro-View identifier (e.g. 'MV-03'). */
   macroViewId: string;

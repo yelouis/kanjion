@@ -7,10 +7,9 @@ import {
 } from './engine/cloud_connector';
 import { calculateEfficiencyMultiplier } from './engine/scoring';
 import {
-  CASE_042_MACRO_VIEWS,
-  CASE_042_EXHIBITS,
-  CASE_042_GHOST_REPLAY,
-} from './data/puzzles/case_042';
+  CASE_001_MACRO_VIEWS,
+  CASE_001_EXHIBITS,
+} from './data/puzzles/case_001';
 import { GameConfig, productionConfig } from './config/game_config';
 
 import {
@@ -18,7 +17,6 @@ import {
   SandboxStage,
   ShinkansenSandbox,
   AgentCursor,
-  GhostReplay,
   LoopedTargetReplay,
   NewspaperFrontCover,
   DispatchPad,
@@ -43,7 +41,7 @@ export const App: React.FC<AppProps> = ({ config }) => {
     undefined,
     () =>
       createInitialGameState({
-        caseNumber: '#042',
+        caseNumber: '#001',
       })
   );
 
@@ -52,7 +50,6 @@ export const App: React.FC<AppProps> = ({ config }) => {
     !resolvedConfig.startOnCover
   );
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
-  const [engineMode, setEngineMode] = useState<'offline' | 'cloud'>('cloud');
   const [mobilePage, setMobilePage] = useState<MobileActivePage>('agent');
   const [isReplayExpanded, setIsReplayExpanded] = useState<boolean>(false);
 
@@ -72,21 +69,19 @@ export const App: React.FC<AppProps> = ({ config }) => {
   );
 
   const offlineEngine = useMemo(
-    () => new OfflineSimulationEngine(CASE_042_MACRO_VIEWS),
+    () => new OfflineSimulationEngine(CASE_001_MACRO_VIEWS),
     []
   );
 
   const cloudEngine = useMemo(() => {
     const transport = new BrowserGeminiNanoTransport();
     return new CloudVisionConnector({
-      puzzleId: 'case_042',
-      macroViews: CASE_042_MACRO_VIEWS,
+      puzzleId: 'case_001',
+      macroViews: CASE_001_MACRO_VIEWS,
       transport,
       fallbackEngine: offlineEngine,
     });
   }, [offlineEngine]);
-
-  const activeEngine = engineMode === 'offline' ? offlineEngine : cloudEngine;
 
   // 3. Computed Multiplier for Live Telemetry
   const linesUsed = state.telegrams.filter((t) => t.submitted).length;
@@ -156,7 +151,7 @@ export const App: React.FC<AppProps> = ({ config }) => {
     dispatch({ type: 'START_EXECUTION' });
 
     try {
-      const action = await activeEngine.resolveInstruction(
+      const action = await cloudEngine.resolveInstruction(
         state.macroViewId,
         state.microState,
         instruction
@@ -235,7 +230,7 @@ export const App: React.FC<AppProps> = ({ config }) => {
         payload: {
           action,
           instruction,
-          exhibits: CASE_042_EXHIBITS,
+          exhibits: CASE_001_EXHIBITS,
         },
       });
 
@@ -255,7 +250,7 @@ export const App: React.FC<AppProps> = ({ config }) => {
             thought: '📌 FIELD NOTE: System execution error encountered.',
           },
           instruction,
-          exhibits: CASE_042_EXHIBITS,
+          exhibits: CASE_001_EXHIBITS,
         },
       });
     }
@@ -272,26 +267,18 @@ export const App: React.FC<AppProps> = ({ config }) => {
   };
 
   const handleCloseCase = () => {
-    dispatch({ type: 'CLOSE_CASE', payload: { exhibits: CASE_042_EXHIBITS } });
+    dispatch({ type: 'CLOSE_CASE', payload: { exhibits: CASE_001_EXHIBITS } });
   };
 
   const handleReopenCase = () => {
     dispatch({ type: 'REOPEN_CASE' });
   };
 
-  const handleToggleGhost = () => {
-    dispatch({ type: 'TOGGLE_GHOST_REPLAY' });
-  };
-
-  const handleToggleSoM = () => {
-    dispatch({ type: 'TOGGLE_SOM_OVERLAY' });
-  };
-
   const handleResetDailyPuzzle = () => {
     dispatch({
       type: 'RESET_GAME',
       payload: {
-        caseNumber: '#042',
+        caseNumber: '#001',
       },
     });
     setMenuOpen(false);
@@ -388,10 +375,7 @@ export const App: React.FC<AppProps> = ({ config }) => {
                 }}
                 className="w-full p-2.5 text-left border-2 border-dossier-ink bg-dossier-accent text-dossier-ink font-black shadow-ink-sm flex items-center justify-between"
               >
-                <span>
-                  📅 Daily Puzzle #001 (Restart)
-                  <span className="sr-only"> Daily Puzzle #042 (Restart)</span>
-                </span>
+                <span>📅 Daily Puzzle #001 (Restart)</span>
                 <span>↺</span>
               </button>
 
@@ -438,16 +422,8 @@ export const App: React.FC<AppProps> = ({ config }) => {
               caseNumber={state.caseNumber}
               caseTitle="KANJION"
               difficultyBadge="🇯🇵 HARD MODE: TOKYO–OSAKA SHINKANSEN"
-              ghostReplayActive={state.ghostReplayActive}
-              onToggleGhostReplay={handleToggleGhost}
-              somOverlayActive={state.somOverlayActive}
-              onToggleSomOverlay={handleToggleSoM}
               caseStatus={state.caseStatus}
               exhibitCount={5}
-              backendMode={engineMode}
-              onToggleBackendMode={() =>
-                setEngineMode(engineMode === 'offline' ? 'cloud' : 'offline')
-              }
               minimalCleanHeader={true}
             />
 
@@ -515,8 +491,6 @@ export const App: React.FC<AppProps> = ({ config }) => {
                     macroViewId={state.macroViewId}
                     microState={displayedMicroState}
                     agentCursor={state.agentCursor}
-                    ghostReplayActive={state.ghostReplayActive}
-                    somOverlayActive={state.somOverlayActive}
                     stageShake={state.stageShake}
                   >
                     <ShinkansenSandbox
@@ -524,12 +498,6 @@ export const App: React.FC<AppProps> = ({ config }) => {
                       onBlockedManualClick={handleBlockedManualClick}
                       signatureProgress={previewSignatureProgress}
                       signatureStroke={previewSignatureStroke}
-                    />
-
-                    <GhostReplay
-                      active={state.ghostReplayActive}
-                      onToggle={handleToggleGhost}
-                      trajectory={CASE_042_GHOST_REPLAY}
                     />
 
                     <AgentCursor
@@ -606,6 +574,7 @@ export const App: React.FC<AppProps> = ({ config }) => {
             <ExhibitsPanel
               caseClosed={state.caseStatus === 'closed'}
               scoreReport={state.scoreReport}
+              caseNumber={state.caseNumber}
               onReopenCase={handleReopenCase}
             />
           </section>

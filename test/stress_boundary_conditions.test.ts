@@ -28,10 +28,10 @@ import {
   VisionLLMTransport,
 } from '../src/engine/cloud_connector';
 import {
-  CASE_042_INITIAL_MICRO_STATE,
-  CASE_042_MACRO_VIEWS,
-  CASE_042_MV03_ELEMENTS,
-} from '../src/data/puzzles/case_042';
+  CASE_001_INITIAL_MICRO_STATE,
+  CASE_001_MACRO_VIEWS,
+  CASE_001_MV03_ELEMENTS,
+} from '../src/data/puzzles/case_001';
 import {
   ShinkansenMicroState,
   LLMDecisionResponse,
@@ -44,7 +44,7 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
 
   beforeEach(() => {
     offlineEngine = new OfflineSimulationEngine();
-    microState = { ...CASE_042_INITIAL_MICRO_STATE };
+    microState = { ...CASE_001_INITIAL_MICRO_STATE };
   });
 
   // =========================================================================
@@ -197,8 +197,8 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
       };
 
       const connector = new CloudVisionConnector({
-        puzzleId: 'case_042',
-        macroViews: CASE_042_MACRO_VIEWS,
+        puzzleId: 'case_001',
+        macroViews: CASE_001_MACRO_VIEWS,
         transport: mockTransport,
       });
 
@@ -220,8 +220,8 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
       };
 
       const connector = new CloudVisionConnector({
-        puzzleId: 'case_042',
-        macroViews: CASE_042_MACRO_VIEWS,
+        puzzleId: 'case_001',
+        macroViews: CASE_001_MACRO_VIEWS,
         transport: mockTransport,
       });
 
@@ -241,8 +241,8 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
       };
 
       const connector = new CloudVisionConnector({
-        puzzleId: 'case_042',
-        macroViews: CASE_042_MACRO_VIEWS,
+        puzzleId: 'case_001',
+        macroViews: CASE_001_MACRO_VIEWS,
         transport: mockTransport,
       });
 
@@ -309,7 +309,7 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
       ];
 
       for (const prompt of evasionAttempts) {
-        const result = filterPromptSyntheticIds(prompt, CASE_042_MV03_ELEMENTS);
+        const result = filterPromptSyntheticIds(prompt, CASE_001_MV03_ELEMENTS);
         expect(result.isBlocked).toBe(true);
       }
     });
@@ -323,42 +323,42 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
       ];
 
       for (const prompt of fullwidthAttempts) {
-        const result = filterPromptSyntheticIds(prompt, CASE_042_MV03_ELEMENTS);
+        const result = filterPromptSyntheticIds(prompt, CASE_001_MV03_ELEMENTS);
         expect(result.isBlocked).toBe(true);
       }
     });
 
     it('allows legitimate visible unformatted numbers and prices through without false positive blockage', () => {
       // 24 is visible as "Nozomi 24"
-      const res24 = filterPromptSyntheticIds('click Nozomi 24', CASE_042_MV03_ELEMENTS);
+      const res24 = filterPromptSyntheticIds('click Nozomi 24', CASE_001_MV03_ELEMENTS);
       expect(res24.isBlocked).toBe(false);
 
       // 13870 is visible as ticket price
-      const resPrice = filterPromptSyntheticIds('select 13870 fare', CASE_042_MV03_ELEMENTS);
+      const resPrice = filterPromptSyntheticIds('select 13870 fare', CASE_001_MV03_ELEMENTS);
       expect(resPrice.isBlocked).toBe(false);
 
       // 515 is visible as "Hikari 515"
-      const res515 = filterPromptSyntheticIds('board Hikari 515', CASE_042_MV03_ELEMENTS);
+      const res515 = filterPromptSyntheticIds('board Hikari 515', CASE_001_MV03_ELEMENTS);
       expect(res515.isBlocked).toBe(false);
     });
 
     it('permits comma-formatted prices containing synthetic ID substrings ("¥14,520" and "¥14,720") without false-positive blockage', () => {
-      const resFare14520 = filterPromptSyntheticIds('select ¥14,520', CASE_042_MV03_ELEMENTS);
+      const resFare14520 = filterPromptSyntheticIds('select ¥14,520', CASE_001_MV03_ELEMENTS);
       expect(resFare14520.isBlocked).toBe(false);
       expect(resFare14520.flaggedId).toBeUndefined();
       expect(resFare14520.filteredInstruction).toBe('select ¥14,520');
 
-      const resFare14720 = filterPromptSyntheticIds('select ¥14,720', CASE_042_MV03_ELEMENTS);
+      const resFare14720 = filterPromptSyntheticIds('select ¥14,720', CASE_001_MV03_ELEMENTS);
       expect(resFare14720.isBlocked).toBe(false);
       expect(resFare14720.flaggedId).toBeUndefined();
       expect(resFare14720.filteredInstruction).toBe('select ¥14,720');
     });
 
     it('prevents sub-number false negatives on #14 colliding with ¥14,520 or ¥14,720', () => {
-      const res14 = filterPromptSyntheticIds('click mark #14', CASE_042_MV03_ELEMENTS);
+      const res14 = filterPromptSyntheticIds('click mark #14', CASE_001_MV03_ELEMENTS);
       expect(res14.isBlocked).toBe(true);
 
-      const res14Bare = filterPromptSyntheticIds('click 14', CASE_042_MV03_ELEMENTS);
+      const res14Bare = filterPromptSyntheticIds('click 14', CASE_001_MV03_ELEMENTS);
       expect(res14Bare.isBlocked).toBe(true);
     });
 
@@ -410,8 +410,8 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
         };
 
         const connector = new CloudVisionConnector({
-          puzzleId: 'case_042',
-          macroViews: CASE_042_MACRO_VIEWS,
+          puzzleId: 'case_001',
+          macroViews: CASE_001_MACRO_VIEWS,
           transport: mockTransport,
           fallbackEngine: dummyFallback,
         });
@@ -433,8 +433,8 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
 
       for (const transport of throwingTransports) {
         const connector = new CloudVisionConnector({
-          puzzleId: 'case_042',
-          macroViews: CASE_042_MACRO_VIEWS,
+          puzzleId: 'case_001',
+          macroViews: CASE_001_MACRO_VIEWS,
           transport: transport as VisionLLMTransport,
           fallbackEngine: offlineEngine,
         });
@@ -513,8 +513,8 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
 
       const cache = new MemoryKVCache();
       const connector = new CloudVisionConnector({
-        puzzleId: 'case_042',
-        macroViews: CASE_042_MACRO_VIEWS,
+        puzzleId: 'case_001',
+        macroViews: CASE_001_MACRO_VIEWS,
         transport: countingTransport,
         cache,
       });

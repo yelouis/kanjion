@@ -114,13 +114,11 @@ Your selection: A
 | F-5 | High | An unsealed result can be re-scored with "Return to Active Play", and a refresh restarts the case. | `src/engine/game_reducer.ts:572-582`; `src/components/ExhibitsPanel.tsx:226-235` | Item 3 |
 | F-6 | High | Players almost never reach a model. Nano is used only if it is already downloaded, the regex wins whenever it matches, and everything else is a ~450-line regex. | `src/engine/cloud_connector.ts:1126-1133`, `:1174-1183`, `:602-1046` | Items 10, 11 |
 | F-7 | High | No model ever receives an image. | All 24 `.webp` files in `public/puzzles/042/views/` are 0 bytes; 11 of 12 SoM SVGs are empty<br>`--case 042` re-serializes the TS fixture: `tools/lib/offline_compiler.ts:108`<br>`template.html` is a hard-coded stub: `:136-160`<br>The game never loads `manifest.json` | Item 9 |
-| F-8 | High | The tests don't run the shipped game. `process.env.NODE_ENV` switches the engine, start state and sandbox mode. Hidden `sr-only` strings exist only to satisfy old assertions. There are no Playwright specs. Production code speeds up animation when `navigator.webdriver` is set. | NODE_ENV branches: `src/App.tsx:40,43,71,98,187,550`; `src/components/LoopedTargetReplay.tsx:84`; `src/components/ShinkansenSandbox.tsx:69`<br>Hidden text: `src/components/MastheadHeader.tsx:39,46`; `src/components/DispatchPad.tsx:56,98`; `src/components/ExhibitsPanel.tsx:77`; `src/App.tsx:415`; `src/components/AgentCursor.tsx:330`<br>Webdriver speed-up: `src/App.tsx:188-190` | Items 1, 2 |
 | F-9 | Medium | The sandbox impersonates a real railway brand. | `src/components/ShinkansenSandbox.tsx:121`, `:202`, `:131-138` | Item 5 |
 | F-10 | Medium | The live pages carry English glosses that announce outcomes, plus internal codes: "(WRONG ROUTE)", "(Page 10)", "REQUIRED TYPE FIELD", "DRAW SIGNATURE HERE", "（赤ボタン）", "（MV-10）". | `src/components/ShinkansenSandbox.tsx:226`, `:242`, `:298-360`, `:379-455`, `:479-492`, `:670-745`, `:822`, `:852-892`, `:907-975` | Item 5 |
 | F-11 | Medium | The timed click isn't timed, so Exhibit C's criteria are false. | `src/engine/game_reducer.ts:159-169`; `src/data/puzzles/case_042.ts:409-423` | Item 7 |
 | F-12 | Medium | Puzzle behavior is a per-ID `switch` statement. MV-06, MV-07, MV-08 and MV-09 never render, `activeModal` is set but never drawn, and page gating keys off `signatureSigned === false`. | `src/engine/game_reducer.ts:53-299`; `src/data/puzzles/case_042.ts:304-342` | Item 6 |
 | F-13 | Medium | Cursor targets come from a hand-tuned percentage table. The manifest centers the green seat at (885, 468), but it renders near (875, 392). The URL bar says "seat-matrix" on every page. | `src/App.tsx:131-150`; `src/data/puzzles/case_042.ts:166-183`; `src/components/SandboxStage.tsx:109` | Items 5, 6 |
-| F-14 | Medium | The share card doesn't match: the report shows "KANJION #001", but the copied text says "#042" and links to `https://kanjion.game/c/042`. | `src/components/ExhibitsPanel.tsx:203`; `src/engine/scoring.ts:172-182` | Item 2 |
 | F-15 | Low | There is no daily schedule or rollover; the one case is hard-coded. | — | Item 12 |
 | F-16 | Low | Phones show the stage at 0.32×, which is too small to read. | `src/components/SandboxStage.tsx:24-59` | Item 13 |
 | F-17 | Low | Dead code. | `functions/` can't deploy on Spark and nothing calls it<br>Dev-server regex middleware duplicates the agent: `vite.config.ts:10-383`<br>Unused components: `GhostReplay`, `CoordinateRulers`, `DossierLayout`<br>Single-page sandbox branch used only by tests: `src/components/ShinkansenSandbox.tsx:985-1464` | Items 1, 2, 10, 11 |
@@ -136,8 +134,9 @@ Reproduce F-1 to F-5 with `npx tsx scripts/exploit_probe.mts`.
 _(none yet — implementors add entries here as options with a `Your selection:` line)_
 
 ## Resolved
-- F-8 (part) — resolved by item 1 (removed `NODE_ENV` and `navigator.webdriver` branches in `src/`, added `GameConfig`, unified initial micro-state on `MV-01`, and added Playwright `e2e/smoke.e2e.ts`)
-- F-17 (part) — resolved by item 1 (deleted single-page test-only sandbox branch in `src/components/ShinkansenSandbox.tsx`)
+- F-8 — resolved by item 2 (removed all `sr-only` hidden test strings and unused debug toggles; item 1 `5efae7f` removed `NODE_ENV` and `navigator.webdriver` branches, added `GameConfig`, and added Playwright `e2e/smoke.e2e.ts`)
+- F-14 — resolved by item 2 (renamed Case #042 to Case #001 everywhere, updated share card URL to `https://kanjion-game.web.app`, and rendered lines 1–2 of `scoreReport.shareableClipping` in `ExhibitsPanel.tsx`)
+- F-17 (part) — resolved by item 2 (deleted unused `GhostReplay.tsx`, `CoordinateRulers.tsx`, and `DossierLayout.tsx`; item 1 `5efae7f` deleted single-page test-only sandbox branch)
 
 ## History
 - **2026-11-07** — Reviewed the build against the original and the updated concept briefs.

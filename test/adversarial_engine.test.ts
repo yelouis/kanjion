@@ -25,10 +25,10 @@ import {
   MockVisionLLMTransport,
 } from '../src/engine/cloud_connector';
 import {
-  CASE_042_INITIAL_MICRO_STATE,
-  CASE_042_MACRO_VIEWS,
-  CASE_042_MV03_ELEMENTS,
-} from '../src/data/puzzles/case_042';
+  CASE_001_INITIAL_MICRO_STATE,
+  CASE_001_MACRO_VIEWS,
+  CASE_001_MV03_ELEMENTS,
+} from '../src/data/puzzles/case_001';
 import { ShinkansenMicroState, LLMDecisionResponse } from '../src/types/engine';
 
 describe('Milestone 2 Adversarial Challenge Suite', () => {
@@ -37,7 +37,7 @@ describe('Milestone 2 Adversarial Challenge Suite', () => {
 
   beforeEach(() => {
     offlineEngine = new OfflineSimulationEngine();
-    microState = { ...CASE_042_INITIAL_MICRO_STATE };
+    microState = { ...CASE_001_INITIAL_MICRO_STATE };
   });
 
   // =========================================================================
@@ -153,8 +153,8 @@ describe('Milestone 2 Adversarial Challenge Suite', () => {
 
       // Cloud connector DOES enforce 60 character limit
       const connector = new CloudVisionConnector({
-        puzzleId: 'case_042',
-        macroViews: CASE_042_MACRO_VIEWS,
+        puzzleId: 'case_001',
+        macroViews: CASE_001_MACRO_VIEWS,
         transport: new MockVisionLLMTransport(),
       });
       const cloudAction = await connector.resolveInstruction('MV-03', microState, overLongInstruction);
@@ -182,8 +182,8 @@ describe('Milestone 2 Adversarial Challenge Suite', () => {
     it('ensures EdgeKVCache correctly isolates keys between rapid state toggles', async () => {
       const mockTransport = new MockVisionLLMTransport();
       const connector = new CloudVisionConnector({
-        puzzleId: 'case_042',
-        macroViews: CASE_042_MACRO_VIEWS,
+        puzzleId: 'case_001',
+        macroViews: CASE_001_MACRO_VIEWS,
         transport: mockTransport,
       });
 
@@ -239,31 +239,31 @@ describe('Milestone 2 Adversarial Challenge Suite', () => {
   // =========================================================================
   describe('Vector 4: Guardrail Evasion & Prompt Injection Attacks', () => {
     it('blocks standard synthetic mark ID injections', () => {
-      expect(filterPromptSyntheticIds('click #25', CASE_042_MV03_ELEMENTS).isBlocked).toBe(true);
-      expect(filterPromptSyntheticIds('click mark 25', CASE_042_MV03_ELEMENTS).isBlocked).toBe(true);
-      expect(filterPromptSyntheticIds('click badge 25', CASE_042_MV03_ELEMENTS).isBlocked).toBe(true);
-      expect(filterPromptSyntheticIds('click id 25', CASE_042_MV03_ELEMENTS).isBlocked).toBe(true);
-      expect(filterPromptSyntheticIds('click tag 25', CASE_042_MV03_ELEMENTS).isBlocked).toBe(true);
-      expect(filterPromptSyntheticIds('click 25', CASE_042_MV03_ELEMENTS).isBlocked).toBe(true);
-      expect(filterPromptSyntheticIds('click #025', CASE_042_MV03_ELEMENTS).isBlocked).toBe(true);
+      expect(filterPromptSyntheticIds('click #25', CASE_001_MV03_ELEMENTS).isBlocked).toBe(true);
+      expect(filterPromptSyntheticIds('click mark 25', CASE_001_MV03_ELEMENTS).isBlocked).toBe(true);
+      expect(filterPromptSyntheticIds('click badge 25', CASE_001_MV03_ELEMENTS).isBlocked).toBe(true);
+      expect(filterPromptSyntheticIds('click id 25', CASE_001_MV03_ELEMENTS).isBlocked).toBe(true);
+      expect(filterPromptSyntheticIds('click tag 25', CASE_001_MV03_ELEMENTS).isBlocked).toBe(true);
+      expect(filterPromptSyntheticIds('click 25', CASE_001_MV03_ELEMENTS).isBlocked).toBe(true);
+      expect(filterPromptSyntheticIds('click #025', CASE_001_MV03_ELEMENTS).isBlocked).toBe(true);
     });
 
     it('verifies Guardrail 3 blocks underscore delimiter evasions ("mark_25" / "som_25")', () => {
-      const resultUnderscore = filterPromptSyntheticIds('click mark_25', CASE_042_MV03_ELEMENTS);
+      const resultUnderscore = filterPromptSyntheticIds('click mark_25', CASE_001_MV03_ELEMENTS);
       expect(resultUnderscore.isBlocked).toBe(true);
-      const resultSom = filterPromptSyntheticIds('click som_25', CASE_042_MV03_ELEMENTS);
+      const resultSom = filterPromptSyntheticIds('click som_25', CASE_001_MV03_ELEMENTS);
       expect(resultSom.isBlocked).toBe(true);
     });
 
     it('verifies Guardrail 3 blocks fullwidth unicode digit evasions ("click ＃２５" / "click ２５")', () => {
-      const resultFullwidth = filterPromptSyntheticIds('click ＃２５', CASE_042_MV03_ELEMENTS);
+      const resultFullwidth = filterPromptSyntheticIds('click ＃２５', CASE_001_MV03_ELEMENTS);
       expect(resultFullwidth.isBlocked).toBe(true);
-      const resultFullwidthStandalone = filterPromptSyntheticIds('click ２５', CASE_042_MV03_ELEMENTS);
+      const resultFullwidthStandalone = filterPromptSyntheticIds('click ２５', CASE_001_MV03_ELEMENTS);
       expect(resultFullwidthStandalone.isBlocked).toBe(true);
     });
 
     it('verifies Guardrail 3 blocks synthetic mark #14 without false negative from fare numerals', () => {
-      const result14 = filterPromptSyntheticIds('click #14', CASE_042_MV03_ELEMENTS);
+      const result14 = filterPromptSyntheticIds('click #14', CASE_001_MV03_ELEMENTS);
       expect(result14.isBlocked).toBe(true);
     });
 
@@ -272,12 +272,12 @@ describe('Milestone 2 Adversarial Challenge Suite', () => {
       // Element #14 is "◀ 条件変更へ戻る".
       // Formatted currency digits are collapsed across commas before word boundary checks,
       // ensuring "14,520" evaluates to "14520" rather than splitting into candidate ID #14.
-      const resFare1 = filterPromptSyntheticIds('select ¥14,520', CASE_042_MV03_ELEMENTS);
+      const resFare1 = filterPromptSyntheticIds('select ¥14,520', CASE_001_MV03_ELEMENTS);
       expect(resFare1.isBlocked).toBe(false);
       expect(resFare1.flaggedId).toBeUndefined();
       expect(resFare1.filteredInstruction).toBe('select ¥14,520');
 
-      const resFare2 = filterPromptSyntheticIds('select ¥14,720', CASE_042_MV03_ELEMENTS);
+      const resFare2 = filterPromptSyntheticIds('select ¥14,720', CASE_001_MV03_ELEMENTS);
       expect(resFare2.isBlocked).toBe(false);
       expect(resFare2.flaggedId).toBeUndefined();
       expect(resFare2.filteredInstruction).toBe('select ¥14,720');
@@ -304,7 +304,7 @@ describe('Milestone 2 Adversarial Challenge Suite', () => {
     });
 
     it('enforces assertGoalBlindness against checklist leakage in context JSON', () => {
-      const mv03 = CASE_042_MACRO_VIEWS.find((mv) => mv.id === 'MV-03')!;
+      const mv03 = CASE_001_MACRO_VIEWS.find((mv) => mv.id === 'MV-03')!;
       const prompt = buildMultimodalPrompt(mv03, microState, 'click green car');
 
       expect(() => assertGoalBlindness(prompt.contextJson)).not.toThrow();
@@ -365,8 +365,8 @@ describe('Milestone 2 Adversarial Challenge Suite', () => {
       mockTransport.setSimulateError(true, 'Simulated gateway timeout');
 
       const connector = new CloudVisionConnector({
-        puzzleId: 'case_042',
-        macroViews: CASE_042_MACRO_VIEWS,
+        puzzleId: 'case_001',
+        macroViews: CASE_001_MACRO_VIEWS,
         transport: mockTransport,
         fallbackEngine: offlineEngine,
       });
@@ -385,8 +385,8 @@ describe('Milestone 2 Adversarial Challenge Suite', () => {
       mockTransport.setSimulateError(true, 'Fatal cloud disconnect');
 
       const connector = new CloudVisionConnector({
-        puzzleId: 'case_042',
-        macroViews: CASE_042_MACRO_VIEWS,
+        puzzleId: 'case_001',
+        macroViews: CASE_001_MACRO_VIEWS,
         transport: mockTransport,
         fallbackEngine: offlineEngine,
       });

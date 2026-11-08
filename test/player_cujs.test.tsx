@@ -2,13 +2,13 @@ import { describe, it, expect } from 'vitest';
 import { reduceShinkansenMicroState, createInitialGameState, gameReducer } from '../src/engine/game_reducer';
 import { OfflineSimulationEngine } from '../src/engine/offline_simulator';
 import { BrowserGeminiNanoTransport, CloudVisionConnector } from '../src/engine/cloud_connector';
-import { CASE_042_INITIAL_MICRO_STATE, CASE_042_EXHIBITS, CASE_042_MACRO_VIEWS } from '../src/data/puzzles/case_042';
+import { CASE_001_INITIAL_MICRO_STATE, CASE_001_EXHIBITS, CASE_001_MACRO_VIEWS } from '../src/data/puzzles/case_001';
 import { calculateScoreReport } from '../src/engine/scoring';
 import type { ShinkansenMicroState } from '../src/types/engine';
 
 function createBrowserStartState(): ShinkansenMicroState {
   return {
-    ...CASE_042_INITIAL_MICRO_STATE,
+    ...CASE_001_INITIAL_MICRO_STATE,
     macroViewId: 'MV-01',
     selectedRoute: 'none',
     departureTime: 'none',
@@ -22,7 +22,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
 
   it('CUJ 1: Zero-Action Immediate Close awards 0% (no free points for Exhibit B or D)', () => {
     const startState = createBrowserStartState();
-    const report = calculateScoreReport(CASE_042_EXHIBITS, startState, 0, '#042');
+    const report = calculateScoreReport(CASE_001_EXHIBITS, startState, 0, '#001');
     expect(report.closenessScore).toBe(0);
     expect(report.finalScore).toBe(0);
     for (const ex of report.exhibitEvaluations) {
@@ -33,7 +33,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
 
   it('CUJ 2: Casual Visual English Prompts traverse all 5 pages to 100% x 1.2x = 120 PTS', () => {
     let game = createInitialGameState({
-      caseNumber: '#042',
+      caseNumber: '#001',
       initialMicroState: createBrowserStartState(),
     });
 
@@ -49,7 +49,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
       const action = engine.resolveInstruction(game.macroViewId, game.microState, prompt);
       game = gameReducer(game, {
         type: 'APPLY_AGENT_ACTION',
-        payload: { action, instruction: prompt, exhibits: CASE_042_EXHIBITS },
+        payload: { action, instruction: prompt, exhibits: CASE_001_EXHIBITS },
       });
     }
 
@@ -61,7 +61,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     expect(game.microState.signatureSigned).toBe(true);
     expect(game.microState.finalConfirmed).toBe(true);
 
-    game = gameReducer(game, { type: 'CLOSE_CASE', payload: { exhibits: CASE_042_EXHIBITS } });
+    game = gameReducer(game, { type: 'CLOSE_CASE', payload: { exhibits: CASE_001_EXHIBITS } });
     expect(game.scoreReport?.closenessScore).toBe(100);
     expect(game.scoreReport?.multiplier).toBe(1.2);
     expect(game.scoreReport?.finalScore).toBe(120);
@@ -129,7 +129,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     state = reduceShinkansenMicroState(state, { action: 'CLICK', targetId: '#30', thought: 'Confirm' }).nextState;
     expect(state.macroViewId).toBe('MV-05');
 
-    const report = calculateScoreReport(CASE_042_EXHIBITS, state, 4, '#042');
+    const report = calculateScoreReport(CASE_001_EXHIBITS, state, 4, '#001');
     expect(report.closenessScore).toBe(85);
     const exD = report.exhibitEvaluations.find((e) => e.id === 'exhibit_d');
     expect(exD?.status).toBe('MISSED');
@@ -144,7 +144,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     expect(state.macroViewId).toBe('MV-03');
 
     // If evaluated with YAMADA, Exhibit B is MISSED
-    const reportWrong = calculateScoreReport(CASE_042_EXHIBITS, state, 2, '#042');
+    const reportWrong = calculateScoreReport(CASE_001_EXHIBITS, state, 2, '#001');
     expect(reportWrong.exhibitEvaluations.find((e) => e.id === 'exhibit_b')?.status).toBe('MISSED');
 
     // Go back (#14) to Page 02 and fix to TANAKA
@@ -153,7 +153,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     const typeTanaka = engine.resolveInstruction(state.macroViewId, state, 'type TANAKA in passenger name');
     state = reduceShinkansenMicroState(state, typeTanaka).nextState;
     expect(state.passengerName).toBe('TANAKA');
-    const reportFixed = calculateScoreReport(CASE_042_EXHIBITS, state, 4, '#042');
+    const reportFixed = calculateScoreReport(CASE_001_EXHIBITS, state, 4, '#001');
     expect(reportFixed.exhibitEvaluations.find((e) => e.id === 'exhibit_b')?.status).toBe('VERIFIED');
   });
 
@@ -189,7 +189,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
 
   it('CUJ 13: 6-Line Exhaustion Auto-Closes Case File with 1.0x multiplier', () => {
     let game = createInitialGameState({
-      caseNumber: '#042',
+      caseNumber: '#001',
       initialMicroState: createBrowserStartState(),
     });
 
@@ -206,7 +206,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
       const action = engine.resolveInstruction(game.macroViewId, game.microState, prompt);
       game = gameReducer(game, {
         type: 'APPLY_AGENT_ACTION',
-        payload: { action, instruction: prompt, exhibits: CASE_042_EXHIBITS },
+        payload: { action, instruction: prompt, exhibits: CASE_001_EXHIBITS },
       });
     }
 
@@ -218,8 +218,8 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
 
   it('CUJ 14: BrowserGeminiNanoTransport executes 100% client-side via window.LanguageModel and local fallback', async () => {
     const connector = new CloudVisionConnector({
-      puzzleId: 'case_042',
-      macroViews: CASE_042_MACRO_VIEWS,
+      puzzleId: 'case_001',
+      macroViews: CASE_001_MACRO_VIEWS,
       transport: new BrowserGeminiNanoTransport(),
     });
 
@@ -263,13 +263,13 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
 
   it('CUJ 15: Custom smile signature ("Draw a signiture in the shape of a smile") + "Click the blue box on the bottom right"', async () => {
     const connector = new CloudVisionConnector({
-      puzzleId: 'case_042',
-      macroViews: CASE_042_MACRO_VIEWS,
+      puzzleId: 'case_001',
+      macroViews: CASE_001_MACRO_VIEWS,
       transport: new BrowserGeminiNanoTransport(),
     });
 
     let game = createInitialGameState({
-      caseNumber: '#042',
+      caseNumber: '#001',
       initialMicroState: createBrowserStartState(),
     });
 
@@ -285,7 +285,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
       const action = await connector.resolveInstruction(game.macroViewId, game.microState, prompt);
       game = gameReducer(game, {
         type: 'APPLY_AGENT_ACTION',
-        payload: { action, instruction: prompt, exhibits: CASE_042_EXHIBITS },
+        payload: { action, instruction: prompt, exhibits: CASE_001_EXHIBITS },
       });
     }
 
@@ -294,7 +294,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     expect(game.microState.finalConfirmed).toBe(true);
     expect(game.macroViewId).toBe('MV-05');
 
-    game = gameReducer(game, { type: 'CLOSE_CASE', payload: { exhibits: CASE_042_EXHIBITS } });
+    game = gameReducer(game, { type: 'CLOSE_CASE', payload: { exhibits: CASE_001_EXHIBITS } });
     expect(game.scoreReport?.closenessScore).toBe(100);
     expect(game.scoreReport?.finalScore).toBe(120);
   });

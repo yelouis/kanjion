@@ -3,7 +3,7 @@
  *
  * Centralized immutable game state reducer for Instruct.
  * Manages typewriter input, telegram lines, agent action execution,
- * micro-state mutations for Case File #042, agent cursor glide kinematics,
+ * micro-state mutations for Case File #001, agent cursor glide kinematics,
  * stage error shake triggers, and case closure lifecycles.
  */
 
@@ -11,10 +11,10 @@ import { AgentAction, ShinkansenMicroState } from '../types/engine';
 import { GameState, TelegramLine, AgentCursorState, ScoreReport } from '../types/game';
 import { ExhibitDefinition } from '../types/puzzle';
 import {
-  CASE_042_INITIAL_MICRO_STATE,
-  CASE_042_EXHIBITS,
-  CASE_042_MV03_ELEMENTS,
-} from '../data/puzzles/case_042';
+  CASE_001_INITIAL_MICRO_STATE,
+  CASE_001_EXHIBITS,
+  CASE_001_MV03_ELEMENTS,
+} from '../data/puzzles/case_001';
 import { calculateScoreReport } from './scoring';
 import { gridToCenter } from '../utils/coordinate_projector';
 import { resolveSignatureDrawingSpec } from '../utils/text_normalizer';
@@ -35,8 +35,6 @@ export type GameAction =
     }
   | { type: 'CLOSE_CASE'; payload?: { exhibits?: ExhibitDefinition[] } }
   | { type: 'REOPEN_CASE' }
-  | { type: 'TOGGLE_GHOST_REPLAY' }
-  | { type: 'TOGGLE_SOM_OVERLAY' }
   | { type: 'CLEAR_STAGE_SHAKE' }
   | {
       type: 'RESET_GAME';
@@ -47,7 +45,7 @@ export type GameAction =
     };
 
 /**
- * Evaluates the micro-state mutation resulting from an agent action on Case File #042.
+ * Evaluates the micro-state mutation resulting from an agent action on Case File #001.
  */
 export function reduceShinkansenMicroState(
   state: ShinkansenMicroState,
@@ -313,7 +311,7 @@ function resolveCursorPosition(
 
   if (action.targetId) {
     const rawId = parseInt(action.targetId.replace(/^#/, ''), 10);
-    const element = CASE_042_MV03_ELEMENTS.find((e) => e.id === rawId);
+    const element = CASE_001_MV03_ELEMENTS.find((e) => e.id === rawId);
     if (element) {
       const cx = element.boundingBox.x + element.boundingBox.width / 2;
       const cy = element.boundingBox.y + element.boundingBox.height / 2;
@@ -336,16 +334,16 @@ function resolveCursorPosition(
 }
 
 /**
- * Creates canonical initial GameState for Case File #042.
+ * Creates canonical initial GameState for Case File #001.
  */
 export function createInitialGameState(options?: {
   caseNumber?: string;
   initialMicroState?: ShinkansenMicroState;
 }): GameState {
-  const caseNumber = options?.caseNumber ?? '#042';
+  const caseNumber = options?.caseNumber ?? '#001';
   const microState = options?.initialMicroState
     ? { ...options.initialMicroState }
-    : { ...CASE_042_INITIAL_MICRO_STATE };
+    : { ...CASE_001_INITIAL_MICRO_STATE };
 
   const telegrams: TelegramLine[] = Array.from({ length: 6 }, (_, i) => ({
     lineNumber: i + 1,
@@ -369,8 +367,6 @@ export function createInitialGameState(options?: {
       variant: 'idle',
       isShaking: false,
     },
-    ghostReplayActive: false,
-    somOverlayActive: false,
     stageShake: false,
     isExecuting: false,
     scoreReport: null,
@@ -410,7 +406,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
 
       const { action: agentAction, instruction } = action.payload;
-      const exhibits = action.payload.exhibits ?? CASE_042_EXHIBITS;
+      const exhibits = action.payload.exhibits ?? CASE_001_EXHIBITS;
       const activeIdx = state.activeLineIndex;
 
       // Disallow out-of-bounds dispatch
@@ -500,7 +496,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         return state;
       }
 
-      const exhibits = action.payload?.exhibits ?? CASE_042_EXHIBITS;
+      const exhibits = action.payload?.exhibits ?? CASE_001_EXHIBITS;
       const linesUsed = state.telegrams.filter((t) => t.submitted).length;
       const scoreReport = calculateScoreReport(exhibits, state.microState, linesUsed, state.caseNumber);
 
@@ -520,20 +516,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         caseStatus: 'active',
         scoreReport: null,
-      };
-    }
-
-    case 'TOGGLE_GHOST_REPLAY': {
-      return {
-        ...state,
-        ghostReplayActive: !state.ghostReplayActive,
-      };
-    }
-
-    case 'TOGGLE_SOM_OVERLAY': {
-      return {
-        ...state,
-        somOverlayActive: !state.somOverlayActive,
       };
     }
 

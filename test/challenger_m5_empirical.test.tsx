@@ -27,9 +27,9 @@ import {
 } from '../src/engine/game_reducer';
 import { OfflineSimulationEngine } from '../src/engine/offline_simulator';
 import {
-  CASE_042_MACRO_VIEWS,
-  CASE_042_EXHIBITS,
-} from '../src/data/puzzles/case_042';
+  CASE_001_MACRO_VIEWS,
+  CASE_001_EXHIBITS,
+} from '../src/data/puzzles/case_001';
 import { calculateEfficiencyMultiplier } from '../src/engine/scoring';
 
 describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () => {
@@ -54,10 +54,10 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       const [state, dispatch] = useReducer(
         gameReducer,
         undefined,
-        () => createInitialGameState({ caseNumber: '#042' })
+        () => createInitialGameState({ caseNumber: '#001' })
       );
 
-      const engine = new OfflineSimulationEngine(CASE_042_MACRO_VIEWS);
+      const engine = new OfflineSimulationEngine(CASE_001_MACRO_VIEWS);
       const linesUsed = state.telegrams.filter((t) => t.submitted).length;
       const { multiplier } = calculateEfficiencyMultiplier(linesUsed);
 
@@ -77,7 +77,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
           payload: {
             action,
             instruction,
-            exhibits: CASE_042_EXHIBITS,
+            exhibits: CASE_001_EXHIBITS,
           },
         });
       };
@@ -91,7 +91,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
             onInputChange={(val) => dispatch({ type: 'SET_INPUT', payload: val })}
             onSubmitLine={handleDispatch}
             onCloseCase={() =>
-              dispatch({ type: 'CLOSE_CASE', payload: { exhibits: CASE_042_EXHIBITS } })
+              dispatch({ type: 'CLOSE_CASE', payload: { exhibits: CASE_001_EXHIBITS } })
             }
             caseStatus={state.caseStatus}
             currentMultiplier={multiplier}
@@ -127,7 +127,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 02 / 06');
       expect(container.querySelector('#live-mult-label')).toHaveTextContent('2.0x'); // 1 line used -> 5 unused -> 1.0 + 5*0.2 = 2.0x
       expect(screen.getByText(/LINE 01:/i)).toBeInTheDocument();
-      expect(screen.getByText(/Exhibit Status: ██ REDACTED ██/i)).toBeInTheDocument();
+      expect(screen.getByTestId('line-01-model-thought')).toBeInTheDocument();
 
       // --- Turn 2 (MV-02): Dispatch Line 02 ---
       const input2 = container.querySelector('#telegram-input') as HTMLInputElement;
@@ -450,14 +450,14 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       const lines = copiedPayload.split('\n');
       expect(lines.length).toBe(3);
 
-      // Line 1: KANJION #042 🇯🇵 — Closeness% × Mult = Score PTS
-      expect(lines[0]).toMatch(/^KANJION #042 🇯🇵 — \d+% × \d+\.\d+x = \d+ PTS$/);
+      // Line 1: KANJION #001 🇯🇵 — Closeness% × Mult = Score PTS
+      expect(lines[0]).toMatch(/^KANJION #001 🇯🇵 — \d+% × \d+\.\d+x = \d+ PTS$/);
 
       // Line 2: 5-symbol emoji matrix + (X/6 Telegrams Sent)
       expect(lines[1]).toMatch(/^[🟩🟥⬜]{5} \(\d\/6 Telegrams Sent\)$/u);
 
       // Line 3: Canonical forensic URL
-      expect(lines[2]).toBe('https://kanjion.game/c/042');
+      expect(lines[2]).toBe('https://kanjion-game.web.app');
 
       // 3. Feedback reverts after 2500ms
       act(() => {

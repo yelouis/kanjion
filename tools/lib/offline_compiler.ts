@@ -10,10 +10,10 @@ import { JSDOM } from 'jsdom';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
-  CASE_042_MANIFEST,
-  CASE_042_MV03_ELEMENTS,
-  CASE_042_MACRO_VIEWS,
-} from '../../src/data/puzzles/case_042';
+  CASE_001_MANIFEST,
+  CASE_001_MV03_ELEMENTS,
+  CASE_001_MACRO_VIEWS,
+} from '../../src/data/puzzles/case_001';
 import {
   boxToGrid,
   tupleToBoundingBox,
@@ -43,7 +43,7 @@ import {
 /**
  * Extracts interactive elements from an HTML template string offline using JSDOM.
  * Uses explicit data-som-id / data-bbox attributes if present, falling back to
- * canonical fixtures for Case File #042 MV-03.
+ * canonical fixtures for Case File #001 MV-03.
  */
 export function extractElementsOffline(html: string, macroViewId: string): SoMElement[] {
   const dom = new JSDOM(html);
@@ -94,19 +94,19 @@ export function extractElementsOffline(html: string, macroViewId: string): SoMEl
     return elements;
   }
 
-  // Fallback to canonical Case File #042 elements if macroViewId is MV-03
+  // Fallback to canonical Case File #001 elements if macroViewId is MV-03
   if (macroViewId === 'MV-03' || macroViewId === 'view_03') {
-    return CASE_042_MV03_ELEMENTS;
+    return CASE_001_MV03_ELEMENTS;
   }
 
   return [];
 }
 
 /**
- * Compiles Case File #042 deterministically in offline mode.
+ * Compiles Case File #001 deterministically in offline mode.
  */
-export function compileOfflineCase042(options: CompilerOptions): PuzzleManifest {
-  const manifest = CASE_042_MANIFEST;
+export function compileOfflineCase001(options: CompilerOptions): PuzzleManifest {
+  const manifest = CASE_001_MANIFEST;
   const validation = validatePuzzleInvariants(manifest);
 
   if (!validation.valid) {
@@ -117,7 +117,7 @@ export function compileOfflineCase042(options: CompilerOptions): PuzzleManifest 
 
   if (options.dryRun) {
     if (options.verbose) {
-      console.log(`[compile] DRY RUN SUCCESS: Validated Case #042 with ${manifest.macroViews.length} views and ${manifest.exhibits.length} exhibits.`);
+      console.log(`[compile] DRY RUN SUCCESS: Validated Case #001 with ${manifest.macroViews.length} views and ${manifest.exhibits.length} exhibits.`);
     }
     return manifest;
   }
@@ -137,7 +137,7 @@ export function compileOfflineCase042(options: CompilerOptions): PuzzleManifest 
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>Case File #042 - Tokyo–Osaka Shinkansen</title>
+  <title>Case File #001 - Tokyo–Osaka Shinkansen</title>
   <style>
     html, body {
       margin: 0; padding: 0;
@@ -230,10 +230,10 @@ export function compileFixtureOffline(fixturePath: string, options: CompilerOpti
 
     const elements = extractElementsOffline(sanitizedHtml, 'MV-03');
 
-    // Build default 9 macro-views using Case 042 structure
+    // Build default macro-views using Case 001 structure
     baseManifest = {
-      ...CASE_042_MANIFEST,
-      macroViews: CASE_042_MACRO_VIEWS.map((mv) =>
+      ...CASE_001_MANIFEST,
+      macroViews: CASE_001_MACRO_VIEWS.map((mv) =>
         mv.id === 'MV-03' ? { ...mv, elements } : mv
       ),
     };

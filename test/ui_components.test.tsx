@@ -2,142 +2,38 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 
 import {
-  DossierLayout,
   MastheadHeader,
-  CoordinateRulers,
   SandboxStage,
   ShinkansenSandbox,
   AgentCursor,
-  GhostReplay,
   DispatchPad,
   ExhibitsPanel,
 } from '../src/components';
 import App from '../src/App';
 
 import {
-  CASE_042_INITIAL_MICRO_STATE,
-  CASE_042_GHOST_REPLAY,
-} from '../src/data/puzzles/case_042';
+  CASE_001_INITIAL_MICRO_STATE,
+} from '../src/data/puzzles/case_001';
 import type { ScoreReport, TelegramLine } from '../src/types/game';
-
-describe('1. DossierLayout Component', () => {
-  it('renders slotted sections and applies archival styling', () => {
-    const { container } = render(
-      <DossierLayout
-        telemetryBar={<div data-testid="telemetry">TELEMETRY BAR</div>}
-        header={<header data-testid="header">HEADER SLOT</header>}
-        stage={<div data-testid="stage">STAGE SLOT</div>}
-        dispatchPad={<div data-testid="dispatch">DISPATCH SLOT</div>}
-        exhibitsPanel={<div data-testid="exhibits">EXHIBITS SLOT</div>}
-        modal={<div data-testid="modal">MODAL SLOT</div>}
-      >
-        <div data-testid="children">EXTRA CHILDREN</div>
-      </DossierLayout>
-    );
-
-    expect(screen.getByTestId('telemetry')).toHaveTextContent('TELEMETRY BAR');
-    expect(screen.getByTestId('header')).toHaveTextContent('HEADER SLOT');
-    expect(screen.getByTestId('stage')).toHaveTextContent('STAGE SLOT');
-    expect(screen.getByTestId('dispatch')).toHaveTextContent('DISPATCH SLOT');
-    expect(screen.getByTestId('exhibits')).toHaveTextContent('EXHIBITS SLOT');
-    expect(screen.getByTestId('modal')).toHaveTextContent('MODAL SLOT');
-    expect(screen.getByTestId('children')).toHaveTextContent('EXTRA CHILDREN');
-
-    // Archival broadsheet classes
-    const main = container.querySelector('main');
-    expect(main).toHaveClass('bg-dossier-paper', 'border-dossier-ink', 'shadow-ink-lg');
-  });
-});
 
 describe('2. MastheadHeader Component', () => {
   it('renders case file metadata, difficulty badge, and date slug', () => {
     render(
       <MastheadHeader
-        caseNumber="#042"
+        caseNumber="#001"
         caseTitle="THE INSTRUCT DOSSIER"
         difficultyBadge="🇯🇵 HARD MODE: TOKYO–OSAKA SHINKANSEN"
-        ghostReplayActive={false}
-        onToggleGhostReplay={vi.fn()}
-        somOverlayActive={false}
-        onToggleSomOverlay={vi.fn()}
         caseStatus="active"
         exhibitCount={5}
         dateSlug="NOVEMBER 06, 2026"
       />
     );
 
-    expect(screen.getByText(/CASE FILE #042/i)).toBeInTheDocument();
+    expect(screen.getByText(/CASE FILE #001/i)).toBeInTheDocument();
     expect(screen.getByText('THE INSTRUCT DOSSIER')).toBeInTheDocument();
     expect(screen.getByText(/🇯🇵 HARD MODE: TOKYO–OSAKA SHINKANSEN/i)).toBeInTheDocument();
     expect(screen.getByText(/NOVEMBER 06, 2026/i)).toBeInTheDocument();
-    expect(screen.getByText(/COPY-PASTE DISABLED/i)).toBeInTheDocument();
     expect(screen.getByText(/██ SEALED UNTIL CASE CLOSED ██/i)).toBeInTheDocument();
-  });
-
-  it('handles Ghost Replay and Backend SoM toggle buttons', () => {
-    const toggleGhost = vi.fn();
-    const toggleSom = vi.fn();
-
-    const { rerender } = render(
-      <MastheadHeader
-        caseNumber="#042"
-        caseTitle="THE INSTRUCT DOSSIER"
-        difficultyBadge="🇯🇵 HARD MODE"
-        ghostReplayActive={false}
-        onToggleGhostReplay={toggleGhost}
-        somOverlayActive={false}
-        onToggleSomOverlay={toggleSom}
-        caseStatus="active"
-        exhibitCount={5}
-      />
-    );
-
-    const ghostBtn = screen.getByRole('button', { name: /Target Ghost Replay/i });
-    fireEvent.click(ghostBtn);
-    expect(toggleGhost).toHaveBeenCalledTimes(1);
-
-    const somBtn = screen.getByRole('button', { name: /Backend SoM IDs/i });
-    fireEvent.click(somBtn);
-    expect(toggleSom).toHaveBeenCalledTimes(1);
-
-    // Rerender in active toggled states and closed case
-    rerender(
-      <MastheadHeader
-        caseNumber="#042"
-        caseTitle="THE INSTRUCT DOSSIER"
-        difficultyBadge="🇯🇵 HARD MODE"
-        ghostReplayActive={true}
-        onToggleGhostReplay={toggleGhost}
-        somOverlayActive={true}
-        onToggleSomOverlay={toggleSom}
-        caseStatus="closed"
-        exhibitCount={5}
-      />
-    );
-
-    expect(screen.getByText(/Target Ghost Replay: ON/i)).toBeInTheDocument();
-    expect(screen.getByText(/Backend SoM IDs: ON/i)).toBeInTheDocument();
-    expect(screen.getByText(/🔓 UNSEALED \(CASE CLOSED\)/i)).toBeInTheDocument();
-  });
-});
-
-describe('3. CoordinateRulers Component', () => {
-  it('renders top column ruler (COL A–D) and left row ruler (ROW 1–4)', () => {
-    render(
-      <CoordinateRulers>
-        <div data-testid="inner-stage">VIRTUAL STAGE CANVAS</div>
-      </CoordinateRulers>
-    );
-
-    expect(screen.getByText(/COL A \(LEFT: 0–256\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/COL B \(CENTER-LEFT: 256–512\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/COL C \(CENTER-RIGHT: 512–768\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/COL D \(RIGHT: 768–1024\)/i)).toBeInTheDocument();
-    expect(screen.getByText('ROW 1')).toBeInTheDocument();
-    expect(screen.getByText('ROW 2')).toBeInTheDocument();
-    expect(screen.getByText('ROW 3')).toBeInTheDocument();
-    expect(screen.getByText('ROW 4')).toBeInTheDocument();
-    expect(screen.getByTestId('inner-stage')).toBeInTheDocument();
   });
 });
 
@@ -146,7 +42,7 @@ describe('4. SandboxStage Component', () => {
     render(
       <SandboxStage
         macroViewId="MV-03"
-        microState={CASE_042_INITIAL_MICRO_STATE}
+        microState={CASE_001_INITIAL_MICRO_STATE}
         agentCursor={{
           xPercent: 50,
           yPercent: 50,
@@ -154,8 +50,6 @@ describe('4. SandboxStage Component', () => {
           variant: 'idle',
           isShaking: false,
         }}
-        ghostReplayActive={false}
-        somOverlayActive={false}
         stageShake={false}
         scaleFactor={0.75}
       >
@@ -184,7 +78,7 @@ describe('4. SandboxStage Component', () => {
     render(
       <SandboxStage
         macroViewId="MV-03"
-        microState={CASE_042_INITIAL_MICRO_STATE}
+        microState={CASE_001_INITIAL_MICRO_STATE}
         agentCursor={{
           xPercent: 50,
           yPercent: 50,
@@ -192,8 +86,6 @@ describe('4. SandboxStage Component', () => {
           variant: 'idle',
           isShaking: false,
         }}
-        ghostReplayActive={false}
-        somOverlayActive={false}
         stageShake={false}
       />
     );
@@ -221,7 +113,7 @@ describe('4. SandboxStage Component', () => {
     render(
       <SandboxStage
         macroViewId="MV-03"
-        microState={CASE_042_INITIAL_MICRO_STATE}
+        microState={CASE_001_INITIAL_MICRO_STATE}
         agentCursor={{
           xPercent: 50,
           yPercent: 50,
@@ -229,8 +121,6 @@ describe('4. SandboxStage Component', () => {
           variant: 'idle',
           isShaking: false,
         }}
-        ghostReplayActive={false}
-        somOverlayActive={false}
         stageShake={true}
       />
     );
@@ -243,7 +133,7 @@ describe('4. SandboxStage Component', () => {
 describe('5. ShinkansenSandbox Component', () => {
   it('updates visual selection state from microState across multi-page views', () => {
     const mv03State = {
-      ...CASE_042_INITIAL_MICRO_STATE,
+      ...CASE_001_INITIAL_MICRO_STATE,
       macroViewId: 'MV-03' as const,
       selectedRoute: 'tokyo_shinosaka' as const,
       departureTime: '14:30' as const,
@@ -362,40 +252,6 @@ describe('6. AgentCursor Component', () => {
   });
 });
 
-describe('7. GhostReplay Component', () => {
-  it('renders trajectory waypoints, redaction bars, and dismiss button when active', () => {
-    const toggleFn = vi.fn();
-
-    render(
-      <GhostReplay
-        active={true}
-        onToggle={toggleFn}
-        trajectory={CASE_042_GHOST_REPLAY}
-      />
-    );
-
-    expect(screen.getByTestId('ghost-replay-overlay')).toBeInTheDocument();
-    expect(screen.getByText(/TARGET GHOST REPLAY/i)).toBeInTheDocument();
-    expect(screen.getByText(/TARGET CLICK @ 0:03 \(COL D, ROW 3\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/TARGET CLICK @ 0:05 \(COL D, ROW 4\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/FORENSIC ANTI-LEAK PROTOCOL/i)).toBeInTheDocument();
-
-    const returnBtn = screen.getByRole('button', { name: /RETURN TO DOSSIER/i });
-    fireEvent.click(returnBtn);
-    expect(toggleFn).toHaveBeenCalledTimes(1);
-  });
-
-  it('renders nothing when active is false', () => {
-    const { container } = render(
-      <GhostReplay
-        active={false}
-        onToggle={vi.fn()}
-      />
-    );
-    expect(container.firstChild).toBeNull();
-  });
-});
-
 describe('8. DispatchPad Component', () => {
   const sampleTelegrams: TelegramLine[] = [
     { lineNumber: 1, text: 'select tokyo to shin-osaka', submitted: true, actionSummary: 'Agent clicked tab', exhibitRedactedStatus: 'SEALED' },
@@ -425,7 +281,6 @@ describe('8. DispatchPad Component', () => {
     expect(screen.getByText(/select tokyo to shin-osaka/i)).toBeInTheDocument();
     expect(screen.getByText(/LINE 02:/i)).toBeInTheDocument();
     expect(screen.getByText(/set departure 14:30/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/\(Exhibit Status: ██ REDACTED ██\)/i)).toHaveLength(2);
 
     // Active input line 03
     expect(screen.getByText(/LINE 03 ▸/i)).toBeInTheDocument();
@@ -541,7 +396,7 @@ describe('9. ExhibitsPanel Component', () => {
       { id: 'exhibit_e', code: 'E', title: 'Final Blue Confirm', weight: 20, status: 'MISSED', stampText: '[MISSED ✗ +0%]', rotationDeg: -4 },
     ],
     emojiRow: '🟩🟩🟩🟩⬜',
-    shareableClipping: 'KANJION #042 🇯🇵 — 80% × 1.6x = 128 PTS\n🟩🟩🟩🟩⬜ (3/6 Telegrams Sent)',
+    shareableClipping: 'KANJION #001 🇯🇵 — 80% × 1.6x = 128 PTS\n🟩🟩🟩🟩⬜ (3/6 Telegrams Sent)\nhttps://kanjion-game.web.app',
   };
 
   it('renders sealed preview during active play', () => {
@@ -565,7 +420,7 @@ describe('9. ExhibitsPanel Component', () => {
       />
     );
 
-    expect(screen.getByText(/FORENSIC AUDIT REPORT • CASE #042/i)).toBeInTheDocument();
+    expect(screen.getByText(/FORENSIC AUDIT REPORT • CASE #001/i)).toBeInTheDocument();
     expect(screen.getAllByText(/80% × 1\.6x = 128 PTS/i).length).toBeGreaterThan(0);
     expect(screen.getByText('Route: 東京 ⇒ 新大阪')).toBeInTheDocument();
     expect(screen.getByText('[VERIFIED ✓ +25%]')).toBeInTheDocument();
@@ -625,7 +480,7 @@ describe('10. App Top-Level Integration Gameplay Loop', () => {
 
     // Case is now closed
     expect(screen.getAllByText(/CASE CLOSED/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/FORENSIC AUDIT REPORT • CASE #042/i)).toBeInTheDocument();
+    expect(screen.getByText(/FORENSIC AUDIT REPORT • CASE #001/i)).toBeInTheDocument();
     expect(screen.getByText(/\[VERIFIED ✓ \+25%\]/i)).toBeInTheDocument();
 
     // Return to active play (practice mode)
@@ -649,7 +504,7 @@ describe('10. App Top-Level Integration Gameplay Loop', () => {
     const menuBtn = screen.getByRole('button', { name: /Open Game Menu/i });
     fireEvent.click(menuBtn);
     expect(screen.getByTestId('top-left-menu-drawer')).toBeInTheDocument();
-    expect(screen.getByText(/Daily Puzzle #042/i)).toBeInTheDocument();
+    expect(screen.getByText(/Daily Puzzle #001/i)).toBeInTheDocument();
 
     // Close menu drawer
     fireEvent.click(menuBtn);

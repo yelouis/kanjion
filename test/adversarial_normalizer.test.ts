@@ -239,7 +239,7 @@ describe('Adversarial Challenge 3: Glyph Preservation & Token Extraction', () =>
 });
 
 describe('Adversarial Challenge 4: Cache Key Determinism & Collision Resistance', () => {
-  it('guarantees 0 collisions across all 6,912 valid combinatorial game states in Case #042', () => {
+  it('guarantees 0 collisions across all 6,912 valid combinatorial game states in Case #001', () => {
     const macroViews = ['MV-01', 'MV-02', 'MV-03', 'MV-04', 'MV-05', 'MV-06', 'MV-07', 'MV-08', 'MV-09'];
     const trainNames = ['none', 'Hikari 515', 'Nozomi 24'];
     const seatClasses = ['none', 'ordinary_free', 'ordinary_reserved', 'green_car'];
@@ -320,11 +320,11 @@ describe('Adversarial Challenge 4: Cache Key Determinism & Collision Resistance'
 
   it('generates consistent, parseable cache keys for edge KV storage', () => {
     const stateHash = generateStateHash('MV-03', { fare: 13870 });
-    const key = generateCacheKey('case_042', stateHash, 'click green clover');
+    const key = generateCacheKey('case_001', stateHash, 'click green clover');
 
-    expect(key).toBe(`case_042:${stateHash}:click green clover`);
+    expect(key).toBe(`case_001:${stateHash}:click green clover`);
     const parts = key.split(':');
-    expect(parts[0]).toBe('case_042');
+    expect(parts[0]).toBe('case_001');
     expect(parts[1]).toBe(stateHash);
     expect(parts[2]).toBe('click green clover');
   });

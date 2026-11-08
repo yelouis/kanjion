@@ -53,7 +53,6 @@ export const DispatchPad: React.FC<DispatchPadProps> = ({
             Each line sends 1 English command (max 60 chars) to your AI agent on the left newspaper
             page. Unused lines give a +20% score bonus.
           </p>
-          <span className="sr-only">6-LINE WESTERN UNION DISPATCH PAD</span>
         </div>
 
         <div className="flex items-center gap-3 text-xs">
@@ -95,7 +94,6 @@ export const DispatchPad: React.FC<DispatchPadProps> = ({
                   </span>
                   <span className="text-emerald-900 font-bold text-xs">
                     → {lineData.actionSummary || 'Agent executed action'}
-                    <span className="sr-only"> (Exhibit Status: ██ REDACTED ██)</span>
                   </span>
                 </div>
                 {showDistinctThought && (

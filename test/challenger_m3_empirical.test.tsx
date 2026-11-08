@@ -5,7 +5,7 @@ import { AgentCursor } from '../src/components/AgentCursor';
 import { gameReducer, createInitialGameState } from '../src/engine/game_reducer';
 import type { TelegramLine } from '../src/types/game';
 import type { AgentAction } from '../src/types/engine';
-import { CASE_042_EXHIBITS } from '../src/data/puzzles/case_042';
+import { CASE_001_EXHIBITS } from '../src/data/puzzles/case_001';
 
 describe('CHALLENGER M3: Empirical Verification & Adversarial Stress Suite', () => {
   afterEach(() => {
@@ -293,7 +293,7 @@ describe('CHALLENGER M3: Empirical Verification & Adversarial Stress Suite', () 
           payload: {
             action: dummyAction,
             instruction: `Line ${line} text`,
-            exhibits: CASE_042_EXHIBITS,
+            exhibits: CASE_001_EXHIBITS,
           },
         });
       }
@@ -330,7 +330,7 @@ describe('CHALLENGER M3: Empirical Verification & Adversarial Stress Suite', () 
       // Close case early
       state = gameReducer(state, {
         type: 'CLOSE_CASE',
-        payload: { exhibits: CASE_042_EXHIBITS },
+        payload: { exhibits: CASE_001_EXHIBITS },
       });
 
       expect(state.caseStatus).toBe('closed');

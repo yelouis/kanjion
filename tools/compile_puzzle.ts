@@ -48,7 +48,7 @@ import {
 } from './lib/manifest_builder';
 
 import {
-  compileOfflineCase042,
+  compileOfflineCase001,
   compileFixtureOffline,
   extractElementsOffline,
 } from './lib/offline_compiler';
@@ -91,7 +91,7 @@ export {
   validatePuzzleInvariants,
   buildDeclarativeManifest,
   generateSvgSomOverlay,
-  compileOfflineCase042,
+  compileOfflineCase001,
   compileFixtureOffline,
   extractElementsOffline,
   sanitizePuzzleHtml,
@@ -155,7 +155,7 @@ export function parseCliArguments(rawArgs: string[]): CompilerOptions {
     );
   }
 
-  const targetId = caseId || '042';
+  const targetId = caseId || '001';
   const outDir = values.out
     ? path.resolve(process.cwd(), values.out)
     : path.resolve(process.cwd(), 'public/puzzles', targetId);
@@ -242,9 +242,9 @@ export async function compileLiveUrl(url: string, options: CompilerOptions): Pro
  * Central compiler dispatcher.
  */
 export async function runCompiler(options: CompilerOptions): Promise<PuzzleManifest> {
-  if (options.caseId === '042' || options.caseId === undefined && !options.fixture && !options.url) {
-    // Built-in Case File #042
-    return compileOfflineCase042(options);
+  if (options.caseId === '001' || options.caseId === undefined && !options.fixture && !options.url) {
+    // Built-in Case File #001
+    return compileOfflineCase001(options);
   }
 
   if (options.fixture) {
@@ -269,7 +269,7 @@ Usage:
   npx tsx tools/compile_puzzle.ts [options]
 
 Options:
-  --case <id>          Compile built-in case file (e.g. 042 or #042)
+  --case <id>          Compile built-in case file (e.g. 001 or #001)
   --fixture <path>     Path to local directory or HTML puzzle fixture
   --url <url>          Live target website URL to crawl and bundle
   --out <dir>          Output directory (default: public/puzzles/<caseId>)
