@@ -72,12 +72,12 @@ You are an implementor agent with no memory of this project. This file is your s
 
 | Gate | Command | Result on 2026-11-07 |
 |---|---|---|
-| Unit/component | `npm test` | **431 passed / 22 files** (≈ 9.7 s). Runs the shipped multi-page game via `GameConfig` (items 1–3). |
-| Typecheck + build | `npm run build` | Clean (`tsc -b && vite build`). `dist/assets/index-*.js` 276.55 kB, **83.99 kB gzip**. CSS 37.00 kB. |
+| Unit/component | `npm test` | **436 passed / 22 files** (≈ 9.7 s). Runs the shipped multi-page game via `GameConfig` (items 1–4). |
+| Typecheck + build | `npm run build` | Clean (`tsc -b && vite build`). `dist/assets/index-*.js` 275.02 kB, **83.75 kB gzip**. CSS 37.00 kB. |
 | Compiler | `npx tsx tools/compile_puzzle.ts --case 001 --offline --validate --dry-run` | Exit 0, but it only validates hand-written TypeScript data and captures nothing (F-7). |
 | E2E | `npm run test:e2e` | **1 passed** (`e2e/smoke.e2e.ts` in `desktop-chromium`). |
 | Lint | — | No lint script exists. |
-| Exploit probe | `npx tsx scripts/exploit_probe.mts` | F-1 and F-5 closed by item 3 (shortcut now 65% / 91 PTS, peek-and-replay preserves official 50 PTS). Reproduces F-2, F-3, F-4. |
+| Exploit probe | `npx tsx scripts/exploit_probe.mts` | Only the answer-key path reaches 100% (`120 PTS`); F-1, F-2, F-3, F-4, F-5 all blocked/mitigated (items 3–4). |
 
 ---
 

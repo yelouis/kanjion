@@ -38,7 +38,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
 
     const prompts = [
       'click the top left green box',
-      'type TANAKA in the text box',
+      'type TANAKA in the passenger name box',
       'click green button in second row',
       'draw a line in the signature box',
       'click blue button at bottom right',
@@ -167,9 +167,9 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     }).nextState;
     expect(state.macroViewId).toBe('MV-03');
 
-    // Ambiguous "click 13,870" triggers CONFUSED and stays on MV-03
+    // Ambiguous "click 13,870" triggers NOOP and stays on MV-03
     const ambigAction = engine.resolveInstruction(state.macroViewId, state, 'click 13,870');
-    expect(ambigAction.action).toBe('CONFUSED');
+    expect(ambigAction.action).toBe('NOOP');
     state = reduceShinkansenMicroState(state, ambigAction).nextState;
     expect(state.macroViewId).toBe('MV-03');
 
@@ -254,7 +254,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
 
     // 2. Without window.LanguageModel (e.g. mobile Safari), still resolves 100% client-side with zero network calls
     const startState2 = createBrowserStartState();
-    const actionLocal = await connector.resolveInstruction('MV-02', startState2, 'type TANAKA in the text box');
+    const actionLocal = await connector.resolveInstruction('MV-02', startState2, 'type TANAKA in the passenger name box');
     expect(actionLocal.action).toBe('TYPE');
     expect(actionLocal.targetId).toBe('#17');
     expect(actionLocal.textValue).toBe('TANAKA');
@@ -274,7 +274,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
 
     const userPrompts = [
       'Click on the green box with the 01 in it',
-      'Click on the box under the required type and type TANAKA',
+      'Type TANAKA in the passenger name box',
       'Click on the green 13870 box',
       'Draw a signiture in the shape of a smile',
       'Click the blue box on the bottom right',

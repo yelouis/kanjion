@@ -277,9 +277,9 @@ export function tokenizeInstruction(instruction: string): InstructionTokens {
 // =========================================================================
 
 export interface SignatureDrawingSpec {
-  /** Stored in state.signatureStroke (e.g. 'SHAPE:smile', 'SHAPE:heart', 'TEXT:BOB', 'T. Tanaka') */
+  /** Stored in state.signatureStroke (e.g. 'SHAPE:smile', 'SHAPE:heart', 'TEXT:BOB', 'SHAPE:signature') */
   strokeValue: string;
-  /** Short human label shown in badge/summary (e.g. '😊 Smile', '❤️ Heart', 'T. Tanaka') */
+  /** Short human label shown in badge/summary (e.g. '😊 Smile', '❤️ Heart', '') */
   displayLabel: string;
   /** Witty, human-friendly model thought reacting to the specific drawing request */
   thought: string;
@@ -402,10 +402,102 @@ const SIGNATURE_SHAPES: Record<string, Omit<SignatureDrawingSpec, 'strokeValue'>
   },
 };
 
+export const NOOP_NO_SIGNAL_THOUGHT =
+  '💭 I have no idea what that means, so I poked the page title. Describe what to click?';
+export const NOOP_META_PROMPT_THOUGHT =
+  '💭 Win? Solve? I only see buttons, not goals. I tapped the title while you rephrase.';
+export const NOOP_MARK_ID_THOUGHT =
+  "💭 I don't see numbers like that on the page — describe the thing instead.";
+
+const META_PROMPT_REGEX =
+  /\b(win|winning|solve|solution|cheat|answer key|complete the (task|puzzle|game|level|case)|beat the (game|level|puzzle)|(do|copy|repeat) what the (replay|video|demo) (did|does|shows)|copy the (replay|video|demo))\b/i;
+
+export function isMetaPrompt(instruction: string): boolean {
+  return META_PROMPT_REGEX.test(instruction || '');
+}
+
+const TYPED_TEXT_DROP_WORDS = new Set([
+  'the',
+  'a',
+  'an',
+  'in',
+  'into',
+  'on',
+  'at',
+  'to',
+  'box',
+  'field',
+  'textbox',
+  'input',
+  'name',
+  'passenger',
+  'passengers',
+  'please',
+  'his',
+  'her',
+  'their',
+  'my',
+  'as',
+  'for',
+]);
+
+export function extractTypedText(instruction: string): string {
+  const raw = instruction || '';
+  const formatOutput = (s: string): string =>
+    s
+      .toUpperCase()
+      .replace(/[^A-Z ]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 16)
+      .trim();
+
+  // 1. If the instruction contains straight- or curly-quoted text, take the first quoted run.
+  const quotedMatch = raw.match(/"([^"]+)"|“([^”]+)”|‘([^’]+)’|(?:^|[^A-Za-z])'([^']+)'(?=[^A-Za-z]|$)/);
+  if (quotedMatch) {
+    const quoted = quotedMatch[1] ?? quotedMatch[2] ?? quotedMatch[3] ?? quotedMatch[4] ?? '';
+    const formatted = formatOutput(quoted);
+    if (formatted) return formatted;
+  }
+
+  // 2. Otherwise take the words after the first verb from: type, enter, write, input, put, fill in, fill.
+  const verbRegex = /\b(fill\s+in|type|enter|write|input|put|fill)\b/i;
+  const verbMatch = verbRegex.exec(raw);
+  const afterVerb = verbMatch ? raw.slice(verbMatch.index + verbMatch[0].length) : raw;
+  const words = afterVerb.match(/[A-Za-z]+/g) ?? [];
+
+  const remaining: string[] = [];
+  const droppedPassengerName: string[] = [];
+
+  for (const w of words) {
+    const lower = w.toLowerCase();
+    if (TYPED_TEXT_DROP_WORDS.has(lower)) {
+      if (lower === 'passenger' || lower === 'name') {
+        droppedPassengerName.push(lower);
+      }
+    } else {
+      remaining.push(w);
+    }
+  }
+
+  const chosenWords = remaining.slice(0, 2);
+  let candidate: string;
+  if (chosenWords.length > 0) {
+    candidate = chosenWords.join(' ');
+  } else if (droppedPassengerName.length > 0) {
+    candidate = droppedPassengerName.join(' ');
+  } else {
+    const fallbackMatches = (raw.match(/\b(passenger|name)\b/gi) ?? []).map((w) => w.toLowerCase());
+    candidate = fallbackMatches.length > 0 ? fallbackMatches.join(' ') : 'name';
+  }
+
+  return formatOutput(candidate) || 'NAME';
+}
+
 const DEFAULT_SQUIGGLE_SPEC: SignatureDrawingSpec = {
-  strokeValue: 'T. Tanaka',
-  displayLabel: 'T. Tanaka',
-  thought: '💭 Channels inner doctor handwriting... drawing a very fancy squiggly "T. Tanaka" in the signature box!',
+  strokeValue: 'SHAPE:signature',
+  displayLabel: '',
+  thought: "💭 Channeling my inner doctor's handwriting — one very fancy squiggle, coming up!",
   svgPaths: [
     'M 24 42 C 42 12, 58 46, 78 24 C 95 10, 110 44, 132 28 C 152 14, 170 42, 196 22 C 212 12, 226 36, 240 26',
   ],
@@ -516,11 +608,11 @@ export function extractSignatureDrawingSpec(instruction: string): SignatureDrawi
 }
 
 /**
- * Resolves a stored state.signatureStroke value (e.g. 'SHAPE:smile', 'TEXT:Bob', 'T. Tanaka')
+ * Resolves a stored state.signatureStroke value (e.g. 'SHAPE:smile', 'TEXT:Bob', 'SHAPE:signature')
  * back to its SVG rendering specification for ShinkansenSandbox.
  */
 export function resolveSignatureDrawingSpec(strokeValue?: string): SignatureDrawingSpec {
-  if (!strokeValue || strokeValue === 'T. Tanaka') {
+  if (!strokeValue || strokeValue === 'SHAPE:signature') {
     return DEFAULT_SQUIGGLE_SPEC;
   }
   if (strokeValue.startsWith('SHAPE:')) {

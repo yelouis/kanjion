@@ -68,7 +68,7 @@ export function reduceShinkansenMicroState(
   let stageShake = false;
   let nextMacroViewId = state.macroViewId;
 
-  if (action.action === 'CONFUSED' || !action.targetId) {
+  if (action.action === 'NOOP' || action.action === 'CONFUSED' || !action.targetId) {
     summary = action.thought || 'Agent was confused; no target identified';
     return { nextState, summary, isTrap: false, stageShake: false, nextMacroViewId };
   }
@@ -84,7 +84,7 @@ export function reduceShinkansenMicroState(
     return { nextState, summary, isTrap: false, stageShake: false, nextMacroViewId };
   }
   if (state.macroViewId === 'MV-02' && ![17, 14, 11, 12].includes(numId)) {
-    summary = '📌 FIELD NOTE: Element is not on Page 02. Type passenger name (TANAKA) first.';
+    summary = "📌 FIELD NOTE: That isn't on this page.";
     return { nextState, summary, isTrap: false, stageShake: false, nextMacroViewId };
   }
   if (
@@ -142,7 +142,7 @@ export function reduceShinkansenMicroState(
       break;
 
     case 17: // Passenger Name Input Field (Page 2 -> Page 3, Exhibit B TYPE Task)
-      nextState.passengerName = (action.textValue || 'TANAKA').toUpperCase();
+      nextState.passengerName = (action.textValue || 'NAME').toUpperCase();
       nextState.departureTime = '14:30';
       nextMacroViewId = 'MV-03';
       summary = `Agent typed [${nextState.passengerName}] into [搭乗者名]`;
@@ -159,12 +159,11 @@ export function reduceShinkansenMicroState(
       break;
 
     case 27: { // Digital Signature Authorization Pad (Page 4, Exhibit D DRAW Task)
-      nextState.signatureStroke = action.textValue || 'T. Tanaka';
+      nextState.signatureStroke = action.textValue || 'SHAPE:signature';
       const sigSpec = resolveSignatureDrawingSpec(nextState.signatureStroke);
-      summary =
-        sigSpec.displayLabel && sigSpec.displayLabel !== 'T. Tanaka'
-          ? `Agent signed [自署・サイン欄] (${sigSpec.displayLabel})`
-          : 'Agent signed [自署・サイン欄]';
+      summary = sigSpec.displayLabel
+        ? `Agent signed [自署・サイン欄] (${sigSpec.displayLabel})`
+        : 'Agent signed [自署・サイン欄]';
       break;
     }
 
@@ -417,11 +416,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       );
 
       // 2. Resolve cursor position and note
-      const { xPercent, yPercent } = resolveCursorPosition(agentAction, state.agentCursor);
+      const { xPercent, yPercent } = resolveCursorPosition(
+        agentAction.action === 'NOOP' && !agentAction.targetCoordinate
+          ? { ...agentAction, targetCoordinate: { x: 512, y: 150 } }
+          : agentAction,
+        state.agentCursor
+      );
       const thoughtText = (agentAction.thought || summary).slice(0, 80);
 
       let cursorVariant: AgentCursorState['variant'] = 'executing';
-      if (agentAction.action === 'CONFUSED') {
+      if (agentAction.action === 'CONFUSED' || agentAction.action === 'NOOP') {
         cursorVariant = 'confused';
       } else if (isTrap || agentAction.isTrap) {
         cursorVariant = 'trap';
@@ -434,7 +438,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         yPercent,
         thought: thoughtText,
         variant: cursorVariant,
-        isShaking: isTrap || stageShake,
+        isShaking: isTrap || stageShake || agentAction.action === 'NOOP',
       };
 
       // 3. Update telegram row in ledger (keep exhibit status SEALED during active play)

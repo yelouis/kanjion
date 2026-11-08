@@ -320,31 +320,27 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
 
     it('2.3 verifies Guardrail 3 prompt filtering catches evasions while permitting visible currency literals', () => {
       // Evasion vectors targeting synthetic ID #25:
-      // Includes explicit marks, fullwidth numbers, circled digits, URL percent encoding, and zero-width characters
+      // Includes explicit marks, fullwidth numbers, URL percent encoding, and zero-width characters
       const evasionAttempts = [
         'click #25',
         'click mark 25',
         'click badge 25',
         'click tag 25',
         'click som_25',
-        'click 25',
         'click ＃２５', // Fullwidth unicode
-        'click ㉕',     // Circled numeral 25
+        'click #㉕',    // Circled numeral 25 with hash
         'click %2325',  // URL encoded #25
         'click mark%2025', // URL encoded space
-        'click %32%35', // URL encoded digits '2' and '5'
         'click badge%20%2325', // URL encoded badge #25
         'click %23%32%35', // Fully URL encoded #25
         'click%20%2325',
-        'click%2025',
-        'click 2\u200B5', // Embedded zero-width space in digits
         'click #2\u200B5', // Embedded zero-width space with mark
         'click #\u200B25', // Leading zero-width space
         'click mark\u200B25', // Zero-width space in mark keyword
-        'click 2\u200C5', // Zero-width non-joiner
-        'click 2\u200D5', // Zero-width joiner
-        'click 2\uFEFF5', // Zero-width no-break space / BOM
-        'click 2\u200B\u200C\u200D5', // Multi-character zero-width sequence
+        'click #2\u200C5', // Zero-width non-joiner
+        'click #2\u200D5', // Zero-width joiner
+        'click #2\uFEFF5', // Zero-width no-break space / BOM
+        'click #2\u200B\u200C\u200D5', // Multi-character zero-width sequence
       ];
 
       for (const attempt of evasionAttempts) {
@@ -439,12 +435,12 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
         transport: mockTransport,
       });
 
-      const evasionPrompts = ['click %2325', 'click 2\u200B5', 'click mark%2025'];
+      const evasionPrompts = ['click %2325', 'click #2\u200B5', 'click mark%2025'];
       for (const prompt of evasionPrompts) {
         mockTransport.recordedRequests = [];
         const action = await connector.resolveInstruction('MV-03', CASE_001_INITIAL_MICRO_STATE, prompt);
-        expect(action.action).toBe('CONFUSED');
-        expect(action.thought).toBe('📌 FIELD NOTE: Synthetic mark IDs cannot be targeted directly.');
+        expect(action.action).toBe('NOOP');
+        expect(action.thought).toBe("💭 I don't see numbers like that on the page — describe the thing instead.");
         expect(mockTransport.recordedRequests.length).toBe(0);
       }
     });
@@ -683,7 +679,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       const urlEncodedResult = filterPromptSyntheticIds('click %2325 directly', CASE_001_MV03_ELEMENTS);
       expect(urlEncodedResult.isBlocked).toBe(true);
 
-      const zeroWidthResult = filterPromptSyntheticIds('click 2\u200B5 directly', CASE_001_MV03_ELEMENTS);
+      const zeroWidthResult = filterPromptSyntheticIds('click #2\u200B5 directly', CASE_001_MV03_ELEMENTS);
       expect(zeroWidthResult.isBlocked).toBe(true);
 
       // Line 1: Select route on MV-01

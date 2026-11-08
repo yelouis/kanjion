@@ -31,21 +31,20 @@ describe('Offline Simulation Engine & Multi-Token Heuristic Matcher', () => {
       expect(typeof customEngine.resolveInstruction).toBe('function');
     });
 
-    it('returns CONFUSED on unknown macroViewId without throwing', () => {
+    it('returns NOOP on unknown macroViewId without throwing', () => {
       const action = engine.resolveInstruction('MV-UNKNOWN', microState, 'click green car');
-      expect(action.action).toBe('CONFUSED');
-      expect(action.thought).toContain('No interactive elements available');
-      expect(action.thought.length).toBeLessThanOrEqual(80);
+      expect(action.action).toBe('NOOP');
+      expect(action.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });
 
-    it('returns CONFUSED on empty or whitespace instructions', () => {
+    it('returns NOOP on empty or whitespace instructions', () => {
       const empty = engine.resolveInstruction('MV-03', microState, '');
-      expect(empty.action).toBe('CONFUSED');
-      expect(empty.thought).toContain('Empty instruction');
+      expect(empty.action).toBe('NOOP');
+      expect(empty.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
 
       const whitespace = engine.resolveInstruction('MV-03', microState, '     ');
-      expect(whitespace.action).toBe('CONFUSED');
-      expect(whitespace.thought).toContain('Empty instruction');
+      expect(whitespace.action).toBe('NOOP');
+      expect(whitespace.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });
   });
 
@@ -220,21 +219,19 @@ describe('Offline Simulation Engine & Multi-Token Heuristic Matcher', () => {
     });
   });
 
-  describe('Fallback Confusion & Recovery Rules', () => {
-    it('returns CONFUSED on ungrounded/nonsense instruction', () => {
+  describe('Fallback NOOP & Recovery Rules', () => {
+    it('returns NOOP on ungrounded/nonsense instruction', () => {
       const action = engine.resolveInstruction('MV-03', microState, 'do a backflip into hyperspace');
-      expect(action.action).toBe('CONFUSED');
-      expect(action.thought).toContain('Instruction unclear');
+      expect(action.action).toBe('NOOP');
+      expect(action.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
       expect(action.targetId).toBeUndefined();
-      expect(action.thought.length).toBeLessThanOrEqual(80);
     });
 
-    it('returns CONFUSED on multi-target collision tie ("click 13870")', () => {
+    it('returns NOOP on multi-target collision tie ("click 13870")', () => {
       // 13870 appears in #21, #23, and #25 with equal weight 25
       const action = engine.resolveInstruction('MV-03', microState, 'click 13870');
-      expect(action.action).toBe('CONFUSED');
-      expect(action.thought).toContain('Ambiguous match between Hikari & Nozomi fares');
-      expect(action.thought.length).toBeLessThanOrEqual(80);
+      expect(action.action).toBe('NOOP');
+      expect(action.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });
 
     it('handles maximum 60-character instruction at boundary without crashing', () => {

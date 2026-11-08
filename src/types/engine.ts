@@ -40,7 +40,7 @@ export type GridCoordinate = `${GridColumn}${GridRow}`;
  * - SCROLL: Viewport or container scroll.
  * - CONFUSED: Fallback when instruction is ambiguous or ungrounded.
  */
-export type AgentActionType = 'CLICK' | 'TYPE' | 'DRAW' | 'TIMED_CLICK' | 'SCROLL' | 'CONFUSED';
+export type AgentActionType = 'CLICK' | 'TYPE' | 'DRAW' | 'TIMED_CLICK' | 'SCROLL' | 'CONFUSED' | 'NOOP';
 
 /**
  * Exact pixel coordinates in normalized 1024x768 stage coordinate space.
@@ -109,7 +109,7 @@ export interface ShinkansenMicroState {
     adults: number;
     children: number;
   };
-  /** Passenger name typed into the reservation input field (e.g. 'TANAKA'). */
+  /** Passenger name typed into the reservation input field. */
   passengerName?: string;
   /** Signature label or stroke rendered inside the signature pad. */
   signatureStroke?: string;

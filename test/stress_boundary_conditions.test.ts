@@ -55,8 +55,8 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
       const inputs = ['', ' ', '   ', '\t\n\r', ' \n \t '];
       for (const input of inputs) {
         const action = offlineEngine.resolveInstruction('MV-03', microState, input);
-        expect(action.action).toBe('CONFUSED');
-        expect(action.thought).toBe('📌 FIELD NOTE: Empty instruction received.');
+        expect(action.action).toBe('NOOP');
+        expect(action.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
       }
     });
 
@@ -75,12 +75,12 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
       expect(action60.action).toBe('CLICK');
       expect(action60.targetId).toBe('#25');
 
-      // Exactly 61 characters: must return CONFUSED with length note
+      // Exactly 61 characters: must return NOOP
       const input61 = 'click green car button at D3 please agent for the shinkansen!';
       expect(input61.length).toBe(61);
       const action61 = offlineEngine.resolveInstruction('MV-03', microState, input61);
-      expect(action61.action).toBe('CONFUSED');
-      expect(action61.thought).toBe('📌 FIELD NOTE: Instruction exceeds maximum length of 60 characters.');
+      expect(action61.action).toBe('NOOP');
+      expect(action61.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
 
       // 55 chars with 6 trailing spaces (length = 61): exceeds length limit
       const inputSpaces = 'click green car button at D3                          ';
@@ -90,8 +90,8 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
       const padded61 = 'click green car button at D3' + ' '.repeat(33); // 28 + 33 = 61
       expect(padded61.length).toBe(61);
       const actionPadded = offlineEngine.resolveInstruction('MV-03', microState, padded61);
-      expect(actionPadded.action).toBe('CONFUSED');
-      expect(actionPadded.thought).toBe('📌 FIELD NOTE: Instruction exceeds maximum length of 60 characters.');
+      expect(actionPadded.action).toBe('NOOP');
+      expect(actionPadded.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });
 
     it('resists ReDoS and handles massive inputs (10,000 characters) instantaneously', () => {
@@ -102,14 +102,14 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
       const elapsed = performance.now() - t0;
 
       expect(elapsed).toBeLessThan(50); // Instantaneous rejection (< 50ms)
-      expect(action.action).toBe('CONFUSED');
-      expect(action.thought).toBe('📌 FIELD NOTE: Instruction exceeds maximum length of 60 characters.');
+      expect(action.action).toBe('NOOP');
+      expect(action.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });
 
     it('handles non-existent macroView IDs and empty element views without crashing', () => {
       const actionMissing = offlineEngine.resolveInstruction('MV-NONEXISTENT', microState, 'click clover');
-      expect(actionMissing.action).toBe('CONFUSED');
-      expect(actionMissing.thought).toBe('📌 FIELD NOTE: No interactive elements available in view.');
+      expect(actionMissing.action).toBe('NOOP');
+      expect(actionMissing.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
 
       const emptyViewEngine = new OfflineSimulationEngine([
         {
@@ -120,8 +120,8 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
         },
       ]);
       const actionEmpty = emptyViewEngine.resolveInstruction('MV-EMPTY', microState, 'click clover');
-      expect(actionEmpty.action).toBe('CONFUSED');
-      expect(actionEmpty.thought).toBe('📌 FIELD NOTE: No interactive elements available in view.');
+      expect(actionEmpty.action).toBe('NOOP');
+      expect(actionEmpty.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });
 
     it('handles multi-byte unicode, Japanese Kanji/Hiragana, and special punctuation', () => {
@@ -146,23 +146,23 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
   // VECTOR 2: Offline Simulation Multi-Token Scoring & Tie Boundaries
   // =========================================================================
   describe('Vector 2: Multi-Token Scoring & Tie Boundaries', () => {
-    it('returns CONFUSED when instruction scores below confidence threshold (25)', () => {
+    it('returns NOOP when instruction scores below confidence threshold (25)', () => {
       // Instruction matching only a generic non-existent or low-weight keyword
       const action = offlineEngine.resolveInstruction('MV-03', microState, 'completely unrelated query');
-      expect(action.action).toBe('CONFUSED');
-      expect(action.thought).toBe('📌 FIELD NOTE: Instruction unclear. Target could not be identified.');
+      expect(action.action).toBe('NOOP');
+      expect(action.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });
 
-    it('provides specialized diagnostic thought for ambiguous fare matches (¥13,870)', () => {
+    it('returns NOOP for ambiguous fare matches (¥13,870)', () => {
       // 13870 matches Hikari Free Seat (#21) and Nozomi Free Seat (#23) equally
       const actionFare = offlineEngine.resolveInstruction('MV-03', microState, 'select ticket 13870');
-      expect(actionFare.action).toBe('CONFUSED');
-      expect(actionFare.thought).toBe('📌 FIELD NOTE: Ambiguous match between Hikari & Nozomi fares (¥13,870).');
+      expect(actionFare.action).toBe('NOOP');
+      expect(actionFare.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
 
       // With comma: 13,870
       const actionFareComma = offlineEngine.resolveInstruction('MV-03', microState, 'select ticket 13,870');
-      expect(actionFareComma.action).toBe('CONFUSED');
-      expect(actionFareComma.thought).toBe('📌 FIELD NOTE: Ambiguous match between Hikari & Nozomi fares (¥13,870).');
+      expect(actionFareComma.action).toBe('NOOP');
+      expect(actionFareComma.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });
 
     it('breaks ties cleanly when additional coordinate or train disambiguation is provided', () => {
@@ -206,8 +206,8 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
       const action = await connector.resolveInstruction('MV-03', microState, longInstruction);
 
       expect(transportCalled).toBe(false); // Transport was never queried
-      expect(action.action).toBe('CONFUSED');
-      expect(action.thought).toBe('📌 FIELD NOTE: Instruction exceeds maximum length of 60 characters.');
+      expect(action.action).toBe('NOOP');
+      expect(action.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });
 
     it('rejects empty and whitespace instructions before reaching LLM transport', async () => {
@@ -227,8 +227,8 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
 
       const action = await connector.resolveInstruction('MV-03', microState, '   ');
       expect(transportCalled).toBe(false);
-      expect(action.action).toBe('CONFUSED');
-      expect(action.thought).toBe('📌 FIELD NOTE: Instruction cannot be empty or whitespace only.');
+      expect(action.action).toBe('NOOP');
+      expect(action.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });
 
     it('rejects non-existent macro-view without querying LLM transport', async () => {
@@ -248,8 +248,8 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
 
       const action = await connector.resolveInstruction('MV-999', microState, 'click button');
       expect(transportCalled).toBe(false);
-      expect(action.action).toBe('CONFUSED');
-      expect(action.thought).toBe('📌 FIELD NOTE: Macro-View MV-999 not found in manifest.');
+      expect(action.action).toBe('NOOP');
+      expect(action.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });
 
     it('strictly enforces assertGoalBlindness against all prohibited goal keys', () => {
@@ -305,7 +305,6 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
         'click badge#25',
         'click id 25',
         'click tag 25',
-        'click 25',
       ];
 
       for (const prompt of evasionAttempts) {
@@ -317,7 +316,6 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
     it('blocks fullwidth unicode variations of synthetic IDs', () => {
       const fullwidthAttempts = [
         'click ＃２５',
-        'click ２５',
         'click ｍａｒｋ２５',
         'click ＃ ２５',
       ];
@@ -358,8 +356,8 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
       const res14 = filterPromptSyntheticIds('click mark #14', CASE_001_MV03_ELEMENTS);
       expect(res14.isBlocked).toBe(true);
 
-      const res14Bare = filterPromptSyntheticIds('click 14', CASE_001_MV03_ELEMENTS);
-      expect(res14Bare.isBlocked).toBe(true);
+      const res14Hash = filterPromptSyntheticIds('click #14', CASE_001_MV03_ELEMENTS);
+      expect(res14Hash.isBlocked).toBe(true);
     });
 
     it('sanitizes DOM HTML with unquoted, single-quoted, and multi-attribute patterns', () => {

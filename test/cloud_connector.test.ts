@@ -276,10 +276,13 @@ describe('Cloud Vision LLM Connector & Security Guardrails', () => {
       expect(res2.flaggedId).toBe(25);
     });
 
-    it('blocks standalone synthetic ID guessing ("click 25")', () => {
+    it('allows bare numbers while blocking explicit synthetic ID syntax ("click 25" vs "click #25")', () => {
       const res = filterPromptSyntheticIds('click 25', CASE_001_MV03_ELEMENTS);
-      expect(res.isBlocked).toBe(true);
-      expect(res.flaggedId).toBe(25);
+      expect(res.isBlocked).toBe(false);
+
+      const resExplicit = filterPromptSyntheticIds('click #25', []);
+      expect(resExplicit.isBlocked).toBe(true);
+      expect(resExplicit.flaggedId).toBe(25);
     });
 
     it('permits numbers that appear visibly in on-screen element text ("click Nozomi 24")', () => {
@@ -317,38 +320,35 @@ describe('Cloud Vision LLM Connector & Security Guardrails', () => {
       expect(resFullwidth.isBlocked).toBe(false);
     });
 
-    it('still blocks synthetic element #14 when targeted explicitly or standalone ("click #14", "click 14", "click 14, then 25")', () => {
+    it('still blocks synthetic element #14 when targeted explicitly ("click #14", "click mark 14", "click #14, then #25")', () => {
       const resExplicit = filterPromptSyntheticIds('click #14', CASE_001_MV03_ELEMENTS);
       expect(resExplicit.isBlocked).toBe(true);
       expect(resExplicit.flaggedId).toBe(14);
 
-      const resStandalone = filterPromptSyntheticIds('click 14', CASE_001_MV03_ELEMENTS);
+      const resStandalone = filterPromptSyntheticIds('click mark 14', CASE_001_MV03_ELEMENTS);
       expect(resStandalone.isBlocked).toBe(true);
       expect(resStandalone.flaggedId).toBe(14);
 
-      const resDelimiter = filterPromptSyntheticIds('click 14, then 25', CASE_001_MV03_ELEMENTS);
+      const resDelimiter = filterPromptSyntheticIds('click #14, then #25', CASE_001_MV03_ELEMENTS);
       expect(resDelimiter.isBlocked).toBe(true);
       expect(resDelimiter.flaggedId).toBe(14);
     });
 
-    it('connector returns immediate CONFUSED on synthetic ID attempt without calling LLM', async () => {
+    it('connector returns immediate NOOP on synthetic ID attempt without calling LLM', async () => {
       const action = await connector.resolveInstruction('MV-03', microState, 'click #25');
-      expect(action.action).toBe('CONFUSED');
-      expect(action.thought).toBe('📌 FIELD NOTE: Synthetic mark IDs cannot be targeted directly.');
+      expect(action.action).toBe('NOOP');
+      expect(action.thought).toBe("💭 I don't see numbers like that on the page — describe the thing instead.");
       expect(mockTransport.recordedRequests.length).toBe(0); // LLM never called!
     });
 
-    it('blocks URL-encoded synthetic mark references ("%2325", "mark%2025", "%32%35", "badge%20%2325")', () => {
+    it('blocks URL-encoded synthetic mark references ("%2325", "mark%2025", "badge%20%2325")', () => {
       const urlEncodedVectors = [
         { input: 'click %2325', expectedId: 25 },
         { input: 'click mark%2025', expectedId: 25 },
-        { input: 'click %32%35', expectedId: 25 },
         { input: 'click badge%20%2325', expectedId: 25 },
         { input: 'click %23%32%35', expectedId: 25 },
         { input: '%2325', expectedId: 25 },
-        { input: '%32%35', expectedId: 25 },
         { input: 'click%20%2325', expectedId: 25 },
-        { input: 'click%2025', expectedId: 25 },
         { input: 'click%20mark%2025', expectedId: 25 },
         { input: 'click som%5F25', expectedId: 25 },
       ];
@@ -362,14 +362,13 @@ describe('Cloud Vision LLM Connector & Security Guardrails', () => {
 
     it('blocks zero-width and invisible control characters embedded within digits and mark tokens', () => {
       const zeroWidthVectors = [
-        { input: 'click 2\u200B5', expectedId: 25, label: 'embedded zero-width space U+200B' },
         { input: 'click #2\u200B5', expectedId: 25, label: 'hash with embedded zero-width space' },
         { input: 'click #\u200B25', expectedId: 25, label: 'leading zero-width space after hash' },
         { input: 'click mark\u200B25', expectedId: 25, label: 'zero-width space in mark token' },
-        { input: 'click 2\u200C5', expectedId: 25, label: 'zero-width non-joiner U+200C' },
-        { input: 'click 2\u200D5', expectedId: 25, label: 'zero-width joiner U+200D' },
-        { input: 'click 2\uFEFF5', expectedId: 25, label: 'byte order mark U+FEFF' },
-        { input: 'click 2\u200B\u200C\u200D5', expectedId: 25, label: 'multiple concatenated zero-width chars' },
+        { input: 'click #2\u200C5', expectedId: 25, label: 'zero-width non-joiner U+200C' },
+        { input: 'click #2\u200D5', expectedId: 25, label: 'zero-width joiner U+200D' },
+        { input: 'click #2\uFEFF5', expectedId: 25, label: 'byte order mark U+FEFF' },
+        { input: 'click #2\u200B\u200C\u200D5', expectedId: 25, label: 'multiple concatenated zero-width chars' },
       ];
 
       for (const vector of zeroWidthVectors) {
@@ -410,8 +409,6 @@ describe('Cloud Vision LLM Connector & Security Guardrails', () => {
       const evasionInputs = [
         'click %2325',
         'click mark%2025',
-        'click %32%35',
-        'click 2\u200B5',
         'click #2\u200B5',
         'click mark\u200B25',
       ];
@@ -419,8 +416,8 @@ describe('Cloud Vision LLM Connector & Security Guardrails', () => {
       for (const input of evasionInputs) {
         mockTransport.recordedRequests = [];
         const action = await connector.resolveInstruction('MV-03', microState, input);
-        expect(action.action).toBe('CONFUSED');
-        expect(action.thought).toBe('📌 FIELD NOTE: Synthetic mark IDs cannot be targeted directly.');
+        expect(action.action).toBe('NOOP');
+        expect(action.thought).toBe("💭 I don't see numbers like that on the page — describe the thing instead.");
         expect(mockTransport.recordedRequests.length).toBe(0); // LLM transport never called!
       }
     });
@@ -453,7 +450,7 @@ describe('Cloud Vision LLM Connector & Security Guardrails', () => {
       expect(action.thought).toContain('(Offline Fallback)');
     });
 
-    it('returns CONFUSED if transport fails and no fallback engine configured', async () => {
+    it('returns NOOP if transport fails and no fallback engine configured', async () => {
       const bareConnector = new CloudVisionConnector({
         puzzleId: 'case_001',
         macroViews: CASE_001_MACRO_VIEWS,
@@ -462,8 +459,8 @@ describe('Cloud Vision LLM Connector & Security Guardrails', () => {
       mockTransport.setSimulateError(true, 'Fatal cloud timeout');
 
       const action = await bareConnector.resolveInstruction('MV-03', microState, 'click green car');
-      expect(action.action).toBe('CONFUSED');
-      expect(action.thought).toContain('Cloud vision service unavailable');
+      expect(action.action).toBe('NOOP');
+      expect(action.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });
 
     it('executes HttpVisionLLMTransport with custom fetch mock', async () => {

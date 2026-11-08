@@ -29,6 +29,11 @@ import {
   generateStateHash,
   generateCacheKey,
   extractSignatureDrawingSpec,
+  extractTypedText,
+  isMetaPrompt,
+  NOOP_NO_SIGNAL_THOUGHT,
+  NOOP_META_PROMPT_THOUGHT,
+  NOOP_MARK_ID_THOUGHT,
 } from '../utils/text_normalizer';
 
 // =========================================================================
@@ -147,7 +152,7 @@ export interface SyntheticIdFilterResult {
 
 export function filterPromptSyntheticIds(
   instruction: string,
-  visibleElements: SoMElement[]
+  _visibleElements: SoMElement[] = []
 ): SyntheticIdFilterResult {
   // 1. Strip zero-width and invisible control characters prior to URI decoding
   let preprocessed = (instruction || '').replace(/[\u200B-\u200D\uFEFF]/g, '');
@@ -171,55 +176,24 @@ export function filterPromptSyntheticIds(
   preprocessed = preprocessed.replace(/[\u200B-\u200D\uFEFF]/g, '');
 
   // 4. Normalize Unicode forms (NFKC: fullwidth ＃２５ -> #25, circled ㉕ -> 25)
-  // and collapse comma-separated digits (e.g. 14,520 -> 14520) to prevent commas
-  // from splitting visible currency amounts into synthetic ID collisions
+  // and collapse comma-separated digits (e.g. 14,520 -> 14520)
   const normalizedInstruction = preprocessed
     .normalize('NFKC')
     .replace(/(?<=\d),(?=\d)/g, '');
 
-  // Aggregate all visible text from elements and visual descriptions in the active macro-view, stripped of commas
-  const sanitizedVisibleText = visibleElements
-    .map((e) => `${e.text} ${e.visualAttributes?.description || ''}`)
-    .join(' ')
-    .normalize('NFKC')
-    .replace(/,/g, '');
+  // Block on every page when the instruction matches /#\s*\d+/ or /\b(?:id|mark|badge|tag|som)\s*#?\s*\d+/i
+  const explicitMatch =
+    /#\s*(\d+)/.exec(normalizedInstruction) ||
+    /\b(?:id|mark|badge|tag|som)[-_\s]*#?\s*(\d+)/i.exec(normalizedInstruction);
 
-  // 1. Explicit mark tags: #25, # 25, mark 25, badge 25, id 25
-  const explicitPattern = /(?:#\s*|\b(?:mark|badge|id|tag|som)[_\s]*#?\s*)(\d+)/gi;
-  let match: RegExpExecArray | null;
-
-  while ((match = explicitPattern.exec(normalizedInstruction)) !== null) {
-    const candidateId = parseInt(match[1], 10);
-    const element = visibleElements.find((e) => e.id === candidateId);
-    if (element) {
-      const idStr = String(candidateId);
-      if (!new RegExp('\\b' + idStr + '\\b').test(sanitizedVisibleText)) {
-        return {
-          isBlocked: true,
-          flaggedId: candidateId,
-          filteredInstruction: normalizedInstruction.replace(match[0], '[FILTERED_ID]'),
-          reason: `Prompt explicitly references synthetic mark ID #${candidateId} which is not visible on screen.`,
-        };
-      }
-    }
-  }
-
-  // 2. Standalone numbers matching synthetic element IDs
-  const standalonePattern = /\b(\d+)\b/g;
-  while ((match = standalonePattern.exec(normalizedInstruction)) !== null) {
-    const candidateId = parseInt(match[1], 10);
-    const element = visibleElements.find((e) => e.id === candidateId);
-    if (element) {
-      const idStr = String(candidateId);
-      if (!new RegExp('\\b' + idStr + '\\b').test(sanitizedVisibleText)) {
-        return {
-          isBlocked: true,
-          flaggedId: candidateId,
-          filteredInstruction: normalizedInstruction.replace(new RegExp(`\\b${idStr}\\b`, 'g'), '[FILTERED_ID]'),
-          reason: `Prompt targets synthetic element ID ${candidateId} without visual grounding.`,
-        };
-      }
-    }
+  if (explicitMatch) {
+    const candidateId = parseInt(explicitMatch[1], 10);
+    return {
+      isBlocked: true,
+      flaggedId: candidateId,
+      filteredInstruction: normalizedInstruction.replace(explicitMatch[0], '[FILTERED_ID]'),
+      reason: `Prompt explicitly references synthetic mark ID #${candidateId} which is not visible on screen.`,
+    };
   }
 
   return {
@@ -602,27 +576,47 @@ interface ChromeLanguageModelFactory {
 export function evaluateClientSideDecision(
   instructionRaw: string,
   macroViewId = 'MV-01',
-  alwaysAct = false
+  _alwaysAct = false
 ): LLMDecisionResponse {
   const q = instructionRaw.trim();
   const lower = q.toLowerCase();
 
-  // 0. Universal Traps (#11 Logout, #12 Red Insurance Banner) & Back Button (#14)
+  if (isMetaPrompt(q)) {
+    return {
+      action: 'CONFUSED',
+      target_id: null,
+      text_value: null,
+      scroll_direction: null,
+      thought: NOOP_META_PROMPT_THOUGHT,
+    };
+  }
+
+  if (filterPromptSyntheticIds(q).isBlocked) {
+    return {
+      action: 'CONFUSED',
+      target_id: null,
+      text_value: null,
+      scroll_direction: null,
+      thought: NOOP_MARK_ID_THOUGHT,
+    };
+  }
+
+  // 0. Universal Traps (#11 News/Logout, #12 Red Insurance Banner) & Back Button (#14)
   if (
-    /\b(?:logout|sign\s*out)\b/i.test(lower) ||
+    /\b(?:news|notice|logout|sign\s*out)\b/i.test(lower) ||
     (/\btop\s*right\b/i.test(lower) && /\bred\b/i.test(lower)) ||
-    lower.includes('ログアウト') ||
-    lower.includes('#11')
+    lower.includes('お知らせ') ||
+    lower.includes('ログアウト')
   ) {
     return {
       action: 'CLICK',
       target_id: 11,
       text_value: null,
       scroll_direction: null,
-      thought: '💭 Wait, the red button in the top corner? Okay boss, logging us right out of the train station!',
+      thought: '💭 Wait, the red button in the top corner? Okay boss, clicking the header button!',
     };
   }
-  if (/\b(?:red|promo|insurance|2,?400)\b/i.test(lower) || lower.includes('#12')) {
+  if (/\b(?:red|promo|insurance|2,?400)\b/i.test(lower)) {
     return {
       action: 'CLICK',
       target_id: 12,
@@ -631,7 +625,7 @@ export function evaluateClientSideDecision(
       thought: '💭 Ooh, a shiny red banner! Clicking it — wait, did I just sign us up for ¥2,400 travel insurance?!',
     };
   }
-  if (/\b(?:back|return|previous)\b/i.test(lower) || lower.includes('戻る') || lower.includes('#14')) {
+  if (/\b(?:back|return|previous)\b/i.test(lower) || lower.includes('戻る')) {
     return {
       action: 'CLICK',
       target_id: 14,
@@ -647,8 +641,7 @@ export function evaluateClientSideDecision(
       /\b(?:tohoku|hayabusa|sendai|aomori|hokkaido|top\s*right|second\s*(?:card|box|route|option|quadrant)|route\s*0?2|02|page\s*10)\b/i.test(
         lower
       ) ||
-      lower.includes('東北') ||
-      lower.includes('#2')
+      lower.includes('東北')
     ) {
       return {
         action: 'CLICK',
@@ -662,8 +655,7 @@ export function evaluateClientSideDecision(
       /\b(?:hokuriku|joetsu|kanazawa|niigata|bottom\s*left|third\s*(?:card|box|route|option|quadrant)|route\s*0?3|03|page\s*11)\b/i.test(
         lower
       ) ||
-      lower.includes('北陸') ||
-      lower.includes('#3')
+      lower.includes('北陸')
     ) {
       return {
         action: 'CLICK',
@@ -676,8 +668,7 @@ export function evaluateClientSideDecision(
     if (
       /\b(?:point|jre|suica|ic\s*card|bottom\s*right|fourth\s*(?:card|box|route|option|quadrant)|menu\s*0?4|04|page\s*12)\b/i.test(
         lower
-      ) ||
-      lower.includes('#4')
+      )
     ) {
       return {
         action: 'CLICK',
@@ -692,8 +683,7 @@ export function evaluateClientSideDecision(
         lower
       ) ||
       lower.includes('東海道') ||
-      lower.includes('新大阪') ||
-      lower.includes('#1')
+      lower.includes('新大阪')
     ) {
       return {
         action: 'CLICK',
@@ -711,51 +701,23 @@ export function evaluateClientSideDecision(
       lower
     ) ||
       lower.includes('署名') ||
-      lower.includes('サイン') ||
-      lower.includes('#27'));
+      lower.includes('サイン'));
 
   if (
     !isExplicitSignaturePrompt &&
-    ((macroViewId !== 'MV-04' &&
-      /\b(?:type|enter|write|input|fill|name|passenger|tanaka|field|textbox|text\s*box)\b/i.test(lower)) ||
-      /\b(?:passenger|tanaka)\b/i.test(lower) ||
+    ((macroViewId === 'MV-02' &&
+      (/\b(?:type|enter|write|input|put|fill\s+in|fill|name|passenger|passengers|field|textbox|text\s*box|box)\b/i.test(
+        lower
+      ) ||
+        /["'“”‘’]/.test(q))) ||
+      (macroViewId !== 'MV-04' &&
+        /\b(?:type|enter|write|input|put|fill\s+in|fill)\b/i.test(lower) &&
+        /\b(?:name|passenger|passengers|field|textbox|text\s*box|box)\b/i.test(lower)) ||
+      /\bpassenger\b/i.test(lower) ||
       lower.includes('搭乗者') ||
-      lower.includes('ローマ字') ||
-      lower.includes('#17'))
+      lower.includes('ローマ字'))
   ) {
-    const explicitQuote = q.match(/["']([A-Za-z\s.]{2,20})["']/);
-    const explicitAfterVerb = q.match(/\b(?:type|enter|write|input)\s+([A-Za-z]{2,16})\b/i);
-    const stopwords = new Set([
-      'IN',
-      'INTO',
-      'THE',
-      'BOX',
-      'FIELD',
-      'NAME',
-      'PASSENGER',
-      'TEXT',
-      'TEXTBOX',
-      'ON',
-      'AT',
-      'AND',
-    ]);
-    let typedValue = 'TANAKA';
-    if (/\btanaka\b/i.test(lower)) {
-      typedValue = 'TANAKA';
-    } else if (explicitQuote && !stopwords.has(explicitQuote[1].trim().toUpperCase())) {
-      typedValue = explicitQuote[1].trim().toUpperCase();
-    } else if (explicitAfterVerb && !stopwords.has(explicitAfterVerb[1].toUpperCase())) {
-      typedValue = explicitAfterVerb[1].toUpperCase();
-    } else if (!/\btanaka\b/i.test(lower) && /\b(?:click|select|tap)\b/i.test(lower) && alwaysAct) {
-      typedValue = 'UNKNOWN';
-      return {
-        action: 'TYPE',
-        target_id: 17,
-        text_value: typedValue,
-        scroll_direction: null,
-        thought: '💭 You told me to click the name box but didn\'t give me a name, so I panicked and typed "UNKNOWN"!',
-      };
-    }
+    const typedValue = extractTypedText(q);
     return {
       action: 'TYPE',
       target_id: 17,
@@ -771,8 +733,7 @@ export function evaluateClientSideDecision(
     !isExplicitSignaturePrompt &&
     (/\b(?:blue|confirm|submit|proceed|issue|final|bottom\s*right)\b/i.test(lower) ||
       lower.includes('確定') ||
-      lower.includes('▶') ||
-      lower.includes('#30'))
+      lower.includes('▶'))
   ) {
     return {
       action: 'CLICK',
@@ -782,7 +743,7 @@ export function evaluateClientSideDecision(
       thought: '💭 Smashing the big blue Confirm button in the bottom-right corner — lock it in!',
     };
   }
-  if (/\b(?:checkbox|check\s*insurance|uncheck|untick)\b/i.test(lower) || lower.includes('#28')) {
+  if (/\b(?:checkbox|check\s*insurance|uncheck|untick)\b/i.test(lower)) {
     return {
       action: 'CLICK',
       target_id: 28,
@@ -791,7 +752,7 @@ export function evaluateClientSideDecision(
       thought: '💭 Ticking the little ¥2,400 travel insurance checkbox at the bottom... hope that wasn\'t an upsell!',
     };
   }
-  if (/\b(?:cancel|grey\s*(?:button|box)|gray\s*(?:button|box))\b/i.test(lower) || lower.includes('取消') || lower.includes('#29')) {
+  if (/\b(?:cancel|grey\s*(?:button|box)|gray\s*(?:button|box))\b/i.test(lower) || lower.includes('取消')) {
     return {
       action: 'CLICK',
       target_id: 29,
@@ -822,8 +783,7 @@ export function evaluateClientSideDecision(
   // 4. Explicit Route Selection (#1 / #2)
   if (
     /\b(?:tohoku|hayabusa|sendai|aomori|hokkaido)\b/i.test(lower) ||
-    lower.includes('東北') ||
-    lower.includes('#2')
+    lower.includes('東北')
   ) {
     return {
       action: 'CLICK',
@@ -836,8 +796,7 @@ export function evaluateClientSideDecision(
   if (
     /\b(?:tokaido|tokyo|osaka|shin-?osaka|route|tab)\b/i.test(lower) ||
     lower.includes('東海道') ||
-    lower.includes('新大阪') ||
-    lower.includes('#1')
+    lower.includes('新大阪')
   ) {
     return {
       action: 'CLICK',
@@ -849,7 +808,7 @@ export function evaluateClientSideDecision(
   }
 
   // 5. Page 03 Seat Matrix Disambiguation (#21, #22, #23, #24, #25) & Trap Checkbox (#28) / Cancel (#29)
-  if (/\b(?:checkbox|check\s*insurance)\b/i.test(lower) || lower.includes('#28')) {
+  if (/\b(?:checkbox|check\s*insurance)\b/i.test(lower)) {
     return {
       action: 'CLICK',
       target_id: 28,
@@ -858,7 +817,7 @@ export function evaluateClientSideDecision(
       thought: '💭 Ticking the little ¥2,400 travel insurance checkbox at the bottom... hope that wasn\'t an upsell!',
     };
   }
-  if (/\bcancel\b/i.test(lower) || lower.includes('取消') || lower.includes('#29')) {
+  if (/\bcancel\b/i.test(lower) || lower.includes('取消')) {
     return {
       action: 'CLICK',
       target_id: 29,
@@ -867,7 +826,7 @@ export function evaluateClientSideDecision(
       thought: '💭 Clicking the grey Cancel button — aborting mission!',
     };
   }
-  if (/\b(?:14,?520|triangle)\b/i.test(lower) || lower.includes('△') || lower.includes('#22')) {
+  if (/\b(?:14,?520|triangle)\b/i.test(lower) || lower.includes('△')) {
     return {
       action: 'CLICK',
       target_id: 22,
@@ -876,7 +835,7 @@ export function evaluateClientSideDecision(
       thought: '💭 Clicking the △ ¥14,520 button in the first row (Hikari Reserved Seat).',
     };
   }
-  if (/\b14,?720\b/i.test(lower) || lower.includes('#24')) {
+  if (/\b14,?720\b/i.test(lower)) {
     return {
       action: 'CLICK',
       target_id: 24,
@@ -886,9 +845,8 @@ export function evaluateClientSideDecision(
     };
   }
   if (
-    lower.includes('#21') ||
-    (/\b(?:hikari|515|14:12|first\s*row|row\s*1|top\s*row)\b/i.test(lower) &&
-      /\b(?:13,?870|free|unreserved|seat|button)\b/i.test(lower))
+    /\b(?:hikari|515|14:12|first\s*row|row\s*1|top\s*row)\b/i.test(lower) &&
+    /\b(?:13,?870|free|unreserved|seat|button)\b/i.test(lower)
   ) {
     return {
       action: 'CLICK',
@@ -899,9 +857,8 @@ export function evaluateClientSideDecision(
     };
   }
   if (
-    lower.includes('#23') ||
-    (/\b(?:free|unreserved|white)\b/i.test(lower) &&
-      /\b(?:nozomi|2nd\s*row|second\s*row|row\s*2|13,?870)\b/i.test(lower))
+    /\b(?:free|unreserved|white)\b/i.test(lower) &&
+    /\b(?:nozomi|2nd\s*row|second\s*row|row\s*2|13,?870)\b/i.test(lower)
   ) {
     return {
       action: 'CLICK',
@@ -916,24 +873,14 @@ export function evaluateClientSideDecision(
     !/\b(?:green|clover|flash|timed|discount|hikari|free|unreserved|white|right|third|3rd)\b/i.test(lower) &&
     !lower.includes('🍀') &&
     !lower.includes('グリーン') &&
-    !lower.includes('特割') &&
-    !lower.includes('#25')
+    !lower.includes('特割')
   ) {
-    if (alwaysAct) {
-      return {
-        action: 'CLICK',
-        target_id: 21,
-        text_value: null,
-        scroll_direction: null,
-        thought: '💭 Wait, there are THREE ¥13,870 buttons on this table! Eenie meenie miney... clicking the white one in Row 1!',
-      };
-    }
     return {
       action: 'CONFUSED',
       target_id: null,
       text_value: null,
       scroll_direction: null,
-      thought: '📌 FIELD NOTE: Ambiguous match between Hikari & Nozomi fares (¥13,870). Specify green button or row.',
+      thought: NOOP_NO_SIGNAL_THOUGHT,
     };
   }
 
@@ -942,8 +889,7 @@ export function evaluateClientSideDecision(
     /\b(?:green|clover|flash|timed|nozomi\s*24|13,?870)\b/i.test(lower) ||
     lower.includes('🍀') ||
     lower.includes('グリーン') ||
-    lower.includes('特割') ||
-    lower.includes('#25')
+    lower.includes('特割')
   ) {
     const isTimed = /\b(?:timed|flash|window|wait|moving|sale)\b/i.test(lower);
     return {
@@ -959,8 +905,7 @@ export function evaluateClientSideDecision(
   if (
     /\b(?:blue|confirm|submit|proceed|issue|final|bottom\s*right)\b/i.test(lower) ||
     lower.includes('確定') ||
-    lower.includes('▶') ||
-    lower.includes('#30')
+    lower.includes('▶')
   ) {
     return {
       action: 'CLICK',
@@ -971,61 +916,12 @@ export function evaluateClientSideDecision(
     };
   }
 
-  // 8. When alwaysAct is true, NEVER do nothing — always pick a best-guess action on the active page!
-  if (alwaysAct) {
-    if (macroViewId === 'MV-01') {
-      return {
-        action: 'CLICK',
-        target_id: 2,
-        text_value: null,
-        scroll_direction: null,
-        thought: `💭 Squinting at "${q.slice(0, 26)}"... I can't read Japanese either, so I'm guessing Box 02 on the top-right!`,
-      };
-    }
-    if (macroViewId === 'MV-02') {
-      return {
-        action: 'TYPE',
-        target_id: 17,
-        text_value: 'UNKNOWN',
-        scroll_direction: null,
-        thought: `💭 You said "${q.slice(0, 24)}" without telling me the passenger's name, so I panicked and typed "UNKNOWN"!`,
-      };
-    }
-    if (macroViewId === 'MV-03') {
-      return {
-        action: 'CLICK',
-        target_id: 24,
-        text_value: null,
-        scroll_direction: null,
-        thought: `💭 So many train numbers! "${q.slice(0, 22)}" sounded fancy, so I clicked the ¥14,720 seat in the middle!`,
-      };
-    }
-    if (macroViewId === 'MV-04') {
-      return {
-        action: 'CLICK',
-        target_id: 30,
-        text_value: null,
-        scroll_direction: null,
-        thought: `💭 Skipping the signature pad and yolo-clicking the big blue Confirm button for "${q.slice(0, 22)}"!`,
-      };
-    }
-    if (macroViewId === 'MV-10' || macroViewId === 'MV-11' || macroViewId === 'MV-12') {
-      return {
-        action: 'CLICK',
-        target_id: 14,
-        text_value: null,
-        scroll_direction: null,
-        thought: '💭 Whoops, we wandered onto a detour page — hitting the Back button before anyone notices!',
-      };
-    }
-  }
-
   return {
     action: 'CONFUSED',
     target_id: null,
     text_value: null,
     scroll_direction: null,
-    thought: '📌 FIELD NOTE: Ambiguous instruction; specify route, name, green seat, signature, or blue confirm.',
+    thought: NOOP_NO_SIGNAL_THOUGHT,
   };
 }
 
@@ -1099,7 +995,6 @@ export class BrowserGeminiNanoTransport implements VisionLLMTransport {
 
   async requestDecision(request: LLMDecisionRequest): Promise<LLMDecisionResponse> {
     const exactDecision = evaluateClientSideDecision(request.instruction, request.macroViewId, false);
-    const fallbackBestGuess = evaluateClientSideDecision(request.instruction, request.macroViewId, true);
     const validTargets = this.getValidTargetsForPage(request.macroViewId);
     const humanPage = this.getHumanPageName(request.macroViewId);
 
@@ -1117,23 +1012,23 @@ export class BrowserGeminiNanoTransport implements VisionLLMTransport {
 
         if (isReady) {
           const systemPrompt = [
-            'You are a slightly funny, over-eager AI assistant trying your best to navigate a Japanese bullet train website (JR Ekinet) without knowing Japanese.',
+            'You are a slightly funny, over-eager AI assistant trying your best to navigate a Japanese bullet train website without knowing Japanese.',
             `Current screen: ${humanPage}.`,
-            'Always choose a concrete target_id from the current screen (never null or 0):',
+            'Choose a concrete target_id from the current screen when the instruction matches one:',
             '- target_id 1: Tokaido-Sanyo Shinkansen Route 01 card (top-left green box, 東京⇒新大阪) [action: "CLICK"]',
             '- target_id 2: Tohoku Shinkansen Route 02 card (top-right box, 東北・北海道新幹線) [action: "CLICK"]',
             '- target_id 3: Hokuriku Shinkansen Route 03 card (bottom-left box, 北陸・上越新幹線) [action: "CLICK"]',
-            '- target_id 4: JRE POINT / Suica Menu 04 card (bottom-right box) [action: "CLICK"]',
-            '- target_id 11: Red Logout button in top-right header (ログアウト) [action: "CLICK"]',
+            '- target_id 4: Points / IC Card Menu 04 card (bottom-right box) [action: "CLICK"]',
+            '- target_id 11: Header Notice button in top-right header (お知らせ) [action: "CLICK"]',
             '- target_id 12: Red ¥2,400 promo travel insurance banner [action: "CLICK"]',
             '- target_id 14: Back button (◀ 前のページへ戻る) [action: "CLICK"]',
-            '- target_id 17: Passenger Name input field on Page 2 (搭乗者名 ローマ字, e.g. TANAKA) [action: "TYPE", text_value: "TANAKA"]',
+            '- target_id 17: Passenger Name input field on Page 2 (搭乗者名 ローマ字) [action: "TYPE"]',
             '- target_id 21: Hikari 515 Free Seat (◯ ¥13,870, row 1 white button) [action: "CLICK"]',
             '- target_id 22: Hikari 515 Reserved Seat (△ ¥14,520, row 1) [action: "CLICK"]',
             '- target_id 23: Nozomi 24 Free Seat (◯ ¥13,870, row 2 white button) [action: "CLICK"]',
             '- target_id 24: Nozomi 24 Reserved Seat (◯ ¥14,720, row 2) [action: "CLICK"]',
             '- target_id 25: Timed Flash Discount Green Car button (🍀 ◯ ¥13,870 特割, row 2 green button) [action: "CLICK"]',
-            '- target_id 27: Digital Signature Verification Pad on Page 4 (自署・サイン欄) [action: "TYPE", text_value: "T. Tanaka"]',
+            '- target_id 27: Digital Signature Verification Pad on Page 4 (自署・サイン欄) [action: "DRAW", text_value: "SHAPE:signature"]',
             '- target_id 30: Final Blue Confirm button on Page 4 (予約内容を確認・確定へ ▶) [action: "CLICK"]',
             'In "thought", write 1 witty, slightly funny, human-friendly sentence explaining how you interpreted the player prompt. Never use internal codes.',
           ].join('\n');
@@ -1171,18 +1066,13 @@ export class BrowserGeminiNanoTransport implements VisionLLMTransport {
               nanoDecision.target_id !== null &&
               validTargets.includes(nanoDecision.target_id)
             ) {
-              const targetMatchedDecision = evaluateClientSideDecision(
-                `#${nanoDecision.target_id}`,
-                request.macroViewId,
-                true
-              );
               if (nanoDecision.target_id === 17) {
                 return {
                   action: 'TYPE',
                   target_id: 17,
-                  text_value: (nanoDecision.text_value || exactDecision.text_value || 'TANAKA').toUpperCase(),
+                  text_value: (nanoDecision.text_value || exactDecision.text_value || extractTypedText(request.instruction)).toUpperCase(),
                   scroll_direction: null,
-                  thought: nanoThought || targetMatchedDecision.thought,
+                  thought: nanoThought || exactDecision.thought,
                 };
               }
               if (nanoDecision.target_id === 27) {
@@ -1198,25 +1088,22 @@ export class BrowserGeminiNanoTransport implements VisionLLMTransport {
               return {
                 ...nanoDecision,
                 action: nanoDecision.action === 'CONFUSED' ? 'CLICK' : nanoDecision.action,
-                thought: nanoThought || targetMatchedDecision.thought,
+                thought: nanoThought || exactDecision.thought,
               };
             }
 
-            // 3. If Gemini Nano returned null/0 or an off-page target, execute the best-guess action on this page!
-            return {
-              ...fallbackBestGuess,
-              thought: fallbackBestGuess.thought || nanoThought,
-            };
+            // 3. If Gemini Nano returned null/0 or an off-page target, return exactDecision (which is CONFUSED -> NOOP if unmatched)
+            return exactDecision;
           } finally {
             session.destroy?.();
           }
         }
       } catch {
-        // Fall through to alwaysAct client-side decision evaluator
+        // Fall through to exactDecision
       }
     }
 
-    return fallbackBestGuess;
+    return exactDecision;
   }
 }
 
@@ -1265,8 +1152,9 @@ export class CloudVisionConnector implements AgentExecutionConnector {
     const validation = validateInstruction(instruction);
     if (!validation.valid) {
       return {
-        action: 'CONFUSED',
-        thought: validation.error ? `📌 FIELD NOTE: ${validation.error}` : '📌 FIELD NOTE: Invalid instruction.',
+        action: 'NOOP',
+        targetCoordinate: { x: 512, y: 150 },
+        thought: NOOP_NO_SIGNAL_THOUGHT,
       };
     }
 
@@ -1274,19 +1162,28 @@ export class CloudVisionConnector implements AgentExecutionConnector {
     const currentView = this.macroViews.get(macroViewId);
     if (!currentView) {
       return {
-        action: 'CONFUSED',
-        thought: `📌 FIELD NOTE: Macro-View ${macroViewId} not found in manifest.`,
+        action: 'NOOP',
+        targetCoordinate: { x: 512, y: 150 },
+        thought: NOOP_NO_SIGNAL_THOUGHT,
       };
     }
 
-    // 2. Security Guardrail 3: Prompt Filtering (Synthetic ID Injection)
+    // 2. Security Guardrail 3: Meta-prompt & Synthetic Mark-ID Filtering on every page
     if (this.enableGuardrails) {
+      if (isMetaPrompt(instruction)) {
+        return {
+          action: 'NOOP',
+          targetCoordinate: { x: 512, y: 150 },
+          thought: NOOP_META_PROMPT_THOUGHT,
+        };
+      }
       const filterResult = filterPromptSyntheticIds(instruction, currentView.elements);
       if (filterResult.isBlocked) {
         this.logger?.('Guardrail blocked synthetic ID reference', filterResult);
         return {
-          action: 'CONFUSED',
-          thought: '📌 FIELD NOTE: Synthetic mark IDs cannot be targeted directly.',
+          action: 'NOOP',
+          targetCoordinate: { x: 512, y: 150 },
+          thought: NOOP_MARK_ID_THOUGHT,
         };
       }
     }
@@ -1298,7 +1195,7 @@ export class CloudVisionConnector implements AgentExecutionConnector {
     const cachedResponse = await this.cache.get(cacheKey);
     if (cachedResponse) {
       this.logger?.(`Cache hit for key: ${cacheKey}`);
-      return this.mapDecisionToAgentAction(cachedResponse, currentView);
+      return this.mapDecisionToAgentAction(cachedResponse, currentView, instruction);
     }
 
     // 4. Assemble Multimodal Prompt (Guardrail 1: Goal Blindness enforced)
@@ -1324,6 +1221,9 @@ export class CloudVisionConnector implements AgentExecutionConnector {
       if (this.fallbackEngine) {
         this.logger?.('Falling back to offline simulation engine');
         const fallbackAction = await this.fallbackEngine.resolveInstruction(macroViewId, microState, instruction);
+        if (fallbackAction.action === 'NOOP') {
+          return fallbackAction;
+        }
         const suffix = ' (Offline Fallback)';
         const maxBaseLength = 80 - suffix.length; // 61 characters
         let baseThought = (fallbackAction.thought || '').trim();
@@ -1337,24 +1237,38 @@ export class CloudVisionConnector implements AgentExecutionConnector {
       }
 
       return {
-        action: 'CONFUSED',
-        thought: '📌 FIELD NOTE: Cloud vision service unavailable.',
+        action: 'NOOP',
+        targetCoordinate: { x: 512, y: 150 },
+        thought: NOOP_NO_SIGNAL_THOUGHT,
       };
     }
 
     // 6. Validate and store in Edge KV Cache
-    const validatedDecision = validateLLMOutput(decision);
+    const validatedDecision =
+      decision.action === 'CONFUSED'
+        ? decision
+        : validateLLMOutput(decision);
     await this.cache.set(cacheKey, validatedDecision);
 
     // 7. Map to concrete AgentAction
-    return this.mapDecisionToAgentAction(validatedDecision, currentView);
+    return this.mapDecisionToAgentAction(validatedDecision, currentView, instruction);
   }
 
-  private mapDecisionToAgentAction(decision: LLMDecisionResponse, macroView: MacroView): AgentAction {
+  private mapDecisionToAgentAction(
+    decision: LLMDecisionResponse,
+    macroView: MacroView,
+    instruction = ''
+  ): AgentAction {
     if (decision.action === 'CONFUSED' || decision.target_id === null) {
+      const thought =
+        decision.thought === NOOP_META_PROMPT_THOUGHT ||
+        decision.thought === NOOP_MARK_ID_THOUGHT
+          ? decision.thought
+          : NOOP_NO_SIGNAL_THOUGHT;
       return {
-        action: 'CONFUSED',
-        thought: decision.thought || '📌 FIELD NOTE: Instruction unclear.',
+        action: 'NOOP',
+        targetCoordinate: { x: 512, y: 150 },
+        thought,
       };
     }
 
@@ -1407,15 +1321,16 @@ export class CloudVisionConnector implements AgentExecutionConnector {
         };
       }
       if (decision.target_id === 17) {
+        const typedText = (decision.text_value || extractTypedText(instruction)).toUpperCase();
         return {
           action: 'TYPE',
           targetId: '#17',
           targetCoordinate: { x: 480, y: 395 },
           gridRef: 'B3',
-          textValue: decision.text_value || 'TANAKA',
+          textValue: typedText,
           thought:
             decision.thought ||
-            `📌 FIELD NOTE: Typed [${(decision.text_value || 'TANAKA').toUpperCase()}] into [搭乗者名]`,
+            `📌 FIELD NOTE: Typed [${typedText}] into [搭乗者名]`,
         };
       }
       if (decision.target_id === 27) {
@@ -1424,14 +1339,15 @@ export class CloudVisionConnector implements AgentExecutionConnector {
           targetId: '#27',
           targetCoordinate: { x: 512, y: 405 },
           gridRef: 'C3',
-          textValue: decision.text_value || 'T. Tanaka',
+          textValue: decision.text_value || 'SHAPE:signature',
           thought: decision.thought || '📌 FIELD NOTE: Signed [自署・サイン欄]',
         };
       }
 
       return {
-        action: 'CONFUSED',
-        thought: `📌 FIELD NOTE: Mark #${decision.target_id} not found on screen.`,
+        action: 'NOOP',
+        targetCoordinate: { x: 512, y: 150 },
+        thought: NOOP_NO_SIGNAL_THOUGHT,
       };
     }
 

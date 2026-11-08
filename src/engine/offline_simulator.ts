@@ -15,7 +15,16 @@ import {
 import { SoMElement, MacroView } from '../types/puzzle';
 import { CASE_001_MACRO_VIEWS } from '../data/puzzles/case_001';
 import { parseGridCoordinate, getBoxCenter } from '../utils/coordinate_projector';
-import { normalizeInstruction, extractSignatureDrawingSpec } from '../utils/text_normalizer';
+import {
+  normalizeInstruction,
+  extractSignatureDrawingSpec,
+  extractTypedText,
+  isMetaPrompt,
+  NOOP_NO_SIGNAL_THOUGHT,
+  NOOP_META_PROMPT_THOUGHT,
+  NOOP_MARK_ID_THOUGHT,
+} from '../utils/text_normalizer';
+import { filterPromptSyntheticIds } from './cloud_connector';
 
 export interface ScoringWeights {
   coord: number;
@@ -99,23 +108,42 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
     const rawTrimmed = (instruction || '').trim();
     if (!rawTrimmed) {
       return {
-        action: 'CONFUSED',
-        thought: '📌 FIELD NOTE: Empty instruction received.',
+        action: 'NOOP',
+        targetCoordinate: { x: 512, y: 150 },
+        thought: NOOP_NO_SIGNAL_THOUGHT,
       };
     }
 
     if (rawTrimmed.length > 60 || (instruction && instruction.length > 60)) {
       return {
-        action: 'CONFUSED',
-        thought: '📌 FIELD NOTE: Instruction exceeds maximum length of 60 characters.',
+        action: 'NOOP',
+        targetCoordinate: { x: 512, y: 150 },
+        thought: NOOP_NO_SIGNAL_THOUGHT,
+      };
+    }
+
+    if (isMetaPrompt(rawTrimmed)) {
+      return {
+        action: 'NOOP',
+        targetCoordinate: { x: 512, y: 150 },
+        thought: NOOP_META_PROMPT_THOUGHT,
+      };
+    }
+
+    if (filterPromptSyntheticIds(rawTrimmed).isBlocked) {
+      return {
+        action: 'NOOP',
+        targetCoordinate: { x: 512, y: 150 },
+        thought: NOOP_MARK_ID_THOUGHT,
       };
     }
 
     const macroView = this.macroViews.get(macroViewId);
     if (!macroView) {
       return {
-        action: 'CONFUSED',
-        thought: '📌 FIELD NOTE: No interactive elements available in view.',
+        action: 'NOOP',
+        targetCoordinate: { x: 512, y: 150 },
+        thought: NOOP_NO_SIGNAL_THOUGHT,
       };
     }
 
@@ -123,16 +151,16 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
 
     // Multi-modal Action 1: TYPE into Passenger Name field (#17)
     if (
-      /\btanaka\b/i.test(rawTrimmed) ||
-      (/\b(?:type|enter|input|fill|write)\b/i.test(lower) &&
-        /\b(?:name|passenger|romaji|box|field|搭乗者)\b/i.test(lower))
+      (macroViewId === 'MV-02' &&
+        (/\b(?:type|enter|input|put|fill\s+in|fill|write|name|passenger|passengers|romaji|box|field|textbox|搭乗者)\b/i.test(
+          lower
+        ) ||
+          /["'“”‘’]/.test(rawTrimmed))) ||
+      (macroViewId !== 'MV-04' &&
+        /\b(?:type|enter|input|put|fill\s+in|fill|write)\b/i.test(lower) &&
+        /\b(?:name|passenger|passengers|romaji|box|field|textbox|搭乗者)\b/i.test(lower))
     ) {
-      const explicitName =
-        rawTrimmed.match(/["']([A-Za-z\s.]{2,20})["']/) ||
-        rawTrimmed.match(/\b(?:type|enter|input|write|name)\s+([A-Za-z]{2,16})\b/i);
-      const candidate = explicitName ? explicitName[1].trim().toUpperCase() : 'TANAKA';
-      const stopwords = new Set(['IN', 'INTO', 'THE', 'BOX', 'FIELD', 'NAME', 'PASSENGER', 'TEXT']);
-      const typedValue = stopwords.has(candidate) ? 'TANAKA' : candidate;
+      const typedValue = extractTypedText(rawTrimmed);
       return {
         action: 'TYPE',
         targetId: '#17',
@@ -178,7 +206,7 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
           thought: '⚠️ TRAP TRIGGERED: Clicked red ¥2,400 promo insurance banner!',
         };
       }
-      if (/\b(?:logout|sign\s*out|ログアウト)\b/i.test(lower)) {
+      if (/\b(?:news|notice|お知らせ|logout|sign\s*out|ログアウト)\b/i.test(lower)) {
         return {
           action: 'CLICK',
           targetId: '#11',
@@ -297,16 +325,18 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
 
     if (!macroView.elements || macroView.elements.length === 0) {
       return {
-        action: 'CONFUSED',
-        thought: '📌 FIELD NOTE: No interactive elements available in view.',
+        action: 'NOOP',
+        targetCoordinate: { x: 512, y: 150 },
+        thought: NOOP_NO_SIGNAL_THOUGHT,
       };
     }
 
     const scores = this.scoreElements(macroView.elements, instruction, microState);
     if (scores.length === 0) {
       return {
-        action: 'CONFUSED',
-        thought: '📌 FIELD NOTE: Instruction unclear. Target could not be identified.',
+        action: 'NOOP',
+        targetCoordinate: { x: 512, y: 150 },
+        thought: NOOP_NO_SIGNAL_THOUGHT,
       };
     }
 
@@ -317,8 +347,9 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
     // Check confidence threshold
     if (top.totalScore < this.confidenceThreshold) {
       return {
-        action: 'CONFUSED',
-        thought: '📌 FIELD NOTE: Instruction unclear. Target could not be identified.',
+        action: 'NOOP',
+        targetCoordinate: { x: 512, y: 150 },
+        thought: NOOP_NO_SIGNAL_THOUGHT,
       };
     }
 
@@ -326,16 +357,10 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
     if (scores.length > 1) {
       const runnerUp = scores[1];
       if (top.totalScore === runnerUp.totalScore && top.totalScore >= this.confidenceThreshold) {
-        // Special diagnostic thought for fare ties (e.g. 13870)
-        if (instruction.includes('13870') || instruction.includes('13,870')) {
-          return {
-            action: 'CONFUSED',
-            thought: '📌 FIELD NOTE: Ambiguous match between Hikari & Nozomi fares (¥13,870).',
-          };
-        }
         return {
-          action: 'CONFUSED',
-          thought: '📌 FIELD NOTE: Ambiguous match. Multiple matching elements detected.',
+          action: 'NOOP',
+          targetCoordinate: { x: 512, y: 150 },
+          thought: NOOP_NO_SIGNAL_THOUGHT,
         };
       }
     }
@@ -569,9 +594,16 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
       }
     }
 
-    // Logout button (#11)
+    // Logout / News button (#11)
     if (el.id === 11) {
-      if (lower.includes('logout') || lower.includes('ログアウト') || lower.includes('sign out')) {
+      if (
+        lower.includes('news') ||
+        lower.includes('notice') ||
+        lower.includes('お知らせ') ||
+        lower.includes('logout') ||
+        lower.includes('ログアウト') ||
+        lower.includes('sign out')
+      ) {
         score += this.weights.label * 2; // Direct high-affinity action command (30)
       }
     }

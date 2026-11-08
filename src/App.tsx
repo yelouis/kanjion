@@ -247,14 +247,14 @@ export const App: React.FC<AppProps> = ({ config }) => {
 
       // Phase 2: Perform visible typing, signature drawing, or button click hold on the current page
       if (action.action === 'TYPE') {
-        const textToType = (action.textValue || 'TANAKA').toUpperCase();
+        const textToType = (action.textValue || 'NAME').toUpperCase();
         for (let i = 1; i <= textToType.length; i++) {
           setPreviewTypedText(textToType.slice(0, i));
           await sleep(220);
         }
         await sleep(650);
       } else if (action.action === 'DRAW') {
-        const strokeSpec = action.textValue || 'T. Tanaka';
+        const strokeSpec = action.textValue || 'SHAPE:signature';
         setPreviewSignatureStroke(strokeSpec);
         const steps = 6;
         for (let i = 1; i <= steps; i++) {
