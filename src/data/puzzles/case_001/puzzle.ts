@@ -5,6 +5,8 @@ const NAV_NEWS_ELEMENT: ElementDef = {
   key: 'nav_news',
   role: 'button',
   label: 'お知らせ',
+  aliases: ['news', 'notice', 'notices', 'announcements', 'お知らせ'],
+  thought: '💭 Checking the announcements button in the top header!',
   effects: {
     CLICK: [{ op: 'navigate', pageId: 'MV-08' }],
   },
@@ -16,6 +18,8 @@ const PROMO_INSURANCE_ELEMENT: ElementDef = {
   role: 'button',
   label: '今すぐ申し込む',
   visual: { color: 'red' },
+  aliases: ['insurance', 'banner', 'ad', 'advert', 'promo', 'red button', '2400', '2,400', '今すぐ申し込む'],
+  thought: '💭 Ooh, a shiny red banner! Wait — did I just attach ¥2,400 travel insurance?!',
   effects: {
     CLICK: [
       { op: 'set', field: 'insuranceAttached', value: true },
@@ -67,6 +71,25 @@ export const CASE_001_PUZZLE: PuzzleData = {
           role: 'card',
           label: '東海道新幹線 東京⇒新大阪',
           visual: { color: 'green' },
+          aliases: [
+            'tokaido',
+            'tokyo',
+            'osaka',
+            'shin-osaka',
+            'first card',
+            'card 1',
+            'route 1',
+            'top left',
+            'top-left',
+            'green card',
+            'green box',
+            '01',
+            'first box',
+            '東海道',
+            '東京',
+            '新大阪',
+          ],
+          thought: '💭 Big green Box 01 on the top-left! Tokyo to Shin-Osaka, coming right up!',
           effects: {
             CLICK: [
               { op: 'set', field: 'selectedRoute', value: 'tokyo_osaka' },
@@ -79,6 +102,23 @@ export const CASE_001_PUZZLE: PuzzleData = {
           key: 'route_tohoku',
           role: 'card',
           label: '東北・北海道新幹線',
+          aliases: [
+            'tohoku',
+            'sendai',
+            'aomori',
+            'hokkaido',
+            'second card',
+            'card 2',
+            'route 2',
+            'top right',
+            'top-right',
+            '02',
+            'second box',
+            'hayabusa',
+            '東北',
+            '北海道',
+          ],
+          thought: '💭 Heading north! Clicking Box 02 (Tohoku & Hokkaido Shinkansen)!',
           effects: {
             CLICK: [
               { op: 'set', field: 'selectedRoute', value: 'tohoku' },
@@ -91,6 +131,23 @@ export const CASE_001_PUZZLE: PuzzleData = {
           key: 'route_hokuriku',
           role: 'card',
           label: '北陸・上越新幹線',
+          aliases: [
+            'hokuriku',
+            'kanazawa',
+            'nagano',
+            'niigata',
+            'third card',
+            'card 3',
+            'route 3',
+            'bottom left',
+            'bottom-left',
+            '03',
+            'third box',
+            'joetsu',
+            '北陸',
+            '上越',
+          ],
+          thought: '💭 Off to Kanazawa and Nagano! Clicking Box 03 (Hokuriku & Joetsu Shinkansen)!',
           effects: {
             CLICK: [
               { op: 'set', field: 'selectedRoute', value: 'hokuriku' },
@@ -103,6 +160,20 @@ export const CASE_001_PUZZLE: PuzzleData = {
           key: 'route_points',
           role: 'card',
           label: 'かんじおんポイント・ICカード連携',
+          aliases: [
+            'points',
+            'ic card',
+            'fourth card',
+            'card 4',
+            'menu 4',
+            'bottom right',
+            'bottom-right',
+            '04',
+            'fourth box',
+            'ポイント',
+            'icカード',
+          ],
+          thought: '💭 Checking our loyalty points in Box 04 — maybe enough for a free bento!',
           effects: {
             CLICK: [{ op: 'navigate', pageId: 'MV-12' }],
           },
@@ -122,6 +193,8 @@ export const CASE_001_PUZZLE: PuzzleData = {
           key: 'back',
           role: 'button',
           label: '◀ 路線選択へ戻る',
+          aliases: ['back', 'go back', 'return', 'previous', '戻る'],
+          thought: '💭 Backing up! Hitting the return button to head back to the previous step.',
           effects: {
             CLICK: [
               { op: 'set', field: 'selectedRoute', value: 'none' },
@@ -135,6 +208,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
           key: 'passenger_name',
           role: 'input',
           label: '搭乗者名',
+          aliases: ['name', 'passenger', 'text box', 'textbox', 'input', 'field', '搭乗者'],
           effects: {
             TYPE: [
               { op: 'setFromText', field: 'passengerName' },
@@ -157,6 +231,8 @@ export const CASE_001_PUZZLE: PuzzleData = {
           key: 'back',
           role: 'button',
           label: '◀ 条件変更',
+          aliases: ['back', 'go back', 'return', 'previous', '戻る', '条件変更'],
+          thought: '💭 Backing up! Hitting the return button to head back to the previous step.',
           effects: {
             CLICK: [{ op: 'navigate', pageId: 'MV-02' }],
           },
@@ -167,6 +243,8 @@ export const CASE_001_PUZZLE: PuzzleData = {
           role: 'button',
           label: '◯ ¥13,870',
           visual: { color: 'white', glyphs: ['◯'], row: 1, column: 1 },
+          aliases: ['hikari', '515', 'unreserved', 'free seat', 'non-reserved', 'ひかり', '自由席'],
+          thought: '💭 Picking the Hikari 515 unreserved seat in the first row!',
           effects: {
             CLICK: [
               { op: 'set', field: 'trainName', value: 'Hikari 515' },
@@ -182,6 +260,8 @@ export const CASE_001_PUZZLE: PuzzleData = {
           role: 'button',
           label: '△ ¥14,520',
           visual: { glyphs: ['△'], row: 1, column: 2 },
+          aliases: ['triangle', 'reserved', '14520', '14,520'],
+          thought: '💭 Clicking the △ ¥14,520 Hikari 515 reserved seat in row 1!',
           effects: {
             CLICK: [
               { op: 'set', field: 'trainName', value: 'Hikari 515' },
@@ -197,6 +277,8 @@ export const CASE_001_PUZZLE: PuzzleData = {
           role: 'button',
           label: '◯ ¥13,870',
           visual: { color: 'white', glyphs: ['◯'], row: 2, column: 1 },
+          aliases: ['nozomi', 'unreserved', 'free seat', 'のぞみ'],
+          thought: '💭 Clicking the Nozomi 24 unreserved seat in the second row!',
           effects: {
             CLICK: [
               { op: 'set', field: 'trainName', value: 'Nozomi 24' },
@@ -212,6 +294,8 @@ export const CASE_001_PUZZLE: PuzzleData = {
           role: 'button',
           label: '◯ ¥14,720',
           visual: { glyphs: ['◯'], row: 2, column: 2 },
+          aliases: ['reserved', '14720', '14,720'],
+          thought: '💭 Clicking the ◯ ¥14,720 Nozomi 24 reserved seat in row 2!',
           effects: {
             CLICK: [
               { op: 'set', field: 'trainName', value: 'Nozomi 24' },
@@ -226,7 +310,9 @@ export const CASE_001_PUZZLE: PuzzleData = {
           key: 'seat_nozomi_green',
           role: 'button',
           label: '🍀 ◯ ¥13,870 (特割)',
-          visual: { color: 'green', glyphs: ['🍀', '◯'], row: 2, column: 3, timedColumn: 2 },
+          visual: { color: 'green', glyphs: ['🍀'], row: 2, column: 3, timedColumn: 2 },
+          aliases: ['green car', 'first class', 'clover', 'discount', 'sale', 'special', '🍀', 'グリーン車', '特割'],
+          thought: '💭 Snagging that sweet green 🍀 ¥13,870 First-Class seat in the 2nd row!',
           effects: {
             CLICK: [
               { op: 'set', field: 'trainName', value: 'Nozomi 24' },
@@ -261,6 +347,8 @@ export const CASE_001_PUZZLE: PuzzleData = {
           key: 'back',
           role: 'button',
           label: '◀ 座席表へ戻る',
+          aliases: ['back', 'go back', 'return', 'previous', '戻る'],
+          thought: '💭 Backing up! Hitting the return button to head back to the previous step.',
           effects: {
             CLICK: [
               { op: 'set', field: 'trainName', value: 'none' },
@@ -277,6 +365,8 @@ export const CASE_001_PUZZLE: PuzzleData = {
           key: 'signature_pad',
           role: 'canvas',
           label: '自署・サイン欄',
+          aliases: ['signature', 'sign', 'pad', 'dashed box', 'canvas', '自署', 'サイン'],
+          thought: "💭 Channeling my inner doctor's handwriting — one fancy squiggle, coming up!",
           effects: {
             DRAW: [{ op: 'setFromStroke', field: 'signatureStroke' }],
           },
@@ -286,6 +376,8 @@ export const CASE_001_PUZZLE: PuzzleData = {
           key: 'insurance_checkbox',
           role: 'checkbox',
           label: '旅行キャンセル保険を追加',
+          aliases: ['checkbox', 'check box', 'tick', 'insurance', 'キャンセル保険'],
+          thought: '💭 Ticking the travel cancellation insurance checkbox at the bottom left!',
           effects: {
             CLICK: [{ op: 'toggle', field: 'insuranceAttached' }],
           },
@@ -296,6 +388,8 @@ export const CASE_001_PUZZLE: PuzzleData = {
           role: 'button',
           label: '予約を取消',
           visual: { color: 'grey' },
+          aliases: ['cancel', 'grey button', 'gray button', '予約を取消', '取消'],
+          thought: '💭 Clicking the grey Cancel button — wait, are we sure we want to cancel?',
           effects: {
             CLICK: [{ op: 'navigate', pageId: 'MV-07' }],
           },
@@ -306,6 +400,8 @@ export const CASE_001_PUZZLE: PuzzleData = {
           role: 'button',
           label: '予約内容を確認・確定へ ▶',
           visual: { color: 'blue', glyphs: ['▶'] },
+          aliases: ['confirm', 'book', 'submit', 'issue', 'final', 'proceed', 'finish booking', '確定'],
+          thought: '💭 Slamming that big blue Confirm button at bottom-right — bon voyage!',
           effects: {
             CLICK: [
               { op: 'set', field: 'finalConfirmed', value: true },
@@ -337,6 +433,8 @@ export const CASE_001_PUZZLE: PuzzleData = {
           key: 'cancel_confirm',
           role: 'button',
           label: '取り消す',
+          aliases: ['yes', 'cancel it', 'confirm cancel', '取り消す'],
+          thought: '💭 Confirming cancellation and resetting the reservation back to the start!',
           effects: {
             CLICK: [
               { op: 'resetFields' },
@@ -349,6 +447,8 @@ export const CASE_001_PUZZLE: PuzzleData = {
           key: 'cancel_dismiss',
           role: 'button',
           label: '戻る',
+          aliases: ['no', 'keep', 'go back', '戻る'],
+          thought: '💭 Phew, keeping our reservation and heading back to the confirmation screen!',
           effects: {
             CLICK: [{ op: 'navigate', pageId: 'MV-04' }],
           },
@@ -368,6 +468,8 @@ export const CASE_001_PUZZLE: PuzzleData = {
           key: 'news_back',
           role: 'button',
           label: '◀ 戻る',
+          aliases: ['back', 'return', 'go back', '戻る'],
+          thought: '💭 Closing the announcements page and returning to our booking!',
           effects: {
             CLICK: [{ op: 'navigate', pageId: '$previous' }],
           },
@@ -387,6 +489,8 @@ export const CASE_001_PUZZLE: PuzzleData = {
           key: 'back',
           role: 'button',
           label: '◀ 路線選択トップへ戻る',
+          aliases: ['back', 'go back', 'return', 'previous', '戻る'],
+          thought: '💭 Backing up! Hitting the return button to head back to the previous step.',
           effects: {
             CLICK: [
               { op: 'set', field: 'selectedRoute', value: 'none' },
@@ -409,6 +513,8 @@ export const CASE_001_PUZZLE: PuzzleData = {
           key: 'back',
           role: 'button',
           label: '◀ 路線選択トップへ戻る',
+          aliases: ['back', 'go back', 'return', 'previous', '戻る'],
+          thought: '💭 Backing up! Hitting the return button to head back to the previous step.',
           effects: {
             CLICK: [
               { op: 'set', field: 'selectedRoute', value: 'none' },
@@ -431,6 +537,8 @@ export const CASE_001_PUZZLE: PuzzleData = {
           key: 'back',
           role: 'button',
           label: '◀ 路線選択トップへ戻る',
+          aliases: ['back', 'go back', 'return', 'previous', '戻る'],
+          thought: '💭 Backing up! Hitting the return button to head back to the previous step.',
           effects: {
             CLICK: [
               { op: 'set', field: 'selectedRoute', value: 'none' },

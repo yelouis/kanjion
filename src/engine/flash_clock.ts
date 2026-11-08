@@ -100,3 +100,9 @@ export function waitForColumnNot(
     timer = setTimeout(tick, msUntilNextColumn());
   });
 }
+
+export function hasTimingIntent(instruction: string): boolean {
+  return /\b(?:wait|when|until|timed|timing|flash|sale|glow|highlight|lights\s+up)\b/i.test(
+    instruction || ''
+  );
+}

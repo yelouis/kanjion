@@ -107,13 +107,12 @@ Your selection: A
 
 | ID | Severity | Finding | Where | Fixed by |
 |---|---|---|---|---|
-| F-3 | Critical | Gibberish and meta-prompts ("asdf qwerty zxcv", "complete the task", "click the winning button") click the winning Confirm button on page 04, because the always-act fallback for MV-04 targets #30. | `src/engine/cloud_connector.ts:1019-1027` | Items 4, 10 |
 | F-6 | High | Players almost never reach a model. Nano is used only if it is already downloaded, the regex wins whenever it matches, and everything else is a ~450-line regex. | `src/engine/cloud_connector.ts:1126-1133`, `:1174-1183`, `:602-1046` | Items 10, 11 |
 | F-15 | Low | There is no daily schedule or rollover; the one case is hard-coded. | — | Item 12 |
 | F-16 | Low | Phones show the stage at 0.32×, which is too small to read. | `src/components/SandboxStage.tsx:24-59` | Item 13 |
-| F-17 | Low | Dead code. | `functions/` can't deploy on Spark and nothing calls it<br>Dev-server regex middleware duplicates the agent: `vite.config.ts:10-383`<br>Unused components: `GhostReplay`, `CoordinateRulers`, `DossierLayout`<br>Single-page sandbox branch used only by tests: `src/components/ShinkansenSandbox.tsx:985-1464` | Items 1, 2, 10, 11 |
+| F-17 | Low | Dead code. | `functions/` can't deploy on Spark and nothing calls it | Item 11 |
 
-Reproduce F-1 to F-5 with `npx tsx scripts/exploit_probe.mts`.
+Verify F-1 to F-5 with `npx vitest run test/exploits.test.ts`.
 
 ---
 
@@ -123,6 +122,7 @@ _(none yet — implementors add entries here as options with a `Your selection:`
 ## Resolved
 - F-1 — resolved by item 3 (deleted hidden shortcut #16, gated Exhibit B on `passengerName === 'TANAKA'` and Exhibit D on non-empty `signatureStroke`, removed `CLEAN` and `signatureSigned`, and added BFS solvability proof that minimum steps to 100% = 5)
 - F-2 — resolved by item 5 (removed all `'TANAKA'` defaults in `2ee1ef3` item 4 and removed `'TANAKA'` page hints and unentered passenger-name fallback labels from `ShinkansenSandbox.tsx`)
+- F-3 — resolved by item 10 (replaced hardcoded `cloud_connector.ts` / `offline_simulator.ts` fallback with unified `resolveLine` and data-driven `fallbackResolve` in `src/engine/agent/`, returning `NOOP` below score 30 and on meta-prompts; item 4 `2ee1ef3` added `NOOP` action and `isMetaPrompt`)
 - F-4 — resolved by item 6 (populated elements on all 10 pages in `src/data/puzzles/case_001/puzzle.ts`, derived `CASE_001_MACRO_VIEWS` from `CASE_001_PUZZLE`, and enforced page-scoped mark resolution in `applyDecision`; item 4 `2ee1ef3` added full mark-set regex blocking)
 - F-5 — resolved by item 3 (locked `officialResult` on first official `CLOSE_CASE`, replaced `REOPEN_CASE` with unscored `START_PRACTICE`, and added `kanjion:v1:case:001` persistence across refreshes)
 - F-7 — resolved by item 9 (implemented headless Chromium SoM capture pipeline via `capture.html` and `tools/compile_puzzle.ts`, generated 1024×768 content-hashed SoM PNGs in `public/puzzles/001/som/` and measured bounding boxes in `src/data/puzzles/case_001/manifest.generated.json`, and removed dead `public/puzzles/001/views/`, `template.html`, and `manifest.json`)

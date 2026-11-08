@@ -73,6 +73,8 @@ export interface AgentAction {
   thought: string;
   /** Whether this action hit a known decoy trap (triggers stage shake animation). */
   isTrap?: boolean;
+  /** Whether the cloud tier failed and fell back to the deterministic backup agent. */
+  cloudFailed?: boolean;
 }
 
 /**

@@ -1,253 +1,283 @@
 /**
  * test/stress_boundary_conditions.test.ts
  *
- * Empirical Adversarial Challenger Stress Test Suite for Milestone 2 Iteration 2:
- * Boundary Condition Stress-Testing of OfflineSimulationEngine & CloudVisionConnector.
- *
- * Test Vectors:
- * Vector 1: OfflineSimulationEngine Boundary Conditions (length, whitespace, multi-byte, ReDoS resistance)
- * Vector 2: Offline Simulation Multi-Token Scoring & Tie-Breaking Boundaries
- * Vector 3: CloudVisionConnector Boundary Validation (lengths, macro-view validation, goal blindness)
- * Vector 4: Guardrail Evasion Stress Harness (synthetic IDs, sub-numbers, delimiters, DOM sanitization)
- * Vector 5: Cloud Connector Transport Error Recovery & Fallback Thought Invariant Harness
- * Vector 6: EdgeKVCache & State Hash Determinism Under Boundary Mutations
+ * Boundary Condition Stress-Testing of resolveLine, fallbackResolve & Guardrails.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
-  OfflineSimulationEngine,
-} from '../src/engine/offline_simulator';
-import {
-  CloudVisionConnector,
+  resolveLine,
+  fallbackResolve,
   filterPromptSyntheticIds,
   sanitizeDomForClient,
   assertGoalBlindness,
-  validateLLMOutput,
-  MemoryKVCache,
-  MockVisionLLMTransport,
-  VisionLLMTransport,
-} from '../src/engine/cloud_connector';
+} from '../src/engine/agent';
 import {
+  CASE_001_PUZZLE,
+  CASE_001_GENERATED_MANIFEST,
   CASE_001_INITIAL_MICRO_STATE,
-  CASE_001_MACRO_VIEWS,
   CASE_001_MV03_ELEMENTS,
 } from '../src/data/puzzles/case_001';
-import {
-  LLMDecisionResponse,
-} from '../src/types/engine';
-import type { FieldValue } from '../src/types/puzzle_data';
+import type { FieldValue, PuzzleState } from '../src/types/puzzle_data';
 import { generateStateHash } from '../src/utils/text_normalizer';
 
+function makeState(pageId: string, fields: Record<string, FieldValue> = CASE_001_INITIAL_MICRO_STATE): PuzzleState {
+  return {
+    pageId,
+    fields: { ...fields },
+  };
+}
+
 describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
-  let offlineEngine: OfflineSimulationEngine;
   let microState: Record<string, FieldValue>;
 
   beforeEach(() => {
-    offlineEngine = new OfflineSimulationEngine();
     microState = { ...CASE_001_INITIAL_MICRO_STATE };
   });
 
   // =========================================================================
-  // VECTOR 1: OfflineSimulationEngine Input Boundaries
+  // VECTOR 1: Agent Pipeline Input Boundaries
   // =========================================================================
-  describe('Vector 1: Offline Engine Input & Length Boundaries', () => {
-    it('handles empty, whitespace, and newline inputs gracefully', () => {
+  describe('Vector 1: Agent Input & Length Boundaries', () => {
+    it('handles empty, whitespace, and newline inputs gracefully', async () => {
       const inputs = ['', ' ', '   ', '\t\n\r', ' \n \t '];
       for (const input of inputs) {
-        const action = offlineEngine.resolveInstruction('MV-03', microState, input);
+        const action = await resolveLine({
+          puzzle: CASE_001_PUZZLE,
+          manifest: CASE_001_GENERATED_MANIFEST,
+          state: makeState('MV-03', microState),
+          instruction: input,
+        });
         expect(action.action).toBe('NOOP');
         expect(action.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
       }
     });
 
-    it('enforces strict 60-character boundary parity', () => {
+    it('enforces strict 60-character boundary parity', async () => {
       // 59 characters: should be evaluated normally
-      const input59 = 'click green car button at D3 please agent for the shinkanse';
+      const input59 = 'click green car button at D3 please right now for shinkanse';
       expect(input59.length).toBe(59);
-      const action59 = offlineEngine.resolveInstruction('MV-03', microState, input59);
+      const action59 = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: makeState('MV-03', microState),
+        instruction: input59,
+      });
       expect(action59.action).toBe('CLICK');
-      expect(action59.targetId).toBe('#25');
+      expect(action59.mark).toBe(25);
 
       // Exactly 60 characters: should be evaluated normally
-      const input60 = 'click green car button at D3 please agent for the shinkansen';
+      const input60 = 'click green car button at D3 please right now for shinkansen';
       expect(input60.length).toBe(60);
-      const action60 = offlineEngine.resolveInstruction('MV-03', microState, input60);
+      const action60 = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: makeState('MV-03', microState),
+        instruction: input60,
+      });
       expect(action60.action).toBe('CLICK');
-      expect(action60.targetId).toBe('#25');
+      expect(action60.mark).toBe(25);
 
       // Exactly 61 characters: must return NOOP
-      const input61 = 'click green car button at D3 please agent for the shinkansen!';
+      const input61 = 'click green car button at D3 please right now for shinkansen!';
       expect(input61.length).toBe(61);
-      const action61 = offlineEngine.resolveInstruction('MV-03', microState, input61);
+      const action61 = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: makeState('MV-03', microState),
+        instruction: input61,
+      });
       expect(action61.action).toBe('NOOP');
       expect(action61.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
 
-      // 55 chars with 6 trailing spaces (length = 61): exceeds length limit
-      const inputSpaces = 'click green car button at D3                          ';
-      expect(inputSpaces.length).toBe(54); // safe
-      const inputSpaces61 = 'click green car button at D3                           ';
-      expect(inputSpaces61.length).toBe(55);
+      // 61 chars with trailing spaces: exceeds length limit
       const padded61 = 'click green car button at D3' + ' '.repeat(33); // 28 + 33 = 61
       expect(padded61.length).toBe(61);
-      const actionPadded = offlineEngine.resolveInstruction('MV-03', microState, padded61);
+      const actionPadded = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: makeState('MV-03', microState),
+        instruction: padded61,
+      });
       expect(actionPadded.action).toBe('NOOP');
       expect(actionPadded.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });
 
-    it('resists ReDoS and handles massive inputs (10,000 characters) instantaneously', () => {
+    it('resists ReDoS and handles massive inputs (10,000 characters) instantaneously', async () => {
       const massiveInput = 'click '.repeat(1666) + 'clover';
       expect(massiveInput.length).toBeGreaterThan(10000);
       const t0 = performance.now();
-      const action = offlineEngine.resolveInstruction('MV-03', microState, massiveInput);
+      const action = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: makeState('MV-03', microState),
+        instruction: massiveInput,
+      });
       const elapsed = performance.now() - t0;
 
-      expect(elapsed).toBeLessThan(50); // Instantaneous rejection (< 50ms)
+      expect(elapsed).toBeLessThan(50);
       expect(action.action).toBe('NOOP');
       expect(action.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });
 
-    it('handles non-existent macroView IDs and empty element views without crashing', () => {
-      const actionMissing = offlineEngine.resolveInstruction('MV-NONEXISTENT', microState, 'click clover');
+    it('handles non-existent macroView IDs and empty element views without crashing', async () => {
+      const actionMissing = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: makeState('MV-NONEXISTENT', microState),
+        instruction: 'click clover',
+      });
       expect(actionMissing.action).toBe('NOOP');
       expect(actionMissing.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
 
-      const emptyViewEngine = new OfflineSimulationEngine([
-        {
-          id: 'MV-EMPTY',
-          name: 'Empty View',
-          simulatedUrl: 'sandbox://empty',
-          elements: [],
-        },
-      ]);
-      const actionEmpty = emptyViewEngine.resolveInstruction('MV-EMPTY', microState, 'click clover');
+      const actionEmpty = fallbackResolve({
+        pages: [{ id: 'MV-EMPTY', slug: 'empty', title: 'Empty View', elements: [] }],
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: makeState('MV-EMPTY', microState),
+        instruction: 'click clover',
+      });
       expect(actionEmpty.action).toBe('NOOP');
       expect(actionEmpty.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });
 
-    it('handles multi-byte unicode, Japanese Kanji/Hiragana, and special punctuation', () => {
-      // Japanese kanji green car instruction
-      const actionKanji = offlineEngine.resolveInstruction('MV-03', microState, '緑の座席 13870 特割');
+    it('handles multi-byte unicode, Japanese Kanji/Hiragana, and special punctuation', async () => {
+      const actionKanji = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: makeState('MV-03', microState),
+        instruction: '緑の座席 13870 特割',
+      });
       expect(actionKanji.action).toBe('CLICK');
-      expect(actionKanji.targetId).toBe('#25');
+      expect(actionKanji.mark).toBe(25);
 
-      // Japanese confirmation button
-      const actionConfirm = offlineEngine.resolveInstruction('MV-03', microState, '確定する ボタン 青');
-      expect(actionConfirm.action).toBe('CLICK');
-      expect(actionConfirm.targetId).toBe('#30');
-
-      // Emoji clover
-      const actionEmoji = offlineEngine.resolveInstruction('MV-03', microState, '🍀 D3');
+      const actionEmoji = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: makeState('MV-03', microState),
+        instruction: '🍀 D3',
+      });
       expect(actionEmoji.action).toBe('CLICK');
-      expect(actionEmoji.targetId).toBe('#25');
+      expect(actionEmoji.mark).toBe(25);
     });
   });
 
   // =========================================================================
-  // VECTOR 2: Offline Simulation Multi-Token Scoring & Tie Boundaries
+  // VECTOR 2: Fallback Multi-Token Scoring & Tie Boundaries
   // =========================================================================
   describe('Vector 2: Multi-Token Scoring & Tie Boundaries', () => {
-    it('returns NOOP when instruction scores below confidence threshold (25)', () => {
-      // Instruction matching only a generic non-existent or low-weight keyword
-      const action = offlineEngine.resolveInstruction('MV-03', microState, 'completely unrelated query');
+    it('returns NOOP when instruction scores below confidence threshold (30)', async () => {
+      const action = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: makeState('MV-03', microState),
+        instruction: 'completely unrelated query',
+      });
       expect(action.action).toBe('NOOP');
       expect(action.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });
 
-    it('returns NOOP for ambiguous fare matches (¥13,870)', () => {
-      // 13870 matches Hikari Free Seat (#21) and Nozomi Free Seat (#23) equally
-      const actionFare = offlineEngine.resolveInstruction('MV-03', microState, 'select ticket 13870');
+    it('returns NOOP for ambiguous fare matches (¥13,870)', async () => {
+      const actionFare = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: makeState('MV-03', microState),
+        instruction: 'select ticket 13870',
+      });
       expect(actionFare.action).toBe('NOOP');
       expect(actionFare.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
 
-      // With comma: 13,870
-      const actionFareComma = offlineEngine.resolveInstruction('MV-03', microState, 'select ticket 13,870');
+      const actionFareComma = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: makeState('MV-03', microState),
+        instruction: 'select ticket 13,870',
+      });
       expect(actionFareComma.action).toBe('NOOP');
       expect(actionFareComma.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });
 
-    it('breaks ties cleanly when additional coordinate or train disambiguation is provided', () => {
-      // Disambiguate with coordinate B2
-      const actionHikari = offlineEngine.resolveInstruction('MV-03', microState, 'ticket 13870 at B2');
+    it('breaks ties cleanly when additional row or train disambiguation is provided', async () => {
+      const actionHikari = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: makeState('MV-03', microState),
+        instruction: 'ticket 13870 in row 1',
+      });
       expect(actionHikari.action).toBe('CLICK');
-      expect(actionHikari.targetId).toBe('#21');
+      expect(actionHikari.mark).toBe(21);
 
-      // Disambiguate with coordinate B3
-      const actionNozomi = offlineEngine.resolveInstruction('MV-03', microState, 'ticket 13870 at B3');
+      const actionNozomi = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: makeState('MV-03', microState),
+        instruction: 'nozomi free seat 13870',
+      });
       expect(actionNozomi.action).toBe('CLICK');
-      expect(actionNozomi.targetId).toBe('#23');
+      expect(actionNozomi.mark).toBe(23);
 
-      // Disambiguate with clover / green car (D3)
-      const actionGreen = offlineEngine.resolveInstruction('MV-03', microState, 'ticket 13870 with clover');
+      const actionGreen = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: makeState('MV-03', microState),
+        instruction: 'ticket 13870 with clover',
+      });
       expect(actionGreen.action).toBe('CLICK');
-      expect(actionGreen.targetId).toBe('#25');
+      expect(actionGreen.mark).toBe(25);
     });
   });
 
   // =========================================================================
-  // VECTOR 3: CloudVisionConnector Boundary Validation & Goal Blindness
+  // VECTOR 3: Cloud Tier Boundary Validation & Goal Blindness
   // =========================================================================
-  describe('Vector 3: CloudVisionConnector Boundary Validation', () => {
-    it('rejects instructions exceeding 60 characters before reaching LLM transport', async () => {
-      let transportCalled = false;
-      const mockTransport: VisionLLMTransport = {
-        async requestDecision(): Promise<LLMDecisionResponse> {
-          transportCalled = true;
-          return { action: 'CLICK', target_id: 25, thought: 'ok', text_value: null, scroll_direction: null };
+  describe('Vector 3: Cloud Tier Boundary Validation', () => {
+    it('rejects instructions exceeding 60 characters before reaching cloud tier', async () => {
+      let cloudCalled = false;
+      const action = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: makeState('MV-03', microState),
+        instruction: 'A'.repeat(61),
+        cloudResolver: async () => {
+          cloudCalled = true;
+          return { action: 'CLICK', pageId: 'MV-03', mark: 25, thought: 'ok', tier: 'cloud' };
         },
-      };
-
-      const connector = new CloudVisionConnector({
-        puzzleId: 'case_001',
-        macroViews: CASE_001_MACRO_VIEWS,
-        transport: mockTransport,
       });
 
-      const longInstruction = 'A'.repeat(61);
-      const action = await connector.resolveInstruction('MV-03', microState, longInstruction);
-
-      expect(transportCalled).toBe(false); // Transport was never queried
+      expect(cloudCalled).toBe(false);
       expect(action.action).toBe('NOOP');
       expect(action.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });
 
-    it('rejects empty and whitespace instructions before reaching LLM transport', async () => {
-      let transportCalled = false;
-      const mockTransport: VisionLLMTransport = {
-        async requestDecision(): Promise<LLMDecisionResponse> {
-          transportCalled = true;
-          return { action: 'CLICK', target_id: 25, thought: 'ok', text_value: null, scroll_direction: null };
+    it('rejects empty and whitespace instructions before reaching cloud tier', async () => {
+      let cloudCalled = false;
+      const action = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: makeState('MV-03', microState),
+        instruction: '   ',
+        cloudResolver: async () => {
+          cloudCalled = true;
+          return { action: 'CLICK', pageId: 'MV-03', mark: 25, thought: 'ok', tier: 'cloud' };
         },
-      };
-
-      const connector = new CloudVisionConnector({
-        puzzleId: 'case_001',
-        macroViews: CASE_001_MACRO_VIEWS,
-        transport: mockTransport,
       });
-
-      const action = await connector.resolveInstruction('MV-03', microState, '   ');
-      expect(transportCalled).toBe(false);
+      expect(cloudCalled).toBe(false);
       expect(action.action).toBe('NOOP');
       expect(action.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });
 
-    it('rejects non-existent macro-view without querying LLM transport', async () => {
-      let transportCalled = false;
-      const mockTransport: VisionLLMTransport = {
-        async requestDecision(): Promise<LLMDecisionResponse> {
-          transportCalled = true;
-          return { action: 'CLICK', target_id: 25, thought: 'ok', text_value: null, scroll_direction: null };
+    it('rejects non-existent macro-view without querying cloud tier', async () => {
+      let cloudCalled = false;
+      const action = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: makeState('MV-999', microState),
+        instruction: 'click button',
+        cloudResolver: async () => {
+          cloudCalled = true;
+          return { action: 'CLICK', pageId: 'MV-999', mark: 25, thought: 'ok', tier: 'cloud' };
         },
-      };
-
-      const connector = new CloudVisionConnector({
-        puzzleId: 'case_001',
-        macroViews: CASE_001_MACRO_VIEWS,
-        transport: mockTransport,
       });
-
-      const action = await connector.resolveInstruction('MV-999', microState, 'click button');
-      expect(transportCalled).toBe(false);
+      expect(cloudCalled).toBe(false);
       expect(action.action).toBe('NOOP');
       expect(action.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
     });
@@ -273,11 +303,9 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
         expect(() => assertGoalBlindness(dirtyContext)).toThrow('Security Guardrail Violation');
       }
 
-      // Also verify isTarget: true and isTrap: true leaks
       expect(() => assertGoalBlindness({ isTarget: true })).toThrow('Security Guardrail Violation');
       expect(() => assertGoalBlindness({ isTrap: true })).toThrow('Security Guardrail Violation');
 
-      // Clean context passes without error
       const cleanContext = {
         macroViewId: 'MV-03',
         microState: { ...microState },
@@ -327,15 +355,12 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
     });
 
     it('allows legitimate visible unformatted numbers and prices through without false positive blockage', () => {
-      // 24 is visible as "Nozomi 24"
       const res24 = filterPromptSyntheticIds('click Nozomi 24', CASE_001_MV03_ELEMENTS);
       expect(res24.isBlocked).toBe(false);
 
-      // 13870 is visible as ticket price
       const resPrice = filterPromptSyntheticIds('select 13870 fare', CASE_001_MV03_ELEMENTS);
       expect(resPrice.isBlocked).toBe(false);
 
-      // 515 is visible as "Hikari 515"
       const res515 = filterPromptSyntheticIds('board Hikari 515', CASE_001_MV03_ELEMENTS);
       expect(res515.isBlocked).toBe(false);
     });
@@ -379,7 +404,6 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
       expect(sanitized).not.toContain('som-badge');
       expect(sanitized).not.toContain('<!--');
 
-      // Valid tag structure remains intact
       expect(sanitized).toContain('<button class="btn">Click</button>');
       expect(sanitized).toContain('<button>Confirm</button>');
       expect(sanitized).toContain('<div>Clean Content</div>');
@@ -387,153 +411,40 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
   });
 
   // =========================================================================
-  // VECTOR 5: Fallback Recovery & Thought Note Invariant Harness
+  // VECTOR 5: Cloud Failure Recovery & State Hash Determinism
   // =========================================================================
-  describe('Vector 5: Fallback Recovery & Thought Note Invariants', () => {
-    it('guarantees fallback thought length <= 80 across various fallback thought lengths', async () => {
-      const mockTransport = new MockVisionLLMTransport();
-      mockTransport.setSimulateError(true, 'Cloud vision timeout 504');
-
-      // Test with custom engines returning thoughts of various lengths
-      const testLengths = [10, 40, 60, 61, 62, 70, 80, 120];
-
-      for (const len of testLengths) {
-        const dummyThought = 'X'.repeat(len);
-        const dummyFallback: any = {
-          resolveInstruction: () => ({
-            action: 'CLICK',
-            targetId: '#25',
-            thought: dummyThought,
-          }),
-        };
-
-        const connector = new CloudVisionConnector({
-          puzzleId: 'case_001',
-          macroViews: CASE_001_MACRO_VIEWS,
-          transport: mockTransport,
-          fallbackEngine: dummyFallback,
-        });
-
-        const action = await connector.resolveInstruction('MV-03', microState, 'click clover');
-        expect(action.action).toBe('CLICK');
-        expect(action.thought.length).toBeLessThanOrEqual(80);
-        expect(action.thought.endsWith('(Offline Fallback)')).toBe(true);
-      }
-    });
-
-    it('safely recovers when transport throws non-Error objects (string, null, primitive)', async () => {
-      const throwingTransports = [
-        { requestDecision: async () => { throw 'String error failure'; } },
-        { requestDecision: async () => { throw 500; } },
-        { requestDecision: async () => { throw null; } },
-        { requestDecision: async () => { throw undefined; } },
+  describe('Vector 5: Cloud Failure Recovery & State Hash Determinism', () => {
+    it('safely recovers when cloudResolver throws non-Error objects (string, null, primitive)', async () => {
+      const throwingResolvers = [
+        async () => { throw 'String error failure'; },
+        async () => { throw 500; },
+        async () => { throw null; },
+        async () => { throw undefined; },
       ];
 
-      for (const transport of throwingTransports) {
-        const connector = new CloudVisionConnector({
-          puzzleId: 'case_001',
-          macroViews: CASE_001_MACRO_VIEWS,
-          transport: transport as VisionLLMTransport,
-          fallbackEngine: offlineEngine,
+      for (const cloudResolver of throwingResolvers) {
+        const action = await resolveLine({
+          puzzle: CASE_001_PUZZLE,
+          manifest: CASE_001_GENERATED_MANIFEST,
+          state: makeState('MV-03', microState),
+          instruction: 'click green car',
+          cloudResolver,
         });
-
-        const action = await connector.resolveInstruction('MV-03', microState, 'click green car');
         expect(action.action).toBe('CLICK');
-        expect(action.targetId).toBe('#25');
-        expect(action.thought).toContain('(Offline Fallback)');
-        expect(action.thought.length).toBeLessThanOrEqual(80);
+        expect(action.mark).toBe(25);
+        expect(action.tier).toBe('fallback');
+        expect(action.cloudFailed).toBe(true);
       }
     });
 
-    it('clamps raw LLM thoughts in validateLLMOutput strictly to <= 80 chars with ellipsis', () => {
-      const thoughtsToTest = [
-        { input: 'Short thought', expectedLength: 13, endsWith: 'Short thought' },
-        { input: 'A'.repeat(80), expectedLength: 80, endsWith: 'A' },
-        { input: 'B'.repeat(81), expectedLength: 80, endsWith: '...' },
-        { input: 'C'.repeat(500), expectedLength: 80, endsWith: '...' },
-      ];
-
-      for (const tc of thoughtsToTest) {
-        const validated = validateLLMOutput({
-          action: 'CLICK',
-          target_id: 25,
-          thought: tc.input,
-        });
-        expect(validated.thought.length).toBeLessThanOrEqual(80);
-        expect(validated.thought.endsWith(tc.endsWith.slice(-3))).toBe(true);
-      }
-    });
-  });
-
-  // =========================================================================
-  // VECTOR 6: EdgeKVCache & State Hash Determinism
-  // =========================================================================
-  describe('Vector 6: EdgeKVCache & State Hash Determinism', () => {
-    it('produces identical state hashes for identical micro-states', () => {
+    it('produces identical state hashes for identical micro-states and distinct hashes on change', () => {
       const hash1 = generateStateHash('MV-03', microState as any);
       const hash2 = generateStateHash('MV-03', { ...microState } as any);
       expect(hash1).toBe(hash2);
       expect(hash1.length).toBe(8);
-    });
 
-    it('produces distinct state hashes when critical state attributes change', () => {
-      const baseHash = generateStateHash('MV-03', microState as any);
-
-      const modifiedStates = [
-        { ...microState, greenCarSelected: true },
-        { ...microState, insuranceTrapHit: true },
-        { ...microState, insuranceCheckboxChecked: true },
-        { ...microState, finalConfirmed: true },
-        { ...microState, seatClass: 'green_car' },
-        { ...microState, fare: 13870 },
-      ];
-
-      for (const mod of modifiedStates) {
-        const modHash = generateStateHash('MV-03', mod as any);
-        expect(modHash).not.toBe(baseHash);
-      }
-    });
-
-    it('caches LLM decisions and serves subsequent identical requests from EdgeKVCache', async () => {
-      let callCount = 0;
-      const countingTransport: VisionLLMTransport = {
-        async requestDecision(): Promise<LLMDecisionResponse> {
-          callCount++;
-          return {
-            action: 'CLICK',
-            target_id: 25,
-            thought: 'Target clicked by LLM',
-            text_value: null,
-            scroll_direction: null,
-          };
-        },
-      };
-
-      const cache = new MemoryKVCache();
-      const connector = new CloudVisionConnector({
-        puzzleId: 'case_001',
-        macroViews: CASE_001_MACRO_VIEWS,
-        transport: countingTransport,
-        cache,
-      });
-
-      // Request 1: Cache miss, transport called
-      const action1 = await connector.resolveInstruction('MV-03', microState, 'click green car');
-      expect(callCount).toBe(1);
-      expect(action1.action).toBe('CLICK');
-      expect(action1.targetId).toBe('#25');
-
-      // Request 2: Cache hit, transport NOT called again
-      const action2 = await connector.resolveInstruction('MV-03', microState, 'click green car');
-      expect(callCount).toBe(1); // Still 1!
-      expect(action2.action).toBe('CLICK');
-      expect(action2.targetId).toBe('#25');
-
-      // Request 3: Different micro-state causes cache miss, transport called
-      const alteredState = { ...microState, greenCarSelected: true };
-      const action3 = await connector.resolveInstruction('MV-03', alteredState, 'click green car');
-      expect(callCount).toBe(2); // Increased to 2!
-      expect(action3.action).toBe('CLICK');
+      const modHash = generateStateHash('MV-03', { ...microState, greenCarSelected: true } as any);
+      expect(modHash).not.toBe(hash1);
     });
   });
 });

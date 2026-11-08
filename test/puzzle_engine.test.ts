@@ -10,7 +10,7 @@ import {
 } from '../src/engine/puzzle_engine';
 import { CASE_001_PUZZLE } from '../src/data/puzzles/case_001/puzzle';
 import { Sandbox } from '../src/data/puzzles/case_001/Sandbox';
-import { filterPromptSyntheticIds } from '../src/engine/cloud_connector';
+import { filterPromptSyntheticIds } from '../src/engine/agent';
 
 describe('Item 6 — Puzzle as Data (★ Falsifying Tests)', () => {
   it('★ runs mini fixture end-to-end: navigate, set, toggle, $previous, resetFields, and all 3 stamp states', () => {

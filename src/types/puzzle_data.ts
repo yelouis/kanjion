@@ -38,4 +38,14 @@ export interface PuzzleData {
   answerKey: string[];      // exact English lines shown in the report
   capturePresets?: Record<string, Partial<Record<string, FieldValue>>>; // item 9
 }
-export interface PuzzleState { pageId: string; previousPageId: string | null; fields: Record<string, FieldValue> }
+export interface PuzzleState { pageId: string; previousPageId?: string | null; fields: Record<string, FieldValue> }
+export interface GeneratedManifestElement {
+  mark: number;
+  key: string;
+  box: { x: number; y: number; w: number; h: number };
+}
+export interface GeneratedManifest {
+  puzzleId: string;
+  stage: { w: number; h: number };
+  pages: Record<string, { som: string; elements: GeneratedManifestElement[] }>;
+}

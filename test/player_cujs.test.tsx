@@ -2,15 +2,33 @@ import { describe, it, expect } from 'vitest';
 import { createInitialGameState, gameReducer } from '../src/engine/game_reducer';
 import { applyDecision, createInitialPuzzleState } from '../src/engine/puzzle_engine';
 import { CASE_001_PUZZLE } from '../src/data/puzzles/case_001/puzzle';
-import { OfflineSimulationEngine } from '../src/engine/offline_simulator';
-import { BrowserGeminiNanoTransport, CloudVisionConnector } from '../src/engine/cloud_connector';
-import { CASE_001_INITIAL_MICRO_STATE, CASE_001_EXHIBITS, CASE_001_MACRO_VIEWS } from '../src/data/puzzles/case_001';
+import { resolveLine, decisionToAgentAction } from '../src/engine/agent';
+import {
+  CASE_001_INITIAL_MICRO_STATE,
+  CASE_001_EXHIBITS,
+  CASE_001_GENERATED_MANIFEST,
+} from '../src/data/puzzles/case_001';
 import { calculateScoreReport } from '../src/engine/scoring';
 import type { AgentAction } from '../src/types/engine';
 import type { PuzzleState } from '../src/types/puzzle_data';
 
 function createBrowserStartState(): PuzzleState {
   return createInitialPuzzleState(CASE_001_PUZZLE);
+}
+
+async function resolveTestAction(pageId: string, fields: Record<string, unknown>, instruction: string) {
+  const decision = await resolveLine({
+    puzzle: CASE_001_PUZZLE,
+    manifest: CASE_001_GENERATED_MANIFEST,
+    state: {
+      pageId,
+      previousPageId: 'MV-01',
+      fields: fields as PuzzleState['fields'],
+    },
+    instruction,
+    visibleText: '',
+  });
+  return decisionToAgentAction(decision, CASE_001_PUZZLE, CASE_001_GENERATED_MANIFEST);
 }
 
 function stepPuzzle(state: PuzzleState, action: Partial<AgentAction> & { action: AgentAction['action'] }) {
@@ -29,6 +47,7 @@ function stepPuzzle(state: PuzzleState, action: Partial<AgentAction> & { action:
     action: mappedAction,
     mark: Number.isFinite(markNum) ? markNum : null,
     text: action.textValue ?? undefined,
+    stroke: action.textValue ?? undefined,
     thought: action.thought ?? '',
   });
   return {
@@ -39,8 +58,6 @@ function stepPuzzle(state: PuzzleState, action: Partial<AgentAction> & { action:
 }
 
 describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
-  const engine = new OfflineSimulationEngine();
-
   it('CUJ 1: Zero-Action Immediate Close awards 0% (no free points for Exhibit B or D)', () => {
     const startState = createBrowserStartState();
     const report = calculateScoreReport(CASE_001_EXHIBITS, startState.fields, 0, '#001');
@@ -52,7 +69,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     }
   });
 
-  it('CUJ 2: Casual Visual English Prompts traverse all 5 pages to 100% x 1.2x = 120 PTS', () => {
+  it('CUJ 2: Casual Visual English Prompts traverse all 5 pages to 100% x 1.2x = 120 PTS', async () => {
     let game = createInitialGameState({
       caseNumber: '#001',
       initialMicroState: { ...CASE_001_INITIAL_MICRO_STATE },
@@ -67,7 +84,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     ];
 
     for (const prompt of prompts) {
-      const action = engine.resolveInstruction(game.macroViewId, game.microState, prompt);
+      const action = await resolveTestAction(game.macroViewId, game.microState, prompt);
       game = gameReducer(game, {
         type: 'APPLY_AGENT_ACTION',
         payload: { action, instruction: prompt, exhibits: CASE_001_EXHIBITS },
@@ -87,36 +104,36 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     expect(game.scoreReport?.finalScore).toBe(120);
   });
 
-  it('CUJ 3 & 4: Wrong Route Detours (Page 10 Tohoku, Page 11 Hokuriku, Page 12 Points) & Back Recovery', () => {
+  it('CUJ 3 & 4: Wrong Route Detours (Page 10 Tohoku, Page 11 Hokuriku, Page 12 Points) & Back Recovery', async () => {
     let state = createBrowserStartState();
 
     // Detour to Tohoku (#2 -> MV-10)
-    const a1 = engine.resolveInstruction(state.pageId, state.fields, 'click second card on top right');
+    const a1 = await resolveTestAction(state.pageId, state.fields, 'click second card on top right');
     state = stepPuzzle(state, a1).nextState;
     expect(state.pageId).toBe('MV-10');
 
     // Back (#14 -> MV-01)
-    const a2 = engine.resolveInstruction(state.pageId, state.fields, 'click back button');
+    const a2 = await resolveTestAction(state.pageId, state.fields, 'click back button');
     state = stepPuzzle(state, a2).nextState;
     expect(state.pageId).toBe('MV-01');
 
     // Detour to Hokuriku (#3 -> MV-11)
-    const a3 = engine.resolveInstruction(state.pageId, state.fields, 'click third card at bottom left');
+    const a3 = await resolveTestAction(state.pageId, state.fields, 'click third card at bottom left');
     state = stepPuzzle(state, a3).nextState;
     expect(state.pageId).toBe('MV-11');
 
     // Back (#14 -> MV-01)
-    const a4 = engine.resolveInstruction(state.pageId, state.fields, 'click back button');
+    const a4 = await resolveTestAction(state.pageId, state.fields, 'click back button');
     state = stepPuzzle(state, a4).nextState;
     expect(state.pageId).toBe('MV-01');
 
-    // Detour to JRE Points (#4 -> MV-12)
-    const a5 = engine.resolveInstruction(state.pageId, state.fields, 'click fourth card at bottom right');
+    // Detour to Points (#4 -> MV-12)
+    const a5 = await resolveTestAction(state.pageId, state.fields, 'click fourth card at bottom right');
     state = stepPuzzle(state, a5).nextState;
     expect(state.pageId).toBe('MV-12');
 
     // Back (#14 -> MV-01)
-    const a6 = engine.resolveInstruction(state.pageId, state.fields, 'click back button');
+    const a6 = await resolveTestAction(state.pageId, state.fields, 'click back button');
     state = stepPuzzle(state, a6).nextState;
     expect(state.pageId).toBe('MV-01');
   });
@@ -155,10 +172,10 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     expect(exD?.status).toBe('MISSED');
   });
 
-  it('CUJ 7: Typing Wrong Passenger Name (YAMADA) misses Exhibit B until fixed to TANAKA', () => {
+  it('CUJ 7: Typing Wrong Passenger Name (YAMADA) misses Exhibit B until fixed to TANAKA', async () => {
     let state = createBrowserStartState();
     state = stepPuzzle(state, { action: 'CLICK', targetId: '#1', thought: 'Route' }).nextState;
-    const typeYamada = engine.resolveInstruction(state.pageId, state.fields, 'type YAMADA in passenger name');
+    const typeYamada = await resolveTestAction(state.pageId, state.fields, 'type YAMADA in passenger name');
     state = stepPuzzle(state, typeYamada).nextState;
     expect(state.fields.passengerName).toBe('YAMADA');
     expect(state.pageId).toBe('MV-03');
@@ -170,14 +187,14 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     // Go back (#14) to Page 02 and fix to TANAKA
     state = stepPuzzle(state, { action: 'CLICK', targetId: '#14', thought: 'Back' }).nextState;
     expect(state.pageId).toBe('MV-02');
-    const typeTanaka = engine.resolveInstruction(state.pageId, state.fields, 'type TANAKA in passenger name');
+    const typeTanaka = await resolveTestAction(state.pageId, state.fields, 'type TANAKA in passenger name');
     state = stepPuzzle(state, typeTanaka).nextState;
     expect(state.fields.passengerName).toBe('TANAKA');
     const reportFixed = calculateScoreReport(CASE_001_EXHIBITS, state.fields, 4, '#001');
     expect(reportFixed.exhibitEvaluations.find((e) => e.id === 'B')?.status).toBe('VERIFIED');
   });
 
-  it('CUJ 12: Page 03 Seat Disambiguation (Ambiguous ¥13,870 tie & Wrong Seat #24 recovery)', () => {
+  it('CUJ 12: Page 03 Seat Disambiguation (Ambiguous ¥13,870 tie & Wrong Seat #24 recovery)', async () => {
     let state = createBrowserStartState();
     state = stepPuzzle(state, { action: 'CLICK', targetId: '#1', thought: 'Route' }).nextState;
     state = stepPuzzle(state, {
@@ -189,7 +206,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     expect(state.pageId).toBe('MV-03');
 
     // Ambiguous "click 13,870" triggers NOOP and stays on MV-03
-    const ambigAction = engine.resolveInstruction(state.pageId, state.fields, 'click 13,870');
+    const ambigAction = await resolveTestAction(state.pageId, state.fields, 'click 13,870');
     expect(ambigAction.action).toBe('NOOP');
     state = stepPuzzle(state, ambigAction).nextState;
     expect(state.pageId).toBe('MV-03');
@@ -201,13 +218,13 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     expect(state.fields.seatClass).toBe('ordinary_reserved');
 
     // Selecting #25 (Green Car ¥13,870) advances to MV-04 and sets greenCarSelected=true
-    const greenAction = engine.resolveInstruction(state.pageId, state.fields, 'click green 13,870');
+    const greenAction = await resolveTestAction(state.pageId, state.fields, 'click green 13,870');
     state = stepPuzzle(state, greenAction).nextState;
     expect(state.pageId).toBe('MV-04');
     expect(state.fields.greenCarSelected).toBe(true);
   });
 
-  it('CUJ 13: 6-Line Exhaustion Auto-Closes Case File with 1.0x multiplier', () => {
+  it('CUJ 13: 6-Line Exhaustion Auto-Closes Case File with 1.0x multiplier', async () => {
     let game = createInitialGameState({
       caseNumber: '#001',
       initialMicroState: { ...CASE_001_INITIAL_MICRO_STATE },
@@ -223,7 +240,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     ];
 
     for (const prompt of sixPrompts) {
-      const action = engine.resolveInstruction(game.macroViewId, game.microState, prompt);
+      const action = await resolveTestAction(game.macroViewId, game.microState, prompt);
       game = gameReducer(game, {
         type: 'APPLY_AGENT_ACTION',
         payload: { action, instruction: prompt, exhibits: CASE_001_EXHIBITS },
@@ -236,58 +253,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     expect(game.scoreReport?.finalScore).toBe(80);
   });
 
-  it('CUJ 14: BrowserGeminiNanoTransport executes 100% client-side via window.LanguageModel and local fallback', async () => {
-    const connector = new CloudVisionConnector({
-      puzzleId: 'case_001',
-      macroViews: CASE_001_MACRO_VIEWS,
-      transport: new BrowserGeminiNanoTransport(),
-    });
-
-    // 1. With mock Chrome Built-in Gemini Nano (window.LanguageModel) installed
-    const g = globalThis as unknown as Record<string, unknown>;
-    let promptCalled = false;
-    g.LanguageModel = {
-      availability: async () => 'available',
-      create: async () => ({
-        prompt: async () => {
-          promptCalled = true;
-          return JSON.stringify({
-            action: 'CLICK',
-            target_id: 1,
-            text_value: null,
-            scroll_direction: null,
-            thought: '📌 FIELD NOTE: Gemini Nano selected Tokaido Shinkansen card.',
-          });
-        },
-        destroy: () => {},
-      }),
-    };
-
-    try {
-      const startState = createBrowserStartState();
-      const actionNano = await connector.resolveInstruction('MV-01', startState.fields, 'click top left green card');
-      expect(promptCalled).toBe(true);
-      expect(actionNano.action).toBe('CLICK');
-      expect(actionNano.targetId).toBe('#1');
-    } finally {
-      delete g.LanguageModel;
-    }
-
-    // 2. Without window.LanguageModel (e.g. mobile Safari), still resolves 100% client-side with zero network calls
-    const startState2 = createBrowserStartState();
-    const actionLocal = await connector.resolveInstruction('MV-02', startState2.fields, 'type TANAKA in the passenger name box');
-    expect(actionLocal.action).toBe('TYPE');
-    expect(actionLocal.targetId).toBe('#17');
-    expect(actionLocal.textValue).toBe('TANAKA');
-  });
-
   it('CUJ 15: Custom smile signature ("Draw a signiture in the shape of a smile") + "Click the blue box on the bottom right"', async () => {
-    const connector = new CloudVisionConnector({
-      puzzleId: 'case_001',
-      macroViews: CASE_001_MACRO_VIEWS,
-      transport: new BrowserGeminiNanoTransport(),
-    });
-
     let game = createInitialGameState({
       caseNumber: '#001',
       initialMicroState: { ...CASE_001_INITIAL_MICRO_STATE },
@@ -302,7 +268,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     ];
 
     for (const prompt of userPrompts) {
-      const action = await connector.resolveInstruction(game.macroViewId, game.microState, prompt);
+      const action = await resolveTestAction(game.macroViewId, game.microState, prompt);
       game = gameReducer(game, {
         type: 'APPLY_AGENT_ACTION',
         payload: { action, instruction: prompt, exhibits: CASE_001_EXHIBITS },

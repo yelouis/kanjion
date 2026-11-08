@@ -25,10 +25,11 @@ import {
   gameReducer,
   createInitialGameState,
 } from '../src/engine/game_reducer';
-import { OfflineSimulationEngine } from '../src/engine/offline_simulator';
+import { resolveLine, decisionToAgentAction } from '../src/engine/agent';
 import {
-  CASE_001_MACRO_VIEWS,
   CASE_001_EXHIBITS,
+  CASE_001_PUZZLE,
+  CASE_001_GENERATED_MANIFEST,
 } from '../src/data/puzzles/case_001';
 import { calculateEfficiencyMultiplier } from '../src/engine/scoring';
 
@@ -57,20 +58,26 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
         () => createInitialGameState({ caseNumber: '#001' })
       );
 
-      const engine = new OfflineSimulationEngine(CASE_001_MACRO_VIEWS);
       const linesUsed = state.telegrams.filter((t) => t.submitted).length;
       const { multiplier } = calculateEfficiencyMultiplier(linesUsed);
 
-      const handleDispatch = () => {
+      const handleDispatch = async () => {
         if (state.caseStatus === 'closed' || state.isExecuting) return;
         const instruction = state.currentInput.trim();
         if (!instruction) return;
 
         dispatch({ type: 'START_EXECUTION' });
-        const action = engine.resolveInstruction(
-          state.macroViewId,
-          state.microState,
-          instruction
+        const decision = await resolveLine({
+          puzzle: CASE_001_PUZZLE,
+          manifest: CASE_001_GENERATED_MANIFEST,
+          state: state.puzzleState,
+          instruction,
+          visibleText: '',
+        });
+        const action = decisionToAgentAction(
+          decision,
+          CASE_001_PUZZLE,
+          CASE_001_GENERATED_MANIFEST
         );
         dispatch({
           type: 'APPLY_AGENT_ACTION',

@@ -110,11 +110,11 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 04 / 06');
       expect(container.querySelector('#live-mult-label')).toHaveTextContent('1.6x');
 
-      // Verification: Agent Cursor glided to #25 at D3
+      // Verification: Agent Cursor glided to #25 measured box center
       const agentCursor = container.querySelector('#agent-cursor') as HTMLElement;
       expect(agentCursor).toBeInTheDocument();
-      expect(agentCursor.style.left).toBe('87.5%');
-      expect(agentCursor.style.top).toBe('62.5%');
+      expect(agentCursor.style.left).toBe('84.57%');
+      expect(agentCursor.style.top).toBe('53.39%');
 
       // Verification: Pinned Yellow Thought Note
       const agentNote = container.querySelector('#agent-note') as HTMLElement;
@@ -148,9 +148,9 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 06 / 06');
       expect(container.querySelector('#live-mult-label')).toHaveTextContent('1.2x');
 
-      // Verification: Cursor glided to #30 at D4
-      expect(agentCursor.style.left).toBe('87.5%');
-      expect(agentCursor.style.top).toBe('87.5%');
+      // Verification: Cursor glided to #30 measured box center
+      expect(agentCursor.style.left).toBe('86.33%');
+      expect(agentCursor.style.top).toBe('94.01%');
       expect(agentNote).toHaveTextContent(/\[✓ CONFIRMED STEP\]/i);
 
       // -----------------------------------------------------------------------

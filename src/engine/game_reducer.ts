@@ -198,6 +198,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ''
       ).trim();
 
+      const finalSummary = agentAction.cloudFailed
+        ? `${summary} (backup agent)`
+        : summary;
+
       const updatedTelegrams: TelegramLine[] = state.telegrams.map((tel, idx) => {
         if (idx === activeIdx) {
           return {
@@ -205,7 +209,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             text: instructionText,
             submitted: true,
             timestamp: new Date().toISOString(),
-            actionSummary: summary,
+            actionSummary: finalSummary,
             exhibitRedactedStatus: 'SEALED',
             agentAction,
           };

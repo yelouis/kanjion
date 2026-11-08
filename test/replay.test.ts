@@ -5,8 +5,8 @@ import { execSync } from 'node:child_process';
 import { CASE_001_PUZZLE } from '../src/data/puzzles/case_001/puzzle';
 import { applyDecision, evaluateExhibits } from '../src/engine/puzzle_engine';
 import { calculateScoreReport } from '../src/engine/scoring';
-import { OfflineSimulationEngine } from '../src/engine/offline_simulator';
-import { CASE_001_MACRO_VIEWS } from '../src/data/puzzles/case_001';
+import { resolveLine } from '../src/engine/agent';
+import { CASE_001_GENERATED_MANIFEST } from '../src/data/puzzles/case_001';
 import { LoopedTargetReplay } from '../src/components/LoopedTargetReplay';
 import type { PuzzleState } from '../src/types/puzzle_data';
 
@@ -47,9 +47,8 @@ describe('Item 8: Replay from data (§10)', () => {
     expect(evals.every((e) => e.status === 'VERIFIED')).toBe(true);
   });
 
-  it('★ for each i, resolving answerKey[i] at the state reached after steps 1…i produces the same (key, action, text) as replay step i+1', () => {
+  it('★ for each i, resolving answerKey[i] with the deterministic fallback tier (pinned tier off) at the state reached after steps 1…i produces the same (key, action, text) as replay step i+1', async () => {
     expect(CASE_001_PUZZLE.replay.length).toBe(CASE_001_PUZZLE.answerKey.length);
-    const engine = new OfflineSimulationEngine(CASE_001_MACRO_VIEWS);
 
     let state: PuzzleState = {
       pageId: CASE_001_PUZZLE.initialPageId,
@@ -62,19 +61,25 @@ describe('Item 8: Replay from data (§10)', () => {
       expect(expectedStep).toBeDefined();
       expect(state.pageId).toBe(expectedStep.pageId);
 
-      const resolved = engine.resolveInstruction(
-        state.pageId,
-        state.fields,
-        CASE_001_PUZZLE.answerKey[i]
-      );
-      const mark = Number(String(resolved.targetId ?? '').replace(/^#/, ''));
+      const resolved = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state,
+        instruction: CASE_001_PUZZLE.answerKey[i],
+        visibleText: '',
+        disablePinned: true,
+      });
+      expect(resolved.tier).toBe('fallback');
       const page = CASE_001_PUZZLE.pages.find((p) => p.id === state.pageId);
-      const el = page?.elements.find((e) => e.mark === mark);
+      const el = page?.elements.find((e) => e.mark === resolved.mark);
 
       expect(el?.key).toBe(expectedStep.key);
       expect(resolved.action).toBe(expectedStep.action);
       if (expectedStep.text !== undefined) {
-        expect(resolved.textValue).toBe(expectedStep.text);
+        expect(resolved.text).toBe(expectedStep.text);
+      }
+      if (expectedStep.stroke !== undefined) {
+        expect(resolved.stroke).toBe(expectedStep.stroke);
       }
 
       const { next } = applyDecision(CASE_001_PUZZLE, state, {

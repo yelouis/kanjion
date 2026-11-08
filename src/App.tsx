@@ -1,14 +1,10 @@
 import React, { useReducer, useMemo, useState, useRef, useEffect } from 'react';
 import { gameReducer, createInitialGameState, GameAction } from './engine/game_reducer';
 import { GameState } from './types/game';
-import { OfflineSimulationEngine } from './engine/offline_simulator';
-import {
-  CloudVisionConnector,
-  BrowserGeminiNanoTransport,
-} from './engine/cloud_connector';
+import { resolveLine, decisionToAgentAction } from './engine/agent';
 import { calculateEfficiencyMultiplier } from './engine/scoring';
 import {
-  CASE_001_MACRO_VIEWS,
+  CASE_001_GENERATED_MANIFEST,
   CASE_001_PUZZLE,
 } from './data/puzzles/case_001';
 import { elementsOnPage } from './engine/puzzle_engine';
@@ -140,21 +136,6 @@ export const App: React.FC<AppProps> = ({ config }) => {
     undefined
   );
 
-  const offlineEngine = useMemo(
-    () => new OfflineSimulationEngine(CASE_001_MACRO_VIEWS),
-    []
-  );
-
-  const cloudEngine = useMemo(() => {
-    const transport = new BrowserGeminiNanoTransport();
-    return new CloudVisionConnector({
-      puzzleId: 'case_001',
-      macroViews: CASE_001_MACRO_VIEWS,
-      transport,
-      fallbackEngine: offlineEngine,
-    });
-  }, [offlineEngine]);
-
   // 3. Computed Multiplier for Live Telemetry
   const linesUsed = state.telegrams.filter((t) => t.submitted).length;
   const { multiplier: currentMultiplier } = calculateEfficiencyMultiplier(linesUsed);
@@ -234,10 +215,19 @@ export const App: React.FC<AppProps> = ({ config }) => {
     dispatch({ type: 'START_EXECUTION' });
 
     try {
-      const action = await cloudEngine.resolveInstruction(
-        state.macroViewId,
-        state.microState,
-        instruction
+      const coreEl = document.getElementById('sandbox-core');
+      const visibleText = coreEl?.textContent ?? '';
+      const decision = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: state.puzzleState,
+        instruction,
+        visibleText,
+      });
+      const action = decisionToAgentAction(
+        decision,
+        CASE_001_PUZZLE,
+        CASE_001_GENERATED_MANIFEST
       );
 
       // Choreograph the mouse glide + character-by-character typing / signature drawing
@@ -286,8 +276,20 @@ export const App: React.FC<AppProps> = ({ config }) => {
         targetElementId: coords.targetKey,
       });
 
-      // Phase 2: Perform visible typing, signature drawing, or button click hold on the current page
-      if (action.action === 'TYPE') {
+      // Phase 2: Perform visible typing, signature drawing, NOOP wiggle, or button click hold on the current page
+      if (isNoop) {
+        const offsets = [-6, 6, 0];
+        for (const dx of offsets) {
+          const wiggleX = Math.max(0, Math.min(1024, coords.x + dx));
+          setPreviewCursor({
+            xPercent: Number(((wiggleX / 1024) * 100).toFixed(2)),
+            yPercent: coords.yPercent,
+            thought: action.thought,
+            targetElementId: coords.targetKey,
+          });
+          await sleep(120);
+        }
+      } else if (action.action === 'TYPE') {
         const textToType = (action.textValue || 'NAME').toUpperCase();
         for (let i = 1; i <= textToType.length; i++) {
           setPreviewTypedText(textToType.slice(0, i));

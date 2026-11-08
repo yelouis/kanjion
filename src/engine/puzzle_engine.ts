@@ -242,3 +242,18 @@ export function evaluateExhibits(
 ): ExhibitEvaluation[] {
   return puzzle.exhibits.map((ex, index) => evaluateExhibitDef(ex, state, index));
 }
+
+export const initialPuzzleState = createInitialPuzzleState;
+
+export function evaluatePuzzle(
+  puzzle: PuzzleData,
+  state: PuzzleState | Record<string, FieldValue>
+): {
+  closeness: number;
+  results: ExhibitEvaluation[];
+} {
+  const results = evaluateExhibits(puzzle, state);
+  const rawCloseness = results.reduce((sum, r) => sum + (r.awardedPoints ?? 0), 0);
+  const closeness = Math.max(0, Math.min(100, rawCloseness));
+  return { closeness, results };
+}

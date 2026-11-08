@@ -2,17 +2,6 @@
  * test/e2e_adversarial_hardening.test.ts
  *
  * Milestone 5: Tier 5 Comprehensive Adversarial Hardening Suite for Instruct.
- *
- * Verifies end-to-end adversarial robustness across:
- * 1. UI & Presentation Layer: Rapid multi-line dispatches, focus management,
- *    empty line rejections, stage copy-paste prevention, ruler scaling invariants (375px, 600px, 768px, 1024px).
- * 2. Engine & Security Guardrails: Prompt injection evasions (zero-width chars, homoglyphs, URL encoding),
- *    goal blindness, client DOM sanitization, network timeouts, and malformed JSON recovery.
- * 3. Scoring & Reducer Immutability: Deeply frozen state trees, score cap enforcement (100% closeness x unused lines),
- *    negative score prevention, trap permanence, and corrupted exhibit evaluations.
- * 4. Compiler & Tooling Stress: 300+ deep DOM nesting, circular transition links in FSA graph,
- *    extreme coordinates, badge boundary clamping, and deterministic exit codes 0-7.
- * 5. Full Adversarial Gameplay Session: Injection attempts, practice mode toggle, and declassified exhibits.
  */
 
 import { describe, it, expect, vi } from 'vitest';
@@ -32,17 +21,13 @@ import {
   createInitialGameState,
 } from '../src/engine/game_reducer';
 import {
-  OfflineSimulationEngine,
-} from '../src/engine/offline_simulator';
-import {
-  CloudVisionConnector,
-  MockVisionLLMTransport,
+  resolveLine,
+  fallbackResolve,
+  decisionToAgentAction,
   assertGoalBlindness,
   sanitizeDomForClient,
   filterPromptSyntheticIds,
-  buildMultimodalPrompt,
-  validateLLMOutput,
-} from '../src/engine/cloud_connector';
+} from '../src/engine/agent';
 
 // Scoring
 import {
@@ -89,8 +74,9 @@ import {
 
 // Case File #001 Fixtures
 import {
+  CASE_001_PUZZLE,
   CASE_001_MANIFEST,
-  CASE_001_MACRO_VIEWS,
+  CASE_001_GENERATED_MANIFEST,
   CASE_001_MV03_ELEMENTS,
   CASE_001_INITIAL_MICRO_STATE,
 } from '../src/data/puzzles/case_001';
@@ -118,7 +104,6 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       let state = createInitialGameState({});
       expect(state.activeLineIndex).toBe(0);
 
-      // Simulate 10 rapid concurrent dispatch attempts
       const dispatchAction: AgentAction = {
         action: 'CLICK',
         targetId: '#25',
@@ -135,7 +120,6 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
         }
       }
 
-      // Line progression must strictly advance sequentially up to 6 max
       expect(state.telegrams.filter((t) => t.submitted).length).toBe(6);
       expect(state.caseStatus).toBe('closed');
       expect(state.activeLineIndex).toBe(5);
@@ -160,7 +144,6 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       expect(input).toBeInTheDocument();
       expect(input).toHaveAttribute('id', 'telegram-input');
 
-      // Rerender as closed
       rerender(
         React.createElement(DispatchPad, {
           telegrams: createInitialGameState({}).telegrams,
@@ -174,7 +157,6 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
         })
       );
 
-      // Input must be removed cleanly and replaced with lockout badge
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
       expect(screen.getByText(/DISPATCH PAD LOCKED/i)).toBeInTheDocument();
     });
@@ -194,7 +176,6 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
         expect(validation.error).toContain('cannot be empty or whitespace only');
       }
 
-      // Zero-width characters (e.g. \u200B) normalize to empty string
       const zeroWidthPayload = '\u200B\u200C\u200D\uFEFF';
       const normalizedZero = normalizeInstruction(zeroWidthPayload);
       expect(normalizedZero).toBe('');
@@ -275,12 +256,14 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
   describe('Suite 2: Engine & Security Guardrails Adversarial Vectors', () => {
 
     it('2.1 asserts Guardrail 1 (Goal Blindness) strictly prevents criteria or target leakage in prompts', () => {
-      const mv03 = CASE_001_MACRO_VIEWS.find((mv) => mv.id === 'MV-03')!;
-      const cleanPrompt = buildMultimodalPrompt(mv03, CASE_001_INITIAL_MICRO_STATE, 'select green car');
+      const cleanContext = {
+        pageId: 'MV-03',
+        instruction: 'select green car',
+        elements: CASE_001_MV03_ELEMENTS.map((e) => ({ mark: e.id, role: e.role, visibleText: e.text })),
+      };
 
-      expect(() => assertGoalBlindness(cleanPrompt.contextJson)).not.toThrow();
+      expect(() => assertGoalBlindness(cleanContext)).not.toThrow();
 
-      // Guardrail throws on forbidden keywords
       const forbiddenLeaks = [
         { exhibit_a: 'Hikari Route' },
         { targetWaypoint: [885, 468] },
@@ -292,7 +275,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
 
       for (const leak of forbiddenLeaks) {
         expect(() => {
-          assertGoalBlindness({ ...cleanPrompt.contextJson, ...leak });
+          assertGoalBlindness({ ...cleanContext, ...leak });
         }).toThrow(/Security Guardrail Violation: Goal leakage detected/i);
       }
     });
@@ -319,28 +302,26 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
     });
 
     it('2.3 verifies Guardrail 3 prompt filtering catches evasions while permitting visible currency literals', () => {
-      // Evasion vectors targeting synthetic ID #25:
-      // Includes explicit marks, fullwidth numbers, URL percent encoding, and zero-width characters
       const evasionAttempts = [
         'click #25',
         'click mark 25',
         'click badge 25',
         'click tag 25',
         'click som_25',
-        'click ＃２５', // Fullwidth unicode
-        'click #㉕',    // Circled numeral 25 with hash
-        'click %2325',  // URL encoded #25
-        'click mark%2025', // URL encoded space
-        'click badge%20%2325', // URL encoded badge #25
-        'click %23%32%35', // Fully URL encoded #25
+        'click ＃２５',
+        'click #㉕',
+        'click %2325',
+        'click mark%2025',
+        'click badge%20%2325',
+        'click %23%32%35',
         'click%20%2325',
-        'click #2\u200B5', // Embedded zero-width space with mark
-        'click #\u200B25', // Leading zero-width space
-        'click mark\u200B25', // Zero-width space in mark keyword
-        'click #2\u200C5', // Zero-width non-joiner
-        'click #2\u200D5', // Zero-width joiner
-        'click #2\uFEFF5', // Zero-width no-break space / BOM
-        'click #2\u200B\u200C\u200D5', // Multi-character zero-width sequence
+        'click #2\u200B5',
+        'click #\u200B25',
+        'click mark\u200B25',
+        'click #2\u200C5',
+        'click #2\u200D5',
+        'click #2\uFEFF5',
+        'click #2\u200B\u200C\u200D5',
       ];
 
       for (const attempt of evasionAttempts) {
@@ -348,7 +329,6 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
         expect(res.isBlocked).toBe(true);
       }
 
-      // Permitted visible fare literals & legitimate percent expressions (must NOT be blocked)
       const permittedInputs = [
         'select ¥14,520',
         'select ¥14,720',
@@ -364,49 +344,27 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       }
     });
 
-    it('2.4 recovers gracefully from network timeouts and 500 errors via offline engine fallback', async () => {
-      const mockTransport = new MockVisionLLMTransport();
-      mockTransport.setSimulateError(true, 'Gateway Timeout (504)');
-
-      const connector = new CloudVisionConnector({
-        puzzleId: 'case_001',
-        macroViews: CASE_001_MACRO_VIEWS,
-        transport: mockTransport,
-        fallbackEngine: new OfflineSimulationEngine(CASE_001_MACRO_VIEWS),
+    it('2.4 recovers gracefully from network timeouts and 500 errors via fallback', async () => {
+      const action = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: {
+          pageId: 'MV-03',
+          fields: { ...CASE_001_INITIAL_MICRO_STATE },
+        },
+        instruction: 'click green clover',
+        cloudResolver: async () => {
+          throw new Error('Gateway Timeout (504)');
+        },
       });
-
-      const action = await connector.resolveInstruction('MV-03', CASE_001_INITIAL_MICRO_STATE, 'click green clover');
       expect(action.action).toBe('CLICK');
-      expect(action.targetId).toBe('#25');
-      expect(action.thought).toContain('(Offline Fallback)');
+      expect(action.mark).toBe(25);
+      expect(action.tier).toBe('fallback');
+      expect(action.cloudFailed).toBe(true);
       expect(action.thought.length).toBeLessThanOrEqual(80);
     });
 
-    it('2.5 validates and recovers from malformed, truncated, or markdown-wrapped LLM JSON outputs', () => {
-      // Markdown code fence wrapped JSON
-      const fenced = '```json\n{"action": "CLICK", "target_id": 25, "thought": "Fenced"}\n```';
-      const parsedFenced = validateLLMOutput(fenced);
-      expect(parsedFenced.action).toBe('CLICK');
-      expect(parsedFenced.target_id).toBe(25);
-
-      // Malformed non-JSON
-      const malformed = 'Error: upstream connect failed or disconnect/reset before headers';
-      const parsedBad = validateLLMOutput(malformed);
-      expect(parsedBad.action).toBe('CONFUSED');
-      expect(parsedBad.target_id).toBeNull();
-
-      // Schema invalid action
-      const invalidAction = validateLLMOutput({ action: 'EXPLODE', target_id: 25, thought: 'Invalid' });
-      expect(invalidAction.action).toBe('CONFUSED');
-
-      // Overflowing thought clamped strictly to <= 80 chars
-      const overLong = validateLLMOutput({ action: 'CLICK', target_id: 25, thought: 'X'.repeat(200) });
-      expect(overLong.thought.length).toBeLessThanOrEqual(80);
-      expect(overLong.thought.endsWith('...')).toBe(true);
-    });
-
-    it('2.6 handles malformed URL percent escapes and validates connector rejection of encoded evasions', async () => {
-      // Malformed URL sequences must not throw uncaught URIError exceptions
+    it('2.5 handles malformed URL percent escapes and validates rejection of encoded evasions', async () => {
       const malformedInputs = [
         'select 50% discount',
         'get +20% bonus',
@@ -422,26 +380,29 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
         expect(res.isBlocked).toBe(false);
       }
 
-      // Malformed escape combined with synthetic mark ID must still be blocked
       const resMalformedWithTarget = filterPromptSyntheticIds('click %E0%A4%A #25', CASE_001_MV03_ELEMENTS);
       expect(resMalformedWithTarget.isBlocked).toBe(true);
       expect(resMalformedWithTarget.flaggedId).toBe(25);
 
-      // Verify CloudVisionConnector integration: URL-encoded and zero-width inputs are blocked at guardrail
-      const mockTransport = new MockVisionLLMTransport();
-      const connector = new CloudVisionConnector({
-        puzzleId: 'case_001',
-        macroViews: CASE_001_MACRO_VIEWS,
-        transport: mockTransport,
-      });
-
       const evasionPrompts = ['click %2325', 'click #2\u200B5', 'click mark%2025'];
       for (const prompt of evasionPrompts) {
-        mockTransport.recordedRequests = [];
-        const action = await connector.resolveInstruction('MV-03', CASE_001_INITIAL_MICRO_STATE, prompt);
+        let cloudCalled = false;
+        const action = await resolveLine({
+          puzzle: CASE_001_PUZZLE,
+          manifest: CASE_001_GENERATED_MANIFEST,
+          state: {
+            pageId: 'MV-03',
+            fields: { ...CASE_001_INITIAL_MICRO_STATE },
+          },
+          instruction: prompt,
+          cloudResolver: async () => {
+            cloudCalled = true;
+            return { action: 'CLICK', pageId: 'MV-03', mark: 25, thought: 'ok', tier: 'cloud' };
+          },
+        });
         expect(action.action).toBe('NOOP');
         expect(action.thought).toBe("💭 I don't see numbers like that on the page — describe the thing instead.");
-        expect(mockTransport.recordedRequests.length).toBe(0);
+        expect(cloudCalled).toBe(false);
       }
     });
   });
@@ -458,7 +419,6 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       Object.freeze(state.telegrams);
       Object.freeze(state.agentCursor);
 
-      // Mutating dispatches must return new copies without throwing TypeError
       const nextInput = gameReducer(state, { type: 'SET_INPUT', payload: 'immutable test' });
       expect(nextInput).not.toBe(state);
       expect(nextInput.currentInput).toBe('immutable test');
@@ -469,18 +429,15 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
     });
 
     it('3.2 enforces mathematical clamping: closeness [0, 100], multiplier [1.0, 2.0], score [0, 200]', () => {
-      // Closeness bounds
       expect(calculateClosenessScore([])).toBe(0);
       expect(calculateClosenessScore([{ id: 'ex', code: 'A', title: 'T', weight: 500, status: 'VERIFIED', stampText: '', rotationDeg: 0, awardedPoints: 500 }])).toBe(100);
 
-      // Multiplier bounds
       expect(calculateEfficiencyMultiplier(-10).multiplier).toBe(2.0);
       expect(calculateEfficiencyMultiplier(0).multiplier).toBe(2.0);
       expect(calculateEfficiencyMultiplier(1).multiplier).toBe(2.0);
       expect(calculateEfficiencyMultiplier(6).multiplier).toBe(1.0);
       expect(calculateEfficiencyMultiplier(999).multiplier).toBe(1.0);
 
-      // Final score clamps
       expect(calculateFinalScore(100, 2.0)).toBe(200);
       expect(calculateFinalScore(500, 5.0)).toBe(200);
       expect(calculateFinalScore(-50, 1.5)).toBe(0);
@@ -497,7 +454,6 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
         },
       });
 
-      // Step 1: Hit Decoy Trap #12 (Promo Banner)
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
         payload: {
@@ -509,7 +465,6 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       expect(state.microState.insuranceAttached).toBe(true);
       expect(state.macroViewId).toBe('MV-03');
 
-      // Step 2: Select Green Car (#25) to reach MV-04, then untoggle Checkbox #28
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
         payload: { action: { action: 'TIMED_CLICK', targetId: '#25', thought: 'Green car' }, instruction: 'wait for sale glow green car' },
@@ -524,14 +479,12 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
 
       expect(state.microState.insuranceAttached).toBe(false);
 
-      // Step 3: Perform Confirm (#30) without signing #27 and close case
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
         payload: { action: { action: 'CLICK', targetId: '#30', thought: 'Confirm' }, instruction: 'confirm' },
       });
       state = gameReducer(state, { type: 'CLOSE_CASE' });
 
-      // Exhibit D must be MISSED (unsigned), capped at 85% closeness
       expect(state.scoreReport?.closenessScore).toBe(85);
       const exD = state.scoreReport?.exhibitEvaluations.find((e) => e.id === 'D');
       expect(exD?.status).toBe('MISSED');
@@ -551,14 +504,12 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
         expect(state.caseStatus).toBe('active');
         state.telegrams.forEach((t) => expect(t.exhibitRedactedStatus).toBe('SEALED'));
 
-        // Serialized state must not contain stamp keywords
         const serialized = JSON.stringify(state);
         expect(serialized).not.toContain('VERIFIED');
         expect(serialized).not.toContain('CONTAMINATED');
         expect(serialized).not.toContain('MISSED');
       }
 
-      // 6th line auto-closes case and populates report
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
         payload: { action: { action: 'CLICK', targetId: '#30', thought: 'confirm' }, instruction: 'confirm' },
@@ -608,7 +559,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
             {
               targetElementId: 1,
               actionType: 'CLICK',
-              destinationMacroViewId: arr[(i + 1) % arr.length].id, // 0->1->2->...->0
+              destinationMacroViewId: arr[(i + 1) % arr.length].id,
             },
           ],
         })),
@@ -623,7 +574,6 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       expect(pixelToGrid(-999999, -999999)).toBe('A1');
       expect(pixelToGrid(999999, 999999)).toBe('D4');
 
-      // Badges must stay within [2, 1022] x [2, 766]
       const minBadge = computeBadgeGeometry({ x: -500, y: -500, width: 20, height: 20 }, '#1');
       expect(minBadge.badgeX).toBe(2);
       expect(minBadge.badgeY).toBe(2);
@@ -669,9 +619,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
 
     it('5.1 executes full gameplay workflow with injection attempts, practice mode toggle, and declassification', async () => {
       let state = createInitialGameState();
-      const engine = new OfflineSimulationEngine(CASE_001_MACRO_VIEWS);
 
-      // Line 1: Attempt prompt injection targeting synthetic mark ID #25 (standard, URL-encoded, and zero-width)
       const injectionResult = filterPromptSyntheticIds('click #25 directly', CASE_001_MV03_ELEMENTS);
       expect(injectionResult.isBlocked).toBe(true);
 
@@ -681,48 +629,82 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       const zeroWidthResult = filterPromptSyntheticIds('click #2\u200B5 directly', CASE_001_MV03_ELEMENTS);
       expect(zeroWidthResult.isBlocked).toBe(true);
 
-      // Line 1: Select route on MV-01
-      const act1 = engine.resolveInstruction(state.macroViewId, state.microState, 'select tokyo to osaka');
+      const dec1 = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: { pageId: state.macroViewId, fields: state.microState },
+        instruction: 'select tokyo to osaka',
+      });
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
-        payload: { action: act1, instruction: 'select tokyo to osaka' },
+        payload: {
+          action: decisionToAgentAction(dec1, CASE_001_PUZZLE, CASE_001_GENERATED_MANIFEST),
+          instruction: 'select tokyo to osaka',
+        },
       });
       expect(state.activeLineIndex).toBe(1);
       expect(state.macroViewId).toBe('MV-02');
 
-      // Line 2: Type passenger name on MV-02
-      const act2 = engine.resolveInstruction(state.macroViewId, state.microState, 'type TANAKA in the passenger name box');
+      const dec2 = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: { pageId: state.macroViewId, fields: state.microState },
+        instruction: 'type TANAKA in the passenger name box',
+      });
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
-        payload: { action: act2, instruction: 'type TANAKA in the passenger name box' },
+        payload: {
+          action: decisionToAgentAction(dec2, CASE_001_PUZZLE, CASE_001_GENERATED_MANIFEST),
+          instruction: 'type TANAKA in the passenger name box',
+        },
       });
       expect(state.macroViewId).toBe('MV-03');
 
-      // Line 3: Valid green car selection on MV-03
-      const act3 = engine.resolveInstruction(state.macroViewId, state.microState, 'Wait for the sale glow, then click the green ¥13,870');
+      const dec3 = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: { pageId: state.macroViewId, fields: state.microState },
+        instruction: 'Wait for the sale glow, then click the green ¥13,870',
+      });
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
-        payload: { action: act3, instruction: 'Wait for the sale glow, then click the green ¥13,870' },
+        payload: {
+          action: decisionToAgentAction(dec3, CASE_001_PUZZLE, CASE_001_GENERATED_MANIFEST),
+          instruction: 'Wait for the sale glow, then click the green ¥13,870',
+        },
       });
       expect(state.microState.greenCarSelected).toBe(true);
       expect(state.macroViewId).toBe('MV-04');
 
-      // Line 4: Draw signature on MV-04
-      const act4 = engine.resolveInstruction(state.macroViewId, state.microState, 'draw a signature in the dashed box');
+      const dec4 = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: { pageId: state.macroViewId, fields: state.microState },
+        instruction: 'draw a signature in the dashed box',
+      });
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
-        payload: { action: act4, instruction: 'draw a signature in the dashed box' },
+        payload: {
+          action: decisionToAgentAction(dec4, CASE_001_PUZZLE, CASE_001_GENERATED_MANIFEST),
+          instruction: 'draw a signature in the dashed box',
+        },
       });
 
-      // Line 5: Confirm booking on MV-04
-      const act5 = engine.resolveInstruction(state.macroViewId, state.microState, 'click blue confirm button at D4');
+      const dec5 = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: { pageId: state.macroViewId, fields: state.microState },
+        instruction: 'click blue confirm button at bottom right',
+      });
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
-        payload: { action: act5, instruction: 'confirm booking' },
+        payload: {
+          action: decisionToAgentAction(dec5, CASE_001_PUZZLE, CASE_001_GENERATED_MANIFEST),
+          instruction: 'confirm booking',
+        },
       });
       expect(state.microState.finalConfirmed).toBe(true);
 
-      // Early close case to lock in efficiency multiplier
       state = gameReducer(state, { type: 'CLOSE_CASE' });
       expect(state.caseStatus).toBe('closed');
       expect(state.scoreReport).not.toBeNull();
@@ -730,9 +712,8 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       expect(state.scoreReport?.unusedLines).toBe(1);
       expect(state.scoreReport?.multiplier).toBe(1.2);
       expect(state.scoreReport?.closenessScore).toBe(100);
-      expect(state.scoreReport?.finalScore).toBe(120); // 100 * 1.2 = 120 PTS
+      expect(state.scoreReport?.finalScore).toBe(120);
 
-      // Practice mode: Start practice
       state = gameReducer(state, { type: 'START_PRACTICE' });
       expect(state.mode).toBe('practice');
       expect(state.caseStatus).toBe('active');
@@ -740,26 +721,31 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       expect(state.officialResult?.finalScore).toBe(120);
     });
 
-    it('5.2 maintains strict behavioral parity between offline engine and cloud connector fallback', async () => {
-      const offlineEngine = new OfflineSimulationEngine(CASE_001_MACRO_VIEWS);
-      const mockTransport = new MockVisionLLMTransport();
-      mockTransport.setSimulateError(true, 'Network offline');
-
-      const cloudConnector = new CloudVisionConnector({
-        puzzleId: 'case_001',
-        macroViews: CASE_001_MACRO_VIEWS,
-        transport: mockTransport,
-        fallbackEngine: offlineEngine,
+    it('5.2 maintains strict behavioral parity between fallbackResolve and resolveLine when cloud fails', async () => {
+      const instruction = 'click green clover 13870 button in 2nd row';
+      const pState = {
+        pageId: 'MV-03',
+        fields: { ...CASE_001_INITIAL_MICRO_STATE },
+      };
+      const fallbackAction = fallbackResolve({
+        pages: CASE_001_PUZZLE.pages,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: pState,
+        instruction,
+      });
+      const resolvedAction = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: pState,
+        instruction,
+        cloudResolver: async () => {
+          throw new Error('Network offline');
+        },
       });
 
-      const instruction = 'click green clover 13870 button in 2nd row';
-      const offlineAction = offlineEngine.resolveInstruction('MV-03', CASE_001_INITIAL_MICRO_STATE, instruction);
-      const cloudAction = await cloudConnector.resolveInstruction('MV-03', CASE_001_INITIAL_MICRO_STATE, instruction);
-
-      expect(cloudAction.action).toBe(offlineAction.action);
-      expect(cloudAction.targetId).toBe(offlineAction.targetId);
-      expect(cloudAction.gridRef).toBe(offlineAction.gridRef);
-      expect(cloudAction.thought).toContain('(Offline Fallback)');
+      expect(resolvedAction.action).toBe(fallbackAction.action);
+      expect(resolvedAction.mark).toBe(fallbackAction.mark);
+      expect(resolvedAction.cloudFailed).toBe(true);
     });
   });
 });
