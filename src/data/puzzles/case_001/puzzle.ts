@@ -496,7 +496,13 @@ export const CASE_001_PUZZLE: PuzzleData = {
       contaminatedNote: '¥2,400 travel insurance was attached',
     },
   ],
-  replay: [],
+  replay: [
+    { pageId: 'MV-01', key: 'route_tokaido', action: 'CLICK' },
+    { pageId: 'MV-02', key: 'passenger_name', action: 'TYPE', text: 'TANAKA' },
+    { pageId: 'MV-03', key: 'seat_nozomi_green', action: 'TIMED_CLICK' },
+    { pageId: 'MV-04', key: 'signature_pad', action: 'DRAW', stroke: 'SHAPE:signature' },
+    { pageId: 'MV-04', key: 'confirm_booking', action: 'CLICK' },
+  ],
   answerKey: [
     'Click the top-left green box',
     'Type TANAKA in the passenger name box',

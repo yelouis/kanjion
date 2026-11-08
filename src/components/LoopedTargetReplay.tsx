@@ -1,7 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Sandbox } from '../data/puzzles/case_001/Sandbox';
 import { CASE_001_PUZZLE } from '../data/puzzles/case_001/puzzle';
-import type { PuzzleState } from '../types/puzzle_data';
+import { applyDecision, elementsOnPage } from '../engine/puzzle_engine';
+import { FLASH_PERIOD_MS } from '../engine/flash_clock';
+import type { PuzzleData, PuzzleState } from '../types/puzzle_data';
 
 export interface LoopedTargetReplayProps {
   /** Optional className override */
@@ -12,52 +14,262 @@ export interface LoopedTargetReplayProps {
   onToggleExpand?: () => void;
   /** Whether the replay automatically loops */
   autoplay?: boolean;
+  /** Optional puzzle override (defaults to CASE_001_PUZZLE) */
+  puzzle?: PuzzleData;
 }
 
-interface ReplayTargets {
-  routeBtn: { x: number; y: number };
-  nameInput: { x: number; y: number };
-  greenBtn: { x: number; y: number };
-  sigStart: { x: number; y: number };
-  sigEnd: { x: number; y: number };
-  confirmBtn: { x: number; y: number };
+interface Point {
+  x: number;
+  y: number;
 }
 
-const DEFAULT_TARGETS: ReplayTargets = {
-  routeBtn: { x: 265, y: 290 },
-  nameInput: { x: 480, y: 395 },
-  greenBtn: { x: 875, y: 390 },
-  sigStart: { x: 210, y: 405 },
-  sigEnd: { x: 810, y: 405 },
-  confirmBtn: { x: 890, y: 695 },
+const DEFAULT_START_POS: Point = { x: 512, y: 140 };
+
+const DEFAULT_KEY_CENTERS: Record<string, Point> = {
+  route_tokaido: { x: 265, y: 290 },
+  passenger_name: { x: 480, y: 395 },
+  seat_nozomi_green: { x: 875, y: 390 },
+  signature_pad: { x: 510, y: 405 },
+  confirm_booking: { x: 890, y: 695 },
 };
 
-const PASSENGER_NAME = 'TANAKA';
+const GLIDE_MS = 1150;
+const CLICK_HOLD_MS = 600;
+const TYPE_CHAR_MS = 220;
+const TYPE_SETTLE_MS = 650;
+const DRAW_STEPS = 6;
+const DRAW_STEP_MS = 180;
+const DRAW_SETTLE_MS = 500;
+const NAV_DWELL_MS = 800;
+const FINAL_DWELL_MS = 2000;
+const TICK_MS = 50;
+
+interface ReplaySegment {
+  startMs: number;
+  endMs: number;
+  kind: 'glide' | 'wait_timed' | 'click' | 'type' | 'type_settle' | 'draw' | 'draw_settle' | 'nav_dwell' | 'final_dwell';
+  stepIndex: number;
+  key: string;
+  fromKey: string | null;
+  stateBefore: PuzzleState;
+  stateAfter: PuzzleState;
+  text?: string;
+  stroke?: string;
+  timedColumn?: 0 | 1 | 2;
+}
+
+export function buildReplayTimeline(puzzle: PuzzleData): {
+  segments: ReplaySegment[];
+  totalDurationMs: number;
+} {
+  const segments: ReplaySegment[] = [];
+  let currentMs = 0;
+  let state: PuzzleState = {
+    pageId: puzzle.initialPageId,
+    previousPageId: null,
+    fields: { ...puzzle.initialFields },
+  };
+  let prevKey: string | null = null;
+
+  for (let i = 0; i < puzzle.replay.length; i++) {
+    const step = puzzle.replay[i];
+    const pageEls = elementsOnPage(puzzle, state.pageId);
+    const el = pageEls.find((e) => e.key === step.key);
+    const mark = el?.mark ?? -1;
+    const { next: nextState } = applyDecision(puzzle, state, {
+      pageId: step.pageId,
+      mark,
+      action: step.action,
+      text: step.text,
+      stroke: step.stroke,
+    });
+
+    // 1. Glide (1,150 ms)
+    segments.push({
+      startMs: currentMs,
+      endMs: currentMs + GLIDE_MS,
+      kind: 'glide',
+      stepIndex: i,
+      key: step.key,
+      fromKey: prevKey,
+      stateBefore: state,
+      stateAfter: state,
+    });
+    currentMs += GLIDE_MS;
+
+    // 2. Action execution
+    if (step.action === 'TIMED_CLICK') {
+      const targetCol = (el?.visual?.timedColumn ?? 2) as 0 | 1 | 2;
+      const curCol = (Math.floor(currentMs / FLASH_PERIOD_MS) % 3) as 0 | 1 | 2;
+      if (curCol !== targetCol) {
+        const remInCur = FLASH_PERIOD_MS - (currentMs % FLASH_PERIOD_MS);
+        const stepsAhead = (targetCol - curCol + 3) % 3;
+        const waitMs = remInCur + (stepsAhead - 1) * FLASH_PERIOD_MS;
+        if (waitMs > 0) {
+          segments.push({
+            startMs: currentMs,
+            endMs: currentMs + waitMs,
+            kind: 'wait_timed',
+            stepIndex: i,
+            key: step.key,
+            fromKey: step.key,
+            stateBefore: state,
+            stateAfter: state,
+            timedColumn: targetCol,
+          });
+          currentMs += waitMs;
+        }
+      }
+      segments.push({
+        startMs: currentMs,
+        endMs: currentMs + CLICK_HOLD_MS,
+        kind: 'click',
+        stepIndex: i,
+        key: step.key,
+        fromKey: step.key,
+        stateBefore: state,
+        stateAfter: nextState,
+        timedColumn: targetCol,
+      });
+      currentMs += CLICK_HOLD_MS;
+    } else if (step.action === 'CLICK') {
+      segments.push({
+        startMs: currentMs,
+        endMs: currentMs + CLICK_HOLD_MS,
+        kind: 'click',
+        stepIndex: i,
+        key: step.key,
+        fromKey: step.key,
+        stateBefore: state,
+        stateAfter: nextState,
+      });
+      currentMs += CLICK_HOLD_MS;
+    } else if (step.action === 'TYPE') {
+      const text = step.text ?? '';
+      const typeDuration = text.length * TYPE_CHAR_MS;
+      const textField = el?.effects.TYPE?.find((ef) => ef.op === 'setFromText');
+      const fieldName = textField && textField.op === 'setFromText' ? textField.field : 'passengerName';
+      const stateWithFullText: PuzzleState = {
+        ...state,
+        fields: { ...state.fields, [fieldName]: text },
+      };
+      if (typeDuration > 0) {
+        segments.push({
+          startMs: currentMs,
+          endMs: currentMs + typeDuration,
+          kind: 'type',
+          stepIndex: i,
+          key: step.key,
+          fromKey: step.key,
+          stateBefore: state,
+          stateAfter: stateWithFullText,
+          text,
+        });
+        currentMs += typeDuration;
+      }
+      segments.push({
+        startMs: currentMs,
+        endMs: currentMs + TYPE_SETTLE_MS,
+        kind: 'type_settle',
+        stepIndex: i,
+        key: step.key,
+        fromKey: step.key,
+        stateBefore: stateWithFullText,
+        stateAfter: nextState,
+        text,
+      });
+      currentMs += TYPE_SETTLE_MS;
+    } else if (step.action === 'DRAW') {
+      const drawDuration = DRAW_STEPS * DRAW_STEP_MS;
+      segments.push({
+        startMs: currentMs,
+        endMs: currentMs + drawDuration,
+        kind: 'draw',
+        stepIndex: i,
+        key: step.key,
+        fromKey: step.key,
+        stateBefore: state,
+        stateAfter: nextState,
+        stroke: step.stroke,
+      });
+      currentMs += drawDuration;
+      segments.push({
+        startMs: currentMs,
+        endMs: currentMs + DRAW_SETTLE_MS,
+        kind: 'draw_settle',
+        stepIndex: i,
+        key: step.key,
+        fromKey: step.key,
+        stateBefore: nextState,
+        stateAfter: nextState,
+        stroke: step.stroke,
+      });
+      currentMs += DRAW_SETTLE_MS;
+    }
+
+    // 3. Dwell after each navigation (800 ms)
+    if (nextState.pageId !== state.pageId) {
+      segments.push({
+        startMs: currentMs,
+        endMs: currentMs + NAV_DWELL_MS,
+        kind: 'nav_dwell',
+        stepIndex: i,
+        key: step.key,
+        fromKey: step.key,
+        stateBefore: nextState,
+        stateAfter: nextState,
+      });
+      currentMs += NAV_DWELL_MS;
+    }
+
+    state = nextState;
+    prevKey = step.key;
+  }
+
+  // 4. Dwell on the final page (2,000 ms)
+  if (puzzle.replay.length > 0) {
+    segments.push({
+      startMs: currentMs,
+      endMs: currentMs + FINAL_DWELL_MS,
+      kind: 'final_dwell',
+      stepIndex: puzzle.replay.length - 1,
+      key: prevKey ?? '',
+      fromKey: prevKey,
+      stateBefore: state,
+      stateAfter: state,
+    });
+    currentMs += FINAL_DWELL_MS;
+  }
+
+  return { segments, totalDurationMs: Math.max(1, currentMs) };
+}
 
 /**
- * Multi-page, multi-modal continuous looping target replay.
- * Traverses 5 distinct pages of the 12-page JR-East Ekinet portal:
- * - Page 01 / 12 (MV-01): Clicks the Tokaido-Sanyo Shinkansen route card (#btn-route-tokaido)
- * - Page 02 / 12 (MV-02): Types "TANAKA" into the Passenger Name field (#input-passenger-name)
- * - Page 03 / 12 (MV-03): Times a click on the Green Car button (#target-green-btn) when the moving flash window lands on Column 3
- * - Page 04 / 12 (MV-04): Draws a handwritten signature inside the Digital Signature Pad (#signature-canvas) and clicks the blue Confirm button (#target-confirm-btn)
- * - Page 05 / 12 (MV-05): Displays the completed Shinkansen e-Ticket Issuance screen
+ * Generic data-driven looping target replay player.
+ * Plays `puzzle.replay` through `applyDecision` using live `[data-el]` centers.
  */
 export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({
   className = '',
   isExpanded = false,
   onToggleExpand,
   autoplay = true,
+  puzzle = CASE_001_PUZZLE,
 }) => {
-  const [phase, setPhase] = useState<number>(0); // 0 to 100
+  const [elapsedMs, setElapsedMs] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [scale, setScale] = useState<number>(1);
-  const [targets, setTargets] = useState<ReplayTargets>(DEFAULT_TARGETS);
+  const [keyCenters, setKeyCenters] = useState<Record<string, Point>>(DEFAULT_KEY_CENTERS);
+  const [sigBounds, setSigBounds] = useState<{ start: Point; end: Point }>({
+    start: { x: 210, y: 405 },
+    end: { x: 810, y: 405 },
+  });
 
   const outerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
 
-  // Measure outer container width for responsive scaling (updates immediately on expand/shrink)
+  const { segments, totalDurationMs } = useMemo(() => buildReplayTimeline(puzzle), [puzzle]);
+
+  // Measure outer container width for responsive scaling
   useEffect(() => {
     const updateScale = () => {
       if (outerRef.current) {
@@ -82,209 +294,145 @@ export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({
     };
   }, [isExpanded]);
 
-  // Continuous 100-tick loop (115ms per tick = 11.5s unhurried 5-page multi-modal cycle)
+  // Advance replay-local clock when autoplay is enabled and not paused
   useEffect(() => {
     if (isPaused || !autoplay) return;
     const interval = setInterval(() => {
-      setPhase((prev) => (prev + 1) % 100);
-    }, 115);
+      setElapsedMs((prev) => (prev + TICK_MS) % totalDurationMs);
+    }, TICK_MS);
     return () => clearInterval(interval);
-  }, [isPaused, autoplay]);
+  }, [isPaused, autoplay, totalDurationMs]);
 
-  const startPos = { x: 512, y: 140 };
+  const effectiveMs = autoplay ? elapsedMs % totalDurationMs : 0;
+  const activeSeg =
+    segments.find((s) => effectiveMs >= s.startMs && effectiveMs < s.endMs) ??
+    segments[segments.length - 1];
+
   const lerp = (a: number, b: number, t: number) => a + (b - a) * Math.max(0, Math.min(1, t));
 
-  // Derive multi-page state, cursor coordinates, click ripple, typed characters, moving flash column, and signature stroke
-  let cursorX = startPos.x;
-  let cursorY = startPos.y;
-  let isClicking = false;
-  let routeSelected = false;
-  let typedChars = 0;
-  let passengerSubmitted = false;
-  let activeFlashColumn: 0 | 1 | 2 = 0;
-  let greenSelected = false;
-  let sigProgress = 0;
-  let finalConfirmed = false;
-  let currentMacroViewId = 'MV-01';
+  const getKeyPoint = (key: string | null, asDrawEnd = false): Point => {
+    if (!key) return DEFAULT_START_POS;
+    if (key === 'signature_pad') {
+      return asDrawEnd ? sigBounds.end : sigBounds.start;
+    }
+    return keyCenters[key] ?? DEFAULT_KEY_CENTERS[key] ?? DEFAULT_START_POS;
+  };
 
-  if (phase < 10) {
-    // PAGE 01 (MV-01): Glide to Tokaido-Sanyo Shinkansen Route Card (#btn-route-tokaido)
-    currentMacroViewId = 'MV-01';
-    const t = phase / 10;
-    cursorX = lerp(startPos.x, targets.routeBtn.x, t);
-    cursorY = lerp(startPos.y, targets.routeBtn.y, t);
-  } else if (phase < 18) {
-    // PAGE 01 (MV-01): Click Route Card (#btn-route-tokaido)
-    currentMacroViewId = 'MV-01';
-    cursorX = targets.routeBtn.x;
-    cursorY = targets.routeBtn.y;
-    isClicking = true;
-    routeSelected = phase >= 13;
-  } else if (phase < 25) {
-    // PAGE 02 (MV-02): Glide to Passenger Name Input (#input-passenger-name)
-    currentMacroViewId = 'MV-02';
-    routeSelected = true;
-    const t = (phase - 18) / 7;
-    cursorX = lerp(targets.routeBtn.x, targets.nameInput.x, t);
-    cursorY = lerp(targets.routeBtn.y, targets.nameInput.y, t);
-  } else if (phase < 40) {
-    // PAGE 02 (MV-02): Click & Type "TANAKA" character by character
-    currentMacroViewId = 'MV-02';
-    routeSelected = true;
-    cursorX = targets.nameInput.x;
-    cursorY = targets.nameInput.y;
-    isClicking = phase < 29;
-    typedChars = Math.min(
-      PASSENGER_NAME.length,
-      Math.floor(((phase - 25) / 12) * PASSENGER_NAME.length) + 1
-    );
-  } else if (phase < 50) {
-    // PAGE 03 (MV-03): Glide to Green Car Button (#target-green-btn) while flash-sale window cycles
-    currentMacroViewId = 'MV-03';
-    routeSelected = true;
-    typedChars = PASSENGER_NAME.length;
-    passengerSubmitted = true;
-    const t = (phase - 40) / 10;
-    cursorX = lerp(targets.nameInput.x, targets.greenBtn.x, t);
-    cursorY = lerp(targets.nameInput.y, targets.greenBtn.y, t);
-    activeFlashColumn = phase < 44 ? 0 : phase < 48 ? 1 : 2;
-  } else if (phase < 58) {
-    // PAGE 03 (MV-03): Timed Click on #target-green-btn right when activeFlashColumn === 2
-    currentMacroViewId = 'MV-03';
-    routeSelected = true;
-    typedChars = PASSENGER_NAME.length;
-    passengerSubmitted = true;
-    cursorX = targets.greenBtn.x;
-    cursorY = targets.greenBtn.y;
-    isClicking = true;
-    activeFlashColumn = 2;
-  } else if (phase < 64) {
-    // PAGE 04 (MV-04): Glide to Digital Signature Pad Start (#signature-canvas)
-    currentMacroViewId = 'MV-04';
-    routeSelected = true;
-    typedChars = PASSENGER_NAME.length;
-    passengerSubmitted = true;
-    greenSelected = true;
-    const t = (phase - 58) / 6;
-    cursorX = lerp(targets.greenBtn.x, targets.sigStart.x, t);
-    cursorY = lerp(targets.greenBtn.y, targets.sigStart.y, t);
-  } else if (phase < 78) {
-    // PAGE 04 (MV-04): Draw Signature across #signature-canvas
-    currentMacroViewId = 'MV-04';
-    routeSelected = true;
-    typedChars = PASSENGER_NAME.length;
-    passengerSubmitted = true;
-    greenSelected = true;
-    const t = (phase - 64) / 14;
-    cursorX = lerp(targets.sigStart.x, targets.sigEnd.x, t);
-    cursorY = targets.sigStart.y + Math.sin(t * Math.PI * 4) * 10;
-    isClicking = true;
-    sigProgress = Math.min(1, t);
-  } else if (phase < 84) {
-    // PAGE 04 (MV-04): Glide to Final Blue Confirm Button (#target-confirm-btn)
-    currentMacroViewId = 'MV-04';
-    routeSelected = true;
-    typedChars = PASSENGER_NAME.length;
-    passengerSubmitted = true;
-    greenSelected = true;
-    sigProgress = 1;
-    const t = (phase - 78) / 6;
-    cursorX = lerp(targets.sigEnd.x, targets.confirmBtn.x, t);
-    cursorY = lerp(targets.sigEnd.y, targets.confirmBtn.y, t);
-  } else if (phase < 91) {
-    // PAGE 04 (MV-04): Click Final Blue Confirm Button
-    currentMacroViewId = 'MV-04';
-    routeSelected = true;
-    typedChars = PASSENGER_NAME.length;
-    passengerSubmitted = true;
-    greenSelected = true;
-    sigProgress = 1;
-    cursorX = targets.confirmBtn.x;
-    cursorY = targets.confirmBtn.y;
-    isClicking = true;
-  } else {
-    // PAGE 05 (MV-05): Official Shinkansen e-Ticket Issued!
-    currentMacroViewId = 'MV-05';
-    routeSelected = true;
-    typedChars = PASSENGER_NAME.length;
-    passengerSubmitted = true;
-    greenSelected = true;
-    sigProgress = 1;
-    finalConfirmed = true;
-    cursorX = targets.confirmBtn.x;
-    cursorY = targets.confirmBtn.y;
+  let replayState: PuzzleState = {
+    pageId: puzzle.initialPageId,
+    previousPageId: null,
+    fields: { ...puzzle.initialFields },
+  };
+  let cursorX = DEFAULT_START_POS.x;
+  let cursorY = DEFAULT_START_POS.y;
+  let isClicking = false;
+  let sigProgress = 0;
+  let activeFlashColumn: 0 | 1 | 2 = (Math.floor(effectiveMs / FLASH_PERIOD_MS) % 3) as 0 | 1 | 2;
+
+  if (activeSeg) {
+    const segDuration = Math.max(1, activeSeg.endMs - activeSeg.startMs);
+    const localT = Math.max(0, Math.min(1, (effectiveMs - activeSeg.startMs) / segDuration));
+    const fromPt = getKeyPoint(activeSeg.fromKey, activeSeg.fromKey === 'signature_pad');
+    const toPt = getKeyPoint(activeSeg.key, false);
+
+    if (activeSeg.kind === 'glide') {
+      replayState = activeSeg.stateBefore;
+      cursorX = lerp(fromPt.x, toPt.x, localT);
+      cursorY = lerp(fromPt.y, toPt.y, localT);
+    } else if (activeSeg.kind === 'wait_timed') {
+      replayState = activeSeg.stateBefore;
+      cursorX = toPt.x;
+      cursorY = toPt.y;
+    } else if (activeSeg.kind === 'click') {
+      replayState = localT >= 0.5 ? activeSeg.stateAfter : activeSeg.stateBefore;
+      cursorX = toPt.x;
+      cursorY = toPt.y;
+      isClicking = true;
+      if (activeSeg.timedColumn !== undefined) {
+        activeFlashColumn = activeSeg.timedColumn;
+      }
+    } else if (activeSeg.kind === 'type') {
+      const fullText = activeSeg.text ?? '';
+      const charsTyped = Math.min(fullText.length, Math.floor((effectiveMs - activeSeg.startMs) / TYPE_CHAR_MS) + 1);
+      const pageEls = elementsOnPage(puzzle, activeSeg.stateBefore.pageId);
+      const el = pageEls.find((e) => e.key === activeSeg.key);
+      const textEffect = el?.effects.TYPE?.find((ef) => ef.op === 'setFromText');
+      const fieldName = textEffect && textEffect.op === 'setFromText' ? textEffect.field : 'passengerName';
+      replayState = {
+        ...activeSeg.stateBefore,
+        fields: {
+          ...activeSeg.stateBefore.fields,
+          [fieldName]: fullText.slice(0, charsTyped),
+        },
+      };
+      cursorX = toPt.x;
+      cursorY = toPt.y;
+      isClicking = localT < 0.25;
+    } else if (activeSeg.kind === 'type_settle') {
+      replayState = activeSeg.stateBefore;
+      cursorX = toPt.x;
+      cursorY = toPt.y;
+    } else if (activeSeg.kind === 'draw') {
+      replayState = activeSeg.stateBefore;
+      const stepIdx = Math.min(DRAW_STEPS, Math.floor((effectiveMs - activeSeg.startMs) / DRAW_STEP_MS) + 1);
+      sigProgress = stepIdx / DRAW_STEPS;
+      cursorX = lerp(sigBounds.start.x, sigBounds.end.x, localT);
+      cursorY = sigBounds.start.y + Math.sin(localT * Math.PI * 4) * 10;
+      isClicking = true;
+    } else if (activeSeg.kind === 'draw_settle') {
+      replayState = activeSeg.stateAfter;
+      sigProgress = 1;
+      cursorX = sigBounds.end.x;
+      cursorY = sigBounds.end.y;
+    } else {
+      // nav_dwell or final_dwell
+      replayState = activeSeg.stateAfter;
+      const holdPt = getKeyPoint(activeSeg.key, activeSeg.key === 'signature_pad');
+      cursorX = holdPt.x;
+      cursorY = holdPt.y;
+    }
   }
 
-  // Dynamically refine DOM element coordinates whenever the active replay page changes
+  if (Boolean(replayState.fields.signatureStroke)) {
+    sigProgress = 1;
+  }
+
+  // Dynamically measure live [data-el] centers inside the replay's own stage whenever page or scale changes
   useEffect(() => {
     if (!stageRef.current) return;
     const stageRect = stageRef.current.getBoundingClientRect();
     if (stageRect.width <= 0 || stageRect.height <= 0) return;
 
-    const centerOf = (selector: string) => {
-      const el = stageRef.current?.querySelector(selector) as HTMLElement | null;
-      if (!el) return null;
+    const nodes = stageRef.current.querySelectorAll<HTMLElement>('[data-el]');
+    const measured: Record<string, Point> = {};
+    nodes.forEach((el) => {
+      const key = el.getAttribute('data-el');
+      if (!key) return;
       const r = el.getBoundingClientRect();
-      if (r.width <= 0) return null;
-      return {
+      if (r.width <= 0 || r.height <= 0) return;
+      measured[key] = {
         x: ((r.left + r.width / 2 - stageRect.left) / stageRect.width) * 1024,
         y: ((r.top + r.height / 2 - stageRect.top) / stageRect.height) * 768,
       };
-    };
-
-    const routeCenter = centerOf('#btn-route-tokaido');
-    const nameCenter = centerOf('#input-passenger-name');
-    const greenCenter = centerOf('#target-green-btn');
-    const confirmCenter = centerOf('#target-confirm-btn');
-
-    let sigStart: { x: number; y: number } | null = null;
-    let sigEnd: { x: number; y: number } | null = null;
-    const sigEl = stageRef.current.querySelector('#signature-canvas') as HTMLElement | null;
-    if (sigEl) {
-      const sr = sigEl.getBoundingClientRect();
-      if (sr.width > 0) {
-        const cy = ((sr.top + sr.height / 2 - stageRect.top) / stageRect.height) * 768;
-        sigStart = {
-          x: ((sr.left + sr.width * 0.16 - stageRect.left) / stageRect.width) * 1024,
-          y: cy,
-        };
-        sigEnd = {
-          x: ((sr.left + sr.width * 0.84 - stageRect.left) / stageRect.width) * 1024,
-          y: cy,
-        };
+      if (key === 'signature_pad') {
+        const cy = ((r.top + r.height / 2 - stageRect.top) / stageRect.height) * 768;
+        setSigBounds({
+          start: {
+            x: ((r.left + r.width * 0.16 - stageRect.left) / stageRect.width) * 1024,
+            y: cy,
+          },
+          end: {
+            x: ((r.left + r.width * 0.84 - stageRect.left) / stageRect.width) * 1024,
+            y: cy,
+          },
+        });
       }
+    });
+
+    if (Object.keys(measured).length > 0) {
+      setKeyCenters((prev) => ({ ...prev, ...measured }));
     }
-
-    setTargets((prev) => ({
-      routeBtn: routeCenter ?? prev.routeBtn,
-      nameInput: nameCenter ?? prev.nameInput,
-      greenBtn: greenCenter ?? prev.greenBtn,
-      sigStart: sigStart ?? prev.sigStart,
-      sigEnd: sigEnd ?? prev.sigEnd,
-      confirmBtn: confirmCenter ?? prev.confirmBtn,
-    }));
-  }, [currentMacroViewId, scale]);
-
-  const replayState: PuzzleState = {
-    pageId: currentMacroViewId,
-    previousPageId: null,
-    fields: {
-      ...CASE_001_PUZZLE.initialFields,
-      selectedRoute: routeSelected ? 'tokyo_osaka' : 'none',
-      passengerName:
-        passengerSubmitted
-          ? PASSENGER_NAME
-          : typedChars > 0
-          ? PASSENGER_NAME.slice(0, typedChars)
-          : '',
-      greenCarSelected: greenSelected,
-      trainName: greenSelected ? 'Nozomi 24' : 'none',
-      seatClass: greenSelected ? 'green_car' : 'none',
-      fare: greenSelected ? 13870 : 0,
-      signatureStroke: sigProgress >= 1 ? 'SHAPE:signature' : '',
-      finalConfirmed,
-    },
-  };
+  }, [replayState.pageId, scale]);
 
   const scaledHeight = Math.round(768 * scale);
 
