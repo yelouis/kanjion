@@ -52,7 +52,20 @@ export const SandboxStage: React.FC<SandboxStageProps & { children?: React.React
     e.preventDefault();
   };
 
-  const currentMacroViewNum = macroViewId.replace(/^[A-Za-z_-]+/, '') || '3';
+  const PAGE_SLUGS: Record<string, string> = {
+    'MV-01': 'route-select',
+    'MV-02': 'passenger',
+    'MV-03': 'seats',
+    'MV-04': 'confirm',
+    'MV-05': 'ticket',
+    'MV-07': 'cancel',
+    'MV-08': 'news',
+    'MV-10': 'tohoku',
+    'MV-11': 'hokuriku',
+    'MV-12': 'points',
+  };
+  const pageSlug = PAGE_SLUGS[macroViewId] ?? 'route-select';
+  const stageUrl = `sandbox://kanjion-rail.example/reserve/${pageSlug}`;
 
   return (
     <div
@@ -95,7 +108,7 @@ export const SandboxStage: React.FC<SandboxStageProps & { children?: React.React
             <div className="flex items-center gap-1.5 bg-white border border-neutral-300 px-2 py-0.5 rounded text-neutral-800 text-[11px]">
               <span className="text-neutral-500">🔒</span>
               <span className="font-mono-clean truncate max-w-[500px]">
-                sandbox://ekinet-jr-sim.jp/reserve/seat-matrix (Macro-View {currentMacroViewNum} of 12)
+                {stageUrl}
               </span>
             </div>
           </div>

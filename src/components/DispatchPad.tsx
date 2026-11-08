@@ -136,7 +136,9 @@ export const DispatchPad: React.FC<DispatchPadProps> = ({
                       disabled={isSubmitting}
                       onChange={(e) => onInputChange(e.target.value.slice(0, 60))}
                       onKeyDown={handleKeyDown}
-                      placeholder={`Type instruction #${lineNumber} in English (e.g. click green 13,870)...`}
+                      onPaste={(e) => e.preventDefault()}
+                      onDrop={(e) => e.preventDefault()}
+                      placeholder="Tell your agent what to do (English, max 60 characters)"
                       style={{ width: 'min(100%, calc(60ch + 1.75rem))' }}
                       className="bg-white border-2 border-dossier-ink px-3 py-2.5 font-mono-clean font-bold text-sm sm:text-base text-dossier-ink placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-dossier-ink disabled:bg-stone-100 disabled:cursor-not-allowed tracking-normal"
                       autoFocus

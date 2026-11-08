@@ -135,10 +135,10 @@ export function reduceShinkansenMicroState(
       summary = 'Agent clicked [北陸・上越新幹線]';
       break;
 
-    case 4: // JRE Point & IC Card Portal (Page 1 -> Page 12)
+    case 4: // Kanjion Point & IC Card Portal (Page 1 -> Page 12)
       nextState.selectedRoute = 'none';
       nextMacroViewId = 'MV-12';
-      summary = 'Agent clicked [JRE POINT・Suica連携]';
+      summary = 'Agent clicked [かんじおんポイント・ICカード連携]';
       break;
 
     case 17: // Passenger Name Input Field (Page 2 -> Page 3, Exhibit B TYPE Task)
@@ -255,11 +255,11 @@ export function reduceShinkansenMicroState(
       summary = 'Agent clicked [予約を取消]';
       break;
 
-    case 11: // Red Logout Button (Decoy Trap)
+    case 11: // Header News Button (Decoy Trap)
       nextState.activeModal = 'logout';
       isTrap = true;
       stageShake = true;
-      summary = 'Agent clicked [ログアウト]';
+      summary = 'Agent clicked [お知らせ]';
       break;
 
     default:

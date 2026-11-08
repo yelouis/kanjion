@@ -382,7 +382,7 @@ export const App: React.FC<AppProps> = ({ config }) => {
             className="btn-press px-2.5 py-1 bg-dossier-card border-2 border-dossier-ink shadow-ink-sm text-xs font-bold text-blue-900 hover:bg-amber-50 flex items-center gap-1"
             title="Visit the actual Japanese Shinkansen reservation portal (JR Ekinet)"
           >
-            <span>🚄 Actual Site (eki-net.com) ↗</span>
+            <span>Inspired by eki-net.com ↗</span>
           </a>
 
           {isNewspaperOpen && (
@@ -447,7 +447,7 @@ export const App: React.FC<AppProps> = ({ config }) => {
                 rel="noopener noreferrer"
                 className="block w-full p-2.5 text-left border-2 border-dossier-ink bg-dossier-card text-blue-900 font-bold hover:bg-stone-100"
               >
-                🔗 Visit Actual Site (JR Ekinet) ↗
+                🔗 Inspired by eki-net.com ↗
               </a>
             </div>
           </div>

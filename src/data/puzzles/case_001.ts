@@ -1,7 +1,7 @@
 /**
  * src/data/puzzles/case_001.ts
  *
- * Canonical data fixtures for Case File #001: Tokyo–Osaka Shinkansen (えきねっと風).
+ * Canonical data fixtures for Case File #001: Tokyo–Osaka Shinkansen (かんじおん鉄道).
  * Contains:
  * - Puzzle metadata & initial micro-state
  * - All 9 discrete Macro-Views with transitions
@@ -53,11 +53,11 @@ export const CASE_001_MV03_ELEMENTS: SoMElement[] = [
     role: 'button',
     boundingBox: tupleToBoundingBox([920, 42, 74, 26]),
     gridRef: 'D1',
-    text: 'ログアウト',
+    text: 'お知らせ',
     visualAttributes: {
-      bgColor: '#DC2626',
-      color: '#FFFFFF',
-      description: 'Red logout button in header',
+      bgColor: '#FFFFFF',
+      color: '#171717',
+      description: 'White news button in header',
     },
     isTrap: true,
     actionType: 'CLICK',
@@ -70,7 +70,7 @@ export const CASE_001_MV03_ELEMENTS: SoMElement[] = [
     role: 'button',
     boundingBox: tupleToBoundingBox([780, 94, 214, 30]),
     gridRef: 'D1',
-    text: '今すぐ申し込む（赤ボタン）',
+    text: '今すぐ申し込む',
     visualAttributes: {
       bgColor: '#DC2626',
       color: '#FFFFFF',
@@ -239,8 +239,8 @@ export const CASE_001_MACRO_VIEWS: MacroView[] = [
   {
     id: 'MV-01',
     name: 'route_select',
-    description: 'JR Ekinet Portal Home — Shinkansen line and route selection',
-    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/route-select (Macro-View 1 of 12)',
+    description: 'Kanjion Rail Portal Home — Shinkansen line and route selection',
+    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/route-select',
     somImagePath: '/som/case_001_mv01.webp',
     elements: [],
     transitions: [
@@ -253,7 +253,7 @@ export const CASE_001_MACRO_VIEWS: MacroView[] = [
     id: 'MV-02',
     name: 'condition_filter',
     description: 'Departure time and passenger name (TYPE) filter form',
-    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/condition-filter (Macro-View 2 of 12)',
+    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/passenger',
     somImagePath: '/som/case_001_mv02.webp',
     elements: [],
     transitions: [
@@ -265,7 +265,7 @@ export const CASE_001_MACRO_VIEWS: MacroView[] = [
     id: 'MV-03',
     name: 'seat_matrix',
     description: 'Primary seat availability, timed flash discount window, and signature authorization',
-    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/seat-matrix (Macro-View 3 of 12)',
+    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/seats',
     somImagePath: '/som/case_001_mv03.webp',
     elements: CASE_001_MV03_ELEMENTS,
     transitions: [
@@ -281,7 +281,7 @@ export const CASE_001_MACRO_VIEWS: MacroView[] = [
     id: 'MV-04',
     name: 'signature_and_seat_map',
     description: 'Car 8 Green Car seat verification and digital signature pad (DRAW)',
-    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/signature-pad (Macro-View 4 of 12)',
+    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/confirm',
     somImagePath: '/som/case_001_mv04.webp',
     elements: [],
     transitions: [
@@ -293,7 +293,7 @@ export const CASE_001_MACRO_VIEWS: MacroView[] = [
     id: 'MV-05',
     name: 'reservation_confirm',
     description: 'Final order verification sheet and IC card binding',
-    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/confirm (Macro-View 5 of 12)',
+    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/ticket',
     somImagePath: '/som/case_001_mv05.webp',
     elements: [],
     transitions: [
@@ -305,7 +305,7 @@ export const CASE_001_MACRO_VIEWS: MacroView[] = [
     id: 'MV-06',
     name: 'seat_map_modal',
     description: 'Car seating chart layout dialog',
-    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/seat-map (Macro-View 6 of 12)',
+    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/seat-map',
     somImagePath: '/som/case_001_mv06.webp',
     elements: [],
     transitions: [{ targetElementId: 61, destinationMacroViewId: 'MV-03' }],
@@ -314,7 +314,7 @@ export const CASE_001_MACRO_VIEWS: MacroView[] = [
     id: 'MV-07',
     name: 'cancel_prompt',
     description: 'Booking cancellation confirmation modal',
-    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/cancel (Macro-View 7 of 12)',
+    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/cancel',
     somImagePath: '/som/case_001_mv07.webp',
     elements: [],
     transitions: [
@@ -325,8 +325,8 @@ export const CASE_001_MACRO_VIEWS: MacroView[] = [
   {
     id: 'MV-08',
     name: 'logout_trap',
-    description: 'Account logout view',
-    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/logout (Macro-View 8 of 12)',
+    description: 'Account news view',
+    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/news',
     somImagePath: '/som/case_001_mv08.webp',
     elements: [],
     transitions: [{ targetElementId: 81, destinationMacroViewId: 'MV-03' }],
@@ -335,7 +335,7 @@ export const CASE_001_MACRO_VIEWS: MacroView[] = [
     id: 'MV-09',
     name: 'booking_complete',
     description: 'Booking confirmation receipt and QR e-ticket issue',
-    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/complete (Macro-View 9 of 12)',
+    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/ticket',
     somImagePath: '/som/case_001_mv09.webp',
     elements: [],
     transitions: [],
@@ -344,7 +344,7 @@ export const CASE_001_MACRO_VIEWS: MacroView[] = [
     id: 'MV-10',
     name: 'tohoku_route_branch',
     description: 'Tohoku-Hokkaido Shinkansen (Hayabusa/Komachi) wrong-route branch page',
-    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/tohoku-line (Macro-View 10 of 12)',
+    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/tohoku',
     somImagePath: '/som/case_001_mv10.webp',
     elements: [],
     transitions: [{ targetElementId: 14, destinationMacroViewId: 'MV-01' }],
@@ -353,7 +353,7 @@ export const CASE_001_MACRO_VIEWS: MacroView[] = [
     id: 'MV-11',
     name: 'hokuriku_route_branch',
     description: 'Hokuriku Shinkansen (Kagayaki/Hakutaka) wrong-route branch page',
-    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/hokuriku-line (Macro-View 11 of 12)',
+    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/hokuriku',
     somImagePath: '/som/case_001_mv11.webp',
     elements: [],
     transitions: [{ targetElementId: 14, destinationMacroViewId: 'MV-01' }],
@@ -362,7 +362,7 @@ export const CASE_001_MACRO_VIEWS: MacroView[] = [
     id: 'MV-12',
     name: 'waitlist_sold_out',
     description: 'Ordinary car seat map and waitlist branch page',
-    simulatedUrl: 'sandbox://ekinet-jr-sim.jp/reserve/ordinary-seat-map (Macro-View 12 of 12)',
+    simulatedUrl: 'sandbox://kanjion-rail.example/reserve/points',
     somImagePath: '/som/case_001_mv12.webp',
     elements: [],
     transitions: [{ targetElementId: 14, destinationMacroViewId: 'MV-03' }],

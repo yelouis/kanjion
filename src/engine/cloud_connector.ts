@@ -605,8 +605,7 @@ export function evaluateClientSideDecision(
   if (
     /\b(?:news|notice|logout|sign\s*out)\b/i.test(lower) ||
     (/\btop\s*right\b/i.test(lower) && /\bred\b/i.test(lower)) ||
-    lower.includes('お知らせ') ||
-    lower.includes('ログアウト')
+    lower.includes('お知らせ')
   ) {
     return {
       action: 'CLICK',
@@ -675,7 +674,7 @@ export function evaluateClientSideDecision(
         target_id: 4,
         text_value: null,
         scroll_direction: null,
-        thought: '💭 Ooh, loyalty points! Clicking Box 04 to check our JRE POINT & Suica penguins.',
+        thought: '💭 Ooh, loyalty points! Clicking Box 04 to check our Kanjion points & IC cards.',
       };
     }
     if (
@@ -1316,7 +1315,7 @@ export class CloudVisionConnector implements AgentExecutionConnector {
           targetId: '#4',
           targetCoordinate: { x: 750, y: 520 },
           gridRef: 'C3',
-          thought: decision.thought || '⚠️ FIELD NOTE: Clicked [JRE POINT・Suica連携] (Wrong Portal MV-12)',
+          thought: decision.thought || '⚠️ FIELD NOTE: Clicked [かんじおんポイント・ICカード連携] (Wrong Portal MV-12)',
           isTrap: true,
         };
       }

@@ -97,27 +97,24 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
   return (
       <div className="w-full h-full bg-white flex flex-col justify-between text-neutral-900 select-none">
         <div className="flex-1 flex flex-col">
-          {/* Shared JR-East Ekinet Portal Top Bar */}
+          {/* Shared Kanjion Rail Portal Top Bar */}
           <header className="bg-emerald-700 text-white px-3.5 py-2 flex items-center justify-between border-b-4 border-emerald-900">
             <div className="flex items-center gap-2.5">
               <span className="font-black text-sm bg-white text-emerald-800 px-2 py-0.5 rounded shadow-sm">
-                えきねっと JR
+                かんじおん鉄道
               </span>
               <span className="font-bold text-sm tracking-tight">
-                新幹線 インターネット予約ポータル（全12ページ）
+                新幹線ネット予約
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs">
-              <span className="px-2 py-0.5 bg-emerald-950 text-amber-300 font-mono-clean font-black rounded border border-emerald-500">
-                PAGE {String(displayedPage).padStart(2, '0')} / 12
-              </span>
               <button
                 id="btn-logout"
                 type="button"
                 onClick={() => handleClick(11)}
-                className="relative px-2 py-0.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded"
+                className="relative px-2 py-0.5 bg-white hover:bg-neutral-100 text-neutral-900 font-bold rounded"
               >
-                ログアウト
+                お知らせ
               </button>
             </div>
           </header>
@@ -181,9 +178,6 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                 5. 発券完了
               </span>
             </div>
-            <span className="font-mono-clean text-[10px] text-emerald-300">
-              eki-net.com/personal/page-{String(displayedPage).padStart(2, '0')}
-            </span>
           </div>
 
           {/* Persistent Decoy Promo Insurance Banner */}
@@ -206,7 +200,7 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                   : 'bg-red-600 hover:bg-red-700 text-white'
               }`}
             >
-              {isPromoTrapHit ? '✓ 申込済 • 今すぐ申し込む（赤ボタン）' : '今すぐ申し込む（赤ボタン）'}
+              {isPromoTrapHit ? '✓ 申込済' : '今すぐ申し込む'}
             </button>
           </div>
 
@@ -222,7 +216,7 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                       STEP 1: ご利用になる新幹線路線を選択してください
                     </h2>
                     <p className="text-xs text-neutral-600 font-medium">
-                      ご希望の方面カードをクリックすると、乗車日時・搭乗者名入力ページ（Page 02）へ進みます。
+                      ご希望の方面カードをクリックすると、乗車日時・搭乗者名入力ページへ進みます。
                     </p>
                   </div>
                   <span className="px-2.5 py-1 bg-emerald-100 text-emerald-900 font-black text-xs rounded border border-emerald-400">
@@ -278,7 +272,7 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
                         <span className="px-2 py-0.5 bg-neutral-700 text-white font-black text-xs rounded">
-                          路線 02 • 東北・北海道新幹線 (Page 10)
+                          路線 02 • 東北・北海道新幹線
                         </span>
                         <span className="font-mono-clean font-bold text-xs text-neutral-600 bg-neutral-200 px-2 py-0.5 rounded">
                           はやぶさ・やまびこ
@@ -288,13 +282,13 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                         東京・上野 ⇒ 仙台・盛岡・新青森・新函館北斗
                       </div>
                       <p className="text-xs text-neutral-600 font-medium">
-                        東北・北海道方面の指定席・グランクラス予約ページ（MV-10）へ移動します
+                        東北・北海道方面の指定席・グランクラス予約ページへ移動します
                       </p>
                     </div>
                     <div className="mt-3 pt-2 border-t border-neutral-300 flex items-center justify-between font-bold text-sm text-neutral-700">
                       <span>東北・北海道方面を選択</span>
                       <span className="px-2.5 py-1 bg-neutral-300 text-neutral-800 rounded text-xs">
-                        Page 10 へ ▶
+                        空席照会 ▶
                       </span>
                     </div>
                   </div>
@@ -307,21 +301,21 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                   >
                     <div className="space-y-1">
                       <span className="px-2 py-0.5 bg-blue-900 text-white font-black text-xs rounded">
-                        路線 03 • 北陸・上越新幹線 (Page 11)
+                        路線 03 • 北陸・上越新幹線
                       </span>
                       <div className="text-lg font-black text-neutral-800 pt-1">
                         東京 ⇒ 長野・金沢・敦賀 / 新潟
                       </div>
                       <p className="text-xs text-neutral-600">
-                        かがやき・はくたか・とき 空席照会ページ（MV-11）
+                        かがやき・はくたか・とき 空席照会ページ
                       </p>
                     </div>
                     <div className="text-right text-xs font-bold text-neutral-600">
-                      Page 11 へ ▶
+                      空席照会 ▶
                     </div>
                   </div>
 
-                  {/* DECOY CARD #4: JRE POINT & IC CARD PORTAL (MV-12) */}
+                  {/* DECOY CARD #4: KANJION POINT & IC CARD PORTAL (MV-12) */}
                   <div
                     id="btn-route-points"
                     onClick={() => handleClick(4)}
@@ -329,17 +323,17 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                   >
                     <div className="space-y-1">
                       <span className="px-2 py-0.5 bg-amber-700 text-white font-black text-xs rounded">
-                        メニュー 04 • JRE POINT・Suica連携 (Page 12)
+                        メニュー 04 • かんじおんポイント・ICカード連携
                       </span>
                       <div className="text-lg font-black text-neutral-800 pt-1">
                         特典チケット交換・交通系ICカード登録
                       </div>
                       <p className="text-xs text-neutral-600">
-                        ポイント交換・タッチでGo!新幹線設定ページ（MV-12）
+                        ポイント交換・ICカード設定ページ
                       </p>
                     </div>
                     <div className="text-right text-xs font-bold text-neutral-600">
-                      Page 12 へ ▶
+                      ポイント ▶
                     </div>
                   </div>
                 </div>
@@ -359,7 +353,7 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                       STEP 2: 乗車条件・搭乗者名（ローマ字）の入力
                     </h2>
                     <p className="text-xs text-neutral-600 font-medium">
-                      予約名義となる搭乗者名をローマ字で入力すると、空席照会・座席表ページ（Page 03）へ進みます。
+                      予約名義となる搭乗者名をローマ字で入力すると、空席照会・座席表ページへ進みます。
                     </p>
                   </div>
                   <button
@@ -368,28 +362,28 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                     onClick={() => handleClick(14)}
                     className="px-3 py-1 bg-neutral-100 hover:bg-neutral-200 border border-neutral-400 rounded text-xs font-bold"
                   >
-                    ◀ 路線選択 (Page 01) へ戻る
+                    ◀ 路線選択へ戻る
                   </button>
                 </div>
 
                 {/* Selected Route & Departure Summary Card */}
                 <div className="grid grid-cols-3 gap-3 bg-emerald-50 border-2 border-emerald-600 p-3.5 rounded-lg">
                   <div>
-                    <div className="text-[11px] font-bold text-emerald-800">選択路線 (Route)</div>
+                    <div className="text-[11px] font-bold text-emerald-800">選択路線</div>
                     <div className="text-sm font-black text-neutral-900 mt-0.5">
                       ✓ 東海道新幹線（東京 ⇒ 新大阪）
                     </div>
                   </div>
                   <div>
-                    <div className="text-[11px] font-bold text-emerald-800">乗車日時 (Departure)</div>
+                    <div className="text-[11px] font-bold text-emerald-800">乗車日時</div>
                     <div className="text-sm font-black text-neutral-900 mt-0.5">
                       ✓ 11月05日 14:30発（片道）
                     </div>
                   </div>
                   <div>
-                    <div className="text-[11px] font-bold text-emerald-800">人数 (Passengers)</div>
+                    <div className="text-[11px] font-bold text-emerald-800">人数</div>
                     <div className="text-sm font-black text-neutral-900 mt-0.5">
-                      大人 1名（スマートEX / eチケット）
+                      大人 1名（eチケット）
                     </div>
                   </div>
                 </div>
@@ -399,15 +393,12 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="px-2 py-0.5 bg-red-600 text-white font-black text-[11px] rounded mr-2">
-                        必須入力 (REQUIRED TYPE FIELD)
+                        必須
                       </span>
                       <span className="text-base font-black text-neutral-900">
-                        搭乗者名（ローマ字入力） / Passenger Name
+                        搭乗者名（ローマ字）
                       </span>
                     </div>
-                    <span className="text-xs font-bold text-emerald-800">
-                      入力例: TANAKA
-                    </span>
                   </div>
 
                   <div
@@ -423,7 +414,7 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                       <span>{passengerName || ''}</span>
                       {!passengerName && (
                         <span className="text-neutral-400 font-normal text-sm tracking-normal">
-                          ここに搭乗者名 (TANAKA) をタイピング入力...
+                          ローマ字で入力してください
                         </span>
                       )}
                       <span className="text-emerald-700 animate-pulse font-black">|</span>
@@ -435,7 +426,7 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                           : 'bg-neutral-200 text-neutral-600'
                       }`}
                     >
-                      {passengerName ? '✓ 入力完了 (TYPED) ▸ 次ページへ' : 'TYPE "TANAKA"'}
+                      {passengerName ? '✓ 入力済' : '未入力'}
                     </span>
                   </div>
 
@@ -459,12 +450,12 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                       STEP 3: 列車・座席指定（タイムセール特割 空席照会）
                     </h2>
                     <p className="text-xs text-neutral-600 font-medium">
-                      移動する「⚡ トクだ値 タイムセール枠」に合わせてご希望の座席ボタンをクリックすると Page 04 へ進みます。
+                      移動する「⚡ トクだ値 タイムセール枠」に合わせてご希望の座席ボタンをクリックすると次へ進みます。
                     </p>
                   </div>
                   <div className="flex items-center gap-2 text-xs font-bold">
                     <span className="px-2 py-0.5 bg-amber-100 border border-amber-400 text-neutral-900 rounded">
-                      搭乗者: {passengerName || 'TANAKA'} 様
+                      搭乗者: {passengerName || '未入力'} 様
                     </span>
                     <button
                       id="btn-back-conditions"
@@ -472,7 +463,7 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                       onClick={() => handleClick(14)}
                       className="px-2.5 py-0.5 bg-neutral-100 hover:bg-neutral-200 border border-neutral-400 rounded"
                     >
-                      ◀ 条件変更 (Page 02)
+                      ◀ 条件変更
                     </button>
                   </div>
                 </div>
@@ -650,7 +641,7 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                 <div className="border-b-2 border-emerald-800 pb-2 flex items-center justify-between">
                   <div>
                     <h2 className="text-lg font-black text-emerald-950">
-                      STEP 4: ご予約内容の確認・本人自署サイン（Page 04 / 12）
+                      STEP 4: ご予約内容の確認・本人自署サイン
                     </h2>
                     <p className="text-xs text-neutral-600 font-medium">
                       下の署名枠内にサイン（自署ストローク）を記入し、右下の青い「予約内容を確認・確定へ」ボタンをクリックしてください。
@@ -662,7 +653,7 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                     onClick={() => handleClick(14)}
                     className="px-3 py-1 bg-neutral-100 hover:bg-neutral-200 border border-neutral-400 rounded text-xs font-bold"
                   >
-                    ◀ 座席表 (Page 03) へ戻る
+                    ◀ 座席表へ戻る
                   </button>
                 </div>
 
@@ -689,7 +680,7 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                   <div>
                     <div className="text-emerald-800 font-bold">搭乗者名</div>
                     <div className="font-mono-clean font-black text-neutral-900 mt-0.5">
-                      {passengerName || 'TANAKA'} 様（大人1名）
+                      {passengerName || '未入力'} 様（大人1名）
                     </div>
                   </div>
                 </div>
@@ -699,7 +690,7 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                   <div className="flex items-center justify-between">
                     <div className="font-black text-sm text-emerald-950 flex items-center gap-2">
                       <span className="px-2 py-0.5 bg-emerald-800 text-white rounded text-xs">
-                        必須署名 (DRAW SIGNATURE)
+                        必須署名
                       </span>
                       <span>自署・本人確認サイン欄（グリーン車特割 発券認証）</span>
                     </div>
@@ -718,14 +709,14 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                     }`}
                   >
                     <span className="absolute top-2 left-3 text-xs font-bold text-neutral-400">
-                      署名欄 (DRAW SIGNATURE HERE)
+                      署名欄
                     </span>
                     {effectiveSigProgress > 0 && (
                       <span
                         data-testid="signature-signed-badge"
                         className="absolute top-2 right-3 text-xs font-black text-emerald-800 bg-emerald-100 border border-emerald-500 px-2 py-0.5 rounded"
                       >
-                        ✓ 署名済 (SIGNED{sigSpec.displayLabel && sigSpec.displayLabel !== 'T. Tanaka' ? ` • ${sigSpec.displayLabel}` : ''})
+                        ✓ 署名済
                       </span>
                     )}
                     <svg
@@ -802,7 +793,7 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                     onClick={() => handleClick(29)}
                     className="px-4 py-2 bg-neutral-300 hover:bg-neutral-400 text-neutral-800 text-xs font-bold border border-neutral-400 rounded"
                   >
-                    予約を取消 (Cancel)
+                    予約を取消
                   </button>
                   <button
                     id="target-confirm-btn"
@@ -832,7 +823,7 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                 <div className="flex items-center justify-between border-b-2 border-emerald-700 pb-3">
                   <div>
                     <span className="px-2.5 py-0.5 bg-emerald-700 text-white font-black text-xs rounded">
-                      PAGE 05 / 12 • 発券完了 (ISSUED)
+                      発券完了
                     </span>
                     <h2 className="text-xl font-black text-emerald-950 mt-1">
                       🎉 新幹線 eチケットのご予約・発券が完了しました
@@ -864,15 +855,15 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-neutral-500">搭乗者名 (Typed)</div>
+                    <div className="text-xs font-bold text-neutral-500">搭乗者名</div>
                     <div className="font-mono-clean font-black text-neutral-900">
-                      ✓ {passengerName || 'TANAKA'} 様
+                      ✓ {passengerName} 様
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-neutral-500">本人自署サイン (Drawn)</div>
+                    <div className="text-xs font-bold text-neutral-500">本人自署サイン</div>
                     <div className="font-black text-emerald-800">
-                      ✓ デジタル自署認証済 (SIGNED)
+                      {isSignatureSigned ? '✓ 署名済' : '未署名'}
                     </div>
                   </div>
                 </div>
@@ -887,13 +878,13 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
             <div className="p-6 flex-1 flex flex-col justify-center items-center bg-red-50/40">
               <div className="w-full max-w-xl bg-white border-4 border-red-700 rounded-xl shadow p-6 space-y-4 text-center">
                 <span className="px-3 py-1 bg-red-700 text-white font-black text-xs rounded">
-                  PAGE 10 / 12 • 東北・北海道新幹線 予約ページ (WRONG ROUTE)
+                  東北・北海道新幹線 予約ページ
                 </span>
                 <h2 className="text-xl font-black text-neutral-900">
                   東北・北海道新幹線（東京 ⇒ 仙台・新青森・新函館北斗）
                 </h2>
                 <p className="text-xs text-neutral-600">
-                  ※ 新大阪方面（東海道新幹線）は路線選択トップ（Page 01）から選択してください。
+                  ※ 新大阪方面（東海道新幹線）は路線選択トップから選択してください。
                 </p>
                 <button
                   id="btn-back-conditions"
@@ -901,7 +892,7 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                   onClick={() => handleClick(14)}
                   className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs rounded shadow"
                 >
-                  ◀ 路線選択トップ (Page 01) へ戻る
+                  ◀ 路線選択トップへ戻る
                 </button>
               </div>
             </div>
@@ -914,13 +905,13 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
             <div className="p-6 flex-1 flex flex-col justify-center items-center bg-blue-50/40">
               <div className="w-full max-w-xl bg-white border-4 border-blue-900 rounded-xl shadow p-6 space-y-4 text-center">
                 <span className="px-3 py-1 bg-blue-900 text-white font-black text-xs rounded">
-                  PAGE 11 / 12 • 北陸・上越新幹線 予約ページ (WRONG ROUTE)
+                  北陸・上越新幹線 予約ページ
                 </span>
                 <h2 className="text-xl font-black text-neutral-900">
                   北陸・上越新幹線（東京 ⇒ 長野・金沢・敦賀 / 新潟）
                 </h2>
                 <p className="text-xs text-neutral-600">
-                  ※ 新大阪方面（東海道新幹線）は路線選択トップ（Page 01）から選択してください。
+                  ※ 新大阪方面（東海道新幹線）は路線選択トップから選択してください。
                 </p>
                 <button
                   id="btn-back-conditions"
@@ -928,26 +919,26 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                   onClick={() => handleClick(14)}
                   className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs rounded shadow"
                 >
-                  ◀ 路線選択トップ (Page 01) へ戻る
+                  ◀ 路線選択トップへ戻る
                 </button>
               </div>
             </div>
           )}
 
           {/* =================================================================
-              PAGE 12 / 12: WRONG BRANCH — JRE POINT & SUICA PORTAL (MV-12)
+              PAGE 12 / 12: WRONG BRANCH — KANJION POINT & IC CARD PORTAL (MV-12)
              ================================================================= */}
           {displayedPage === 12 && (
             <div className="p-6 flex-1 flex flex-col justify-center items-center bg-amber-50/40">
               <div className="w-full max-w-xl bg-white border-4 border-amber-700 rounded-xl shadow p-6 space-y-4 text-center">
                 <span className="px-3 py-1 bg-amber-700 text-white font-black text-xs rounded">
-                  PAGE 12 / 12 • JRE POINT 特典・Suica IC連携ページ (WRONG PORTAL)
+                  かんじおんポイント・ICカード連携ページ
                 </span>
                 <h2 className="text-xl font-black text-neutral-900">
-                  JRE POINT 特典チケット交換・交通系ICカード登録
+                  かんじおんポイント 特典チケット交換・交通系ICカード登録
                 </h2>
                 <p className="text-xs text-neutral-600">
-                  ※ 新幹線の通常指定席・グリーン車特割予約は路線選択トップ（Page 01）から行ってください。
+                  ※ 新幹線の通常指定席・グリーン車特割予約は路線選択トップから行ってください。
                 </p>
                 <button
                   id="btn-back-conditions"
@@ -955,7 +946,7 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
                   onClick={() => handleClick(14)}
                   className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs rounded shadow"
                 >
-                  ◀ 路線選択トップ (Page 01) へ戻る
+                  ◀ 路線選択トップへ戻る
                 </button>
               </div>
             </div>

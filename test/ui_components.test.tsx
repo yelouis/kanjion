@@ -69,7 +69,7 @@ describe('4. SandboxStage Component', () => {
       transformOrigin: 'top left',
     });
 
-    expect(screen.getByText(/sandbox:\/\/ekinet-jr-sim\.jp\/reserve\/seat-matrix/i)).toBeInTheDocument();
+    expect(screen.getByText(/sandbox:\/\/kanjion-rail\.example\/reserve\/seats/i)).toBeInTheDocument();
     expect(screen.getByText(/🔒 TEXT SELECTION LOCKED/i)).toBeInTheDocument();
     expect(screen.getByTestId('content')).toBeInTheDocument();
   });
@@ -524,5 +524,93 @@ describe('10. App Top-Level Integration Gameplay Loop', () => {
     expect(mobileSwitcher).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Right Page: Target Video/i }));
     expect(screen.getByTestId('newspaper-left-page')).toHaveClass('hidden');
+  });
+});
+
+describe('11. Item 5 — Sandbox Copy, Branding & Anti-Copy (★ Falsifying Tests)', () => {
+  const PAGE_IDS = ['MV-01', 'MV-02', 'MV-03', 'MV-04', 'MV-05', 'MV-10', 'MV-11', 'MV-12'] as const;
+
+  it('★ renders each page state with no two-letter Latin runs other than PR, IC, QR (plus STEP in headings) and no TANAKA when passengerName is empty', () => {
+    const allowedWords = new Set(['PR', 'IC', 'QR', 'STEP']);
+    for (const macroViewId of PAGE_IDS) {
+      const state = {
+        ...CASE_001_INITIAL_MICRO_STATE,
+        macroViewId,
+        selectedRoute: macroViewId === 'MV-01' ? ('none' as const) : ('tokyo_shinosaka' as const),
+        departureTime: macroViewId === 'MV-01' ? ('none' as const) : ('14:30' as const),
+        passengerName: '',
+        greenCarSelected: macroViewId === 'MV-04' || macroViewId === 'MV-05',
+        signatureStroke: macroViewId === 'MV-05' ? 'SHAPE:signature' : '',
+        finalConfirmed: macroViewId === 'MV-05',
+      };
+      const { container, unmount } = render(<ShinkansenSandbox microState={state} />);
+      const rawText = container.textContent ?? '';
+      expect(rawText).not.toContain('TANAKA');
+
+      const cleaned = rawText
+        .replace(/[\d¥,:.\/]/g, ' ');
+      const latinMatches = (cleaned.match(/[A-Za-z]{2,}/g) ?? []).filter(
+        (word) => !allowedWords.has(word)
+      );
+      expect(latinMatches, `Unexpected English words on ${macroViewId}: ${latinMatches.join(', ')}`).toEqual([]);
+      unmount();
+    }
+  });
+
+  it('★ shows sandbox://kanjion-rail.example/reserve/passenger on MV-02 URL bar without Macro-View suffix', () => {
+    const mv02State = {
+      ...CASE_001_INITIAL_MICRO_STATE,
+      macroViewId: 'MV-02',
+      passengerName: '',
+    };
+    render(
+      <SandboxStage
+        macroViewId="MV-02"
+        microState={mv02State}
+        agentCursor={{ xPercent: 50, yPercent: 50, thought: '', variant: 'idle', isShaking: false }}
+        stageShake={false}
+      >
+        <div>Body</div>
+      </SandboxStage>
+    );
+    expect(screen.getByText('sandbox://kanjion-rail.example/reserve/passenger')).toBeInTheDocument();
+    expect(screen.queryByText(/Macro-View/i)).not.toBeInTheDocument();
+  });
+
+  it('★ blocks paste and drop events on #telegram-input silently', () => {
+    const sampleTelegrams: TelegramLine[] = Array.from({ length: 6 }, (_, i) => ({
+      lineNumber: i + 1,
+      text: '',
+      submitted: false,
+      exhibitRedactedStatus: 'SEALED' as const,
+    }));
+    const onInputChange = vi.fn();
+    render(
+      <DispatchPad
+        telegrams={sampleTelegrams}
+        activeLineIndex={0}
+        currentInput=""
+        onInputChange={onInputChange}
+        onSubmitLine={vi.fn()}
+        onCloseCase={vi.fn()}
+        caseStatus="active"
+        currentMultiplier={2.0}
+      />
+    );
+    const input = document.getElementById('telegram-input') as HTMLInputElement;
+    expect(input).toBeTruthy();
+
+    const pasteEvent = new Event('paste', { bubbles: true, cancelable: true });
+    Object.defineProperty(pasteEvent, 'clipboardData', {
+      value: { getData: () => '東海道' },
+    });
+    input.dispatchEvent(pasteEvent);
+    expect(pasteEvent.defaultPrevented).toBe(true);
+    expect(input.value).toBe('');
+    expect(onInputChange).not.toHaveBeenCalled();
+
+    const dropEvent = new Event('drop', { bubbles: true, cancelable: true });
+    input.dispatchEvent(dropEvent);
+    expect(dropEvent.defaultPrevented).toBe(true);
   });
 });

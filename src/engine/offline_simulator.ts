@@ -206,14 +206,14 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
           thought: '⚠️ TRAP TRIGGERED: Clicked red ¥2,400 promo insurance banner!',
         };
       }
-      if (/\b(?:news|notice|お知らせ|logout|sign\s*out|ログアウト)\b/i.test(lower)) {
+      if (/\b(?:news|notice|お知らせ|logout|sign\s*out)\b/i.test(lower)) {
         return {
           action: 'CLICK',
           targetId: '#11',
           gridRef: 'D1',
           targetCoordinate: { x: 960, y: 58 },
           isTrap: true,
-          thought: '⚠️ TRAP TRIGGERED: Clicked Logout button!',
+          thought: '⚠️ TRAP TRIGGERED: Clicked News button!',
         };
       }
       if (
@@ -257,7 +257,7 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
           gridRef: 'C3',
           targetCoordinate: { x: 750, y: 520 },
           isTrap: true,
-          thought: '⚠️ FIELD NOTE: Clicked [JRE POINT・Suica連携] (Wrong Portal MV-12)',
+          thought: '⚠️ FIELD NOTE: Clicked [かんじおんポイント・ICカード連携] (Wrong Portal MV-12)',
         };
       }
       if (
@@ -545,7 +545,6 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
     rawInstruction: string
   ): number {
     let score = 0;
-    const text = el.text.toLowerCase();
 
     // Confirm button (#30)
     if (el.id === 30) {
@@ -601,7 +600,6 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
         lower.includes('notice') ||
         lower.includes('お知らせ') ||
         lower.includes('logout') ||
-        lower.includes('ログアウト') ||
         lower.includes('sign out')
       ) {
         score += this.weights.label * 2; // Direct high-affinity action command (30)
@@ -621,8 +619,10 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
       ) {
         score += this.weights.label;
       }
-      // Matches button where text has 赤ボタン
-      if (text.includes('赤ボタン') && (lower.includes('button') || lower.includes('ボタン'))) {
+      if (
+        (lower.includes('red') || lower.includes('赤')) &&
+        (lower.includes('button') || lower.includes('ボタン'))
+      ) {
         score += this.weights.label;
       }
     }
@@ -731,7 +731,7 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
       case 29:
         return '📌 FIELD NOTE: Clicked [予約を取消] at C4'; // 41 chars
       case 11:
-        return '📌 FIELD NOTE: Clicked [ログアウト] at D1'; // 40 chars
+        return '📌 FIELD NOTE: Clicked [お知らせ] at D1'; // 39 chars
       default:
         return `📌 FIELD NOTE: Clicked ${el.somId} at ${el.gridRef}`;
     }

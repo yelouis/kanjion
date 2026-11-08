@@ -65,7 +65,7 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       // Virtual Sandbox Stage geometry
       const stageCore = container.querySelector('#sandbox-core');
       expect(stageCore).toHaveStyle({ width: '1024px', height: '768px' });
-      expect(screen.getByText(/sandbox:\/\/ekinet-jr-sim\.jp\/reserve\/seat-matrix/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/sandbox:\/\/kanjion-rail\.example\/reserve\/route-select/i).length).toBeGreaterThan(0);
       expect(screen.getByText(/🔒 TEXT SELECTION LOCKED/i)).toBeInTheDocument();
 
       // Initial Unseeded Ledger State (Starts at Line 01 / 06 on MV-01)

@@ -72,8 +72,8 @@ You are an implementor agent with no memory of this project. This file is your s
 
 | Gate | Command | Result on 2026-11-07 |
 |---|---|---|
-| Unit/component | `npm test` | **436 passed / 22 files** (≈ 9.7 s). Runs the shipped multi-page game via `GameConfig` (items 1–4). |
-| Typecheck + build | `npm run build` | Clean (`tsc -b && vite build`). `dist/assets/index-*.js` 275.02 kB, **83.75 kB gzip**. CSS 37.00 kB. |
+| Unit/component | `npm test` | **439 passed / 22 files** (≈ 9.7 s). Runs the shipped multi-page game via `GameConfig` (items 1–5). |
+| Typecheck + build | `npm run build` | Clean (`tsc -b && vite build`). `dist/assets/index-*.js` 273.80 kB, **83.19 kB gzip**. CSS 36.91 kB. |
 | Compiler | `npx tsx tools/compile_puzzle.ts --case 001 --offline --validate --dry-run` | Exit 0, but it only validates hand-written TypeScript data and captures nothing (F-7). |
 | E2E | `npm run test:e2e` | **1 passed** (`e2e/smoke.e2e.ts` in `desktop-chromium`). |
 | Lint | — | No lint script exists. |

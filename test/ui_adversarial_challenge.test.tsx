@@ -282,8 +282,8 @@ describe('Adversarial Challenge 3: Anti-Copy & Clipboard Tamper Lockout', () => 
 
     // Find deep child targets: Japanese fare button #25, promo button #12, and simulated URL bar
     const greenBtn = screen.getByRole('button', { name: /🍀 ◯ ¥13,870/i });
-    const promoBtn = screen.getByRole('button', { name: /今すぐ申し込む（赤ボタン）/i });
-    const urlText = screen.getByText(/sandbox:\/\/ekinet-jr-sim\.jp/i);
+    const promoBtn = screen.getByRole('button', { name: /今すぐ申し込む/i });
+    const urlText = screen.getByText(/sandbox:\/\/kanjion-rail\.example/i);
 
     const targets = [greenBtn, promoBtn, urlText];
     const prohibitedEvents = ['copy', 'cut', 'paste', 'dragstart', 'contextmenu'];

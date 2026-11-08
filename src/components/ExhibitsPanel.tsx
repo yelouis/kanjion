@@ -219,7 +219,7 @@ export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 font-bold text-blue-800 underline hover:text-blue-950"
             >
-              <span>🔗 Visit the actual site this puzzle is based on: JR Ekinet (eki-net.com) ↗</span>
+              <span>🔗 This case is inspired by the real JR East booking site, eki-net.com ↗</span>
             </a>
           </div>
         </div>

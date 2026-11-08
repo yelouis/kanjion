@@ -152,13 +152,13 @@ describe('Offline Simulation Engine & Multi-Token Heuristic Matcher', () => {
       expect(action.thought).toBe('📌 FIELD NOTE: Unchecked [旅行キャンセル保険を追加] at B4');
     });
 
-    it('resolves "logout" to #11 (Header logout trap)', () => {
+    it('resolves "logout" to #11 (Header news/logout trap)', () => {
       const action = engine.resolveInstruction('MV-03', microState, 'logout');
       expect(action.action).toBe('CLICK');
       expect(action.targetId).toBe('#11');
       expect(action.gridRef).toBe('D1');
       expect(action.isTrap).toBe(true);
-      expect(action.thought).toBe('📌 FIELD NOTE: Clicked [ログアウト] at D1');
+      expect(action.thought).toBe('📌 FIELD NOTE: Clicked [お知らせ] at D1');
       expect(action.thought.length).toBeLessThanOrEqual(80);
     });
   });
