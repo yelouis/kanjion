@@ -226,13 +226,14 @@ export const CASE_001_PUZZLE: PuzzleData = {
           key: 'seat_nozomi_green',
           role: 'button',
           label: '🍀 ◯ ¥13,870 (特割)',
-          visual: { color: 'green', glyphs: ['🍀', '◯'], row: 2, column: 3 },
+          visual: { color: 'green', glyphs: ['🍀', '◯'], row: 2, column: 3, timedColumn: 2 },
           effects: {
             CLICK: [
               { op: 'set', field: 'trainName', value: 'Nozomi 24' },
               { op: 'set', field: 'seatClass', value: 'green_car' },
-              { op: 'set', field: 'fare', value: 13870 },
+              { op: 'set', field: 'fare', value: 19590 },
               { op: 'set', field: 'greenCarSelected', value: true },
+              { op: 'set', field: 'timedWindowHit', value: false },
               { op: 'navigate', pageId: 'MV-04' },
             ],
             TIMED_CLICK: [
@@ -240,6 +241,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
               { op: 'set', field: 'seatClass', value: 'green_car' },
               { op: 'set', field: 'fare', value: 13870 },
               { op: 'set', field: 'greenCarSelected', value: true },
+              { op: 'set', field: 'timedWindowHit', value: true },
               { op: 'navigate', pageId: 'MV-04' },
             ],
           },
@@ -458,7 +460,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
       id: 'C',
       title: '14:30 Nozomi • 🍀 ¥13,870',
       weight: 20,
-      criteria: 'Timed-clicked Green Car seat on Nozomi 24 during active flash discount (特割) for ¥13,870.',
+      criteria: 'Clicked the 🍀 Green Car seat on Nozomi 24 while the flash-sale highlight was on it (¥13,870).',
       verified: {
         all: [
           { field: 'trainName', eq: 'Nozomi 24' },
@@ -479,14 +481,26 @@ export const CASE_001_PUZZLE: PuzzleData = {
       title: 'Final Blue Confirm',
       weight: 20,
       criteria: 'Clicked the final confirmation button [予約内容を確認・確定へ ▶] to issue the Shinkansen e-ticket.',
-      verified: { field: 'finalConfirmed', eq: true },
+      verified: {
+        all: [
+          { field: 'finalConfirmed', eq: true },
+          { field: 'confirmedWithInsurance', eq: false },
+        ],
+      },
+      contaminated: {
+        all: [
+          { field: 'finalConfirmed', eq: true },
+          { field: 'confirmedWithInsurance', eq: true },
+        ],
+      },
+      contaminatedNote: '¥2,400 travel insurance was attached',
     },
   ],
   replay: [],
   answerKey: [
     'Click the top-left green box',
     'Type TANAKA in the passenger name box',
-    'Click the green 13,870 button in the 2nd row',
+    'Wait for the sale glow, then click the green ¥13,870',
     'Draw a signature in the dashed box',
     'Click the blue confirm button at bottom right',
   ],

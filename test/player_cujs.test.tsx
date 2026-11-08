@@ -61,7 +61,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     const prompts = [
       'click the top left green box',
       'type TANAKA in the passenger name box',
-      'click green button in second row',
+      'wait for sale glow then click green button in second row',
       'draw a line in the signature box',
       'click blue button at bottom right',
     ];
@@ -218,7 +218,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
       'click back button',
       'click top left green card',
       'type TANAKA',
-      'click green 13,870',
+      'wait for flash sale and click green 13,870',
       'draw signature in box',
     ];
 
@@ -296,7 +296,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     const userPrompts = [
       'Click on the green box with the 01 in it',
       'Type TANAKA in the passenger name box',
-      'Click on the green 13870 box',
+      'Wait for flash sale and click on the green 13870 box',
       'Draw a signiture in the shape of a smile',
       'Click the blue box on the bottom right',
     ];

@@ -399,7 +399,7 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
       }
     }
 
-    return this.buildAction(top.element, microState);
+    return this.buildAction(top.element, microState, instruction);
   }
 
   /**
@@ -718,7 +718,11 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
   /**
    * Constructs the concrete AgentAction with exact center coordinates and thought note.
    */
-  private buildAction(el: SoMElement, microState: Record<string, unknown>): AgentAction {
+  private buildAction(
+    el: SoMElement,
+    microState: Record<string, unknown>,
+    rawInstruction?: string
+  ): AgentAction {
     const center = el.boundingBox ? getBoxCenter(el.boundingBox) : gridToCenter(el.gridRef);
     const targetCoordinate: AgentCoordinate = {
       x: Math.round(center.x),
@@ -726,9 +730,16 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
     };
 
     const thought = this.generateFieldNote(el, microState);
+    const isTimed = rawInstruction
+      ? /\b(?:wait|when|until|timed|timing|flash|sale|glow|highlight|lights\s*up)\b/i.test(
+          rawInstruction
+        )
+      : false;
+    const actionKind =
+      el.id === 25 ? (isTimed ? 'TIMED_CLICK' : 'CLICK') : el.actionType || 'CLICK';
 
     return {
-      action: el.actionType || 'CLICK',
+      action: actionKind,
       targetId: el.somId,
       gridRef: el.gridRef,
       targetCoordinate,

@@ -221,7 +221,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       );
 
       const stage = screen.getByTestId('sandbox-stage');
-      const greenBtn = screen.getByRole('button', { name: /🍀 ◯ ¥13,870/i });
+      const greenBtn = screen.getByRole('button', { name: /🍀 ◯ ¥(?:13,870|19,590)/i });
 
       const prohibitedEvents = ['copy', 'cut', 'paste', 'dragstart', 'contextmenu'];
 
@@ -512,7 +512,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       // Step 2: Select Green Car (#25) to reach MV-04, then untoggle Checkbox #28
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
-        payload: { action: { action: 'CLICK', targetId: '#25', thought: 'Green car' }, instruction: 'green car' },
+        payload: { action: { action: 'TIMED_CLICK', targetId: '#25', thought: 'Green car' }, instruction: 'wait for sale glow green car' },
       });
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
@@ -699,10 +699,10 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       expect(state.macroViewId).toBe('MV-03');
 
       // Line 3: Valid green car selection on MV-03
-      const act3 = engine.resolveInstruction(state.macroViewId, state.microState, 'click green clover ¥13,870');
+      const act3 = engine.resolveInstruction(state.macroViewId, state.microState, 'Wait for the sale glow, then click the green ¥13,870');
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
-        payload: { action: act3, instruction: 'click green clover' },
+        payload: { action: act3, instruction: 'Wait for the sale glow, then click the green ¥13,870' },
       });
       expect(state.microState.greenCarSelected).toBe(true);
       expect(state.macroViewId).toBe('MV-04');

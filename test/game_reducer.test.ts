@@ -128,7 +128,7 @@ describe('Game State Reducer & Micro-State Transitions', () => {
     it('mutates micro-state satisfying Exhibit C, updates cursor, and keeps ledger SEALED', () => {
       const mv03State = advanceToMv03(initialState);
       const greenCarAction: AgentAction = {
-        action: 'CLICK',
+        action: 'TIMED_CLICK',
         targetId: '#25',
         gridRef: 'D3',
         targetCoordinate: { x: 885, y: 468 },
@@ -319,8 +319,8 @@ describe('Game State Reducer & Micro-State Transitions', () => {
       s = gameReducer(s, {
         type: 'APPLY_AGENT_ACTION',
         payload: {
-          action: { action: 'CLICK', targetId: '#25', thought: 'green car' },
-          instruction: 'click green car',
+          action: { action: 'TIMED_CLICK', targetId: '#25', thought: 'green car' },
+          instruction: 'wait for sale glow then click green car',
         },
       });
       s = gameReducer(s, {

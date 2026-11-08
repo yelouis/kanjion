@@ -122,11 +122,6 @@ export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
                 <div className="font-bold text-xs mb-2 text-dossier-ink line-clamp-2">
                   {ex.title}
                 </div>
-                {ex.status === 'CONTAMINATED' && ex.contaminatedNote && (
-                  <div className="text-[11px] text-red-900 font-semibold mb-1">
-                    {ex.contaminatedNote}
-                  </div>
-                )}
               </div>
 
               {/* Dynamic Angled Rubber Ink Stamp Badge */}
@@ -140,6 +135,11 @@ export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
                 >
                   {ex.stampText || `[${ex.status} ✓]`}
                 </span>
+                {ex.status === 'CONTAMINATED' && ex.contaminatedNote && (
+                  <div className="text-[11px] text-red-900 font-semibold mt-1">
+                    {ex.contaminatedNote}
+                  </div>
+                )}
               </div>
             </div>
           );

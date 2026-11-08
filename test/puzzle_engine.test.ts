@@ -162,3 +162,111 @@ describe('Item 6 — Puzzle as Data (★ Falsifying Tests)', () => {
     expect(state.pageId).toBe('MV-04');
   });
 });
+
+describe('Item 7 — Real Flash-Sale Timing & Add-On Trap (★ Falsifying Tests)', () => {
+  it('★ F-11 (D-4=A): CLICK 25 -> fare 19590 and C MISSED; TIMED_CLICK 25 -> fare 13870 and C VERIFIED', () => {
+    let mv03State = createInitialPuzzleState(CASE_001_PUZZLE);
+    mv03State = applyDecision(CASE_001_PUZZLE, mv03State, { pageId: 'MV-01', mark: 1, action: 'CLICK' }).next;
+    mv03State = applyDecision(CASE_001_PUZZLE, mv03State, {
+      pageId: 'MV-02',
+      mark: 17,
+      action: 'TYPE',
+      text: 'TANAKA',
+    }).next;
+
+    // Plain CLICK 25 -> fare 19590, timedWindowHit false, Exhibit C MISSED
+    const plainNext = applyDecision(CASE_001_PUZZLE, mv03State, {
+      pageId: 'MV-03',
+      mark: 25,
+      action: 'CLICK',
+    }).next;
+    expect(plainNext.fields.fare).toBe(19590);
+    expect(plainNext.fields.timedWindowHit).toBe(false);
+    const plainEvals = evaluateExhibits(CASE_001_PUZZLE, plainNext);
+    expect(plainEvals.find((e) => e.id === 'C')?.status).toBe('MISSED');
+
+    // TIMED_CLICK 25 -> fare 13870, timedWindowHit true, Exhibit C VERIFIED
+    const timedNext = applyDecision(CASE_001_PUZZLE, mv03State, {
+      pageId: 'MV-03',
+      mark: 25,
+      action: 'TIMED_CLICK',
+    }).next;
+    expect(timedNext.fields.fare).toBe(13870);
+    expect(timedNext.fields.timedWindowHit).toBe(true);
+    const timedEvals = evaluateExhibits(CASE_001_PUZZLE, timedNext);
+    expect(timedEvals.find((e) => e.id === 'C')?.status).toBe('VERIFIED');
+  });
+
+  it('★ D-5=A: confirm with insurance attached -> E CONTAMINATED with note; uncheck (CLICK 28) before confirming -> E VERIFIED', () => {
+    let state = createInitialPuzzleState(CASE_001_PUZZLE);
+    state = applyDecision(CASE_001_PUZZLE, state, { pageId: 'MV-01', mark: 1, action: 'CLICK' }).next;
+    state = applyDecision(CASE_001_PUZZLE, state, { pageId: 'MV-02', mark: 17, action: 'TYPE', text: 'TANAKA' }).next;
+    state = applyDecision(CASE_001_PUZZLE, state, { pageId: 'MV-03', mark: 25, action: 'TIMED_CLICK' }).next;
+
+    // Attach insurance via CLICK 28, then confirm via CLICK 30
+    const withIns = applyDecision(CASE_001_PUZZLE, state, { pageId: 'MV-04', mark: 28, action: 'CLICK' }).next;
+    expect(withIns.fields.insuranceAttached).toBe(true);
+    const confirmedWithIns = applyDecision(CASE_001_PUZZLE, withIns, {
+      pageId: 'MV-04',
+      mark: 30,
+      action: 'CLICK',
+    }).next;
+
+    const evalsContam = evaluateExhibits(CASE_001_PUZZLE, confirmedWithIns);
+    const evalEContam = evalsContam.find((e) => e.id === 'E')!;
+    expect(evalEContam.status).toBe('CONTAMINATED');
+    expect(evalEContam.contaminatedNote).toBe('¥2,400 travel insurance was attached');
+
+    // Uncheck insurance via CLICK 28 before confirming -> E VERIFIED
+    const unchecked = applyDecision(CASE_001_PUZZLE, withIns, { pageId: 'MV-04', mark: 28, action: 'CLICK' }).next;
+    expect(unchecked.fields.insuranceAttached).toBe(false);
+    const confirmedClean = applyDecision(CASE_001_PUZZLE, unchecked, {
+      pageId: 'MV-04',
+      mark: 30,
+      action: 'CLICK',
+    }).next;
+
+    const evalsClean = evaluateExhibits(CASE_001_PUZZLE, confirmedClean);
+    const evalEClean = evalsClean.find((e) => e.id === 'E')!;
+    expect(evalEClean.status).toBe('VERIFIED');
+  });
+
+  it('★ with a fake clock, waitForColumnNot(2) never resolves while currentColumn() === 2, and waitForColumn(2) always resolves when currentColumn() === 2', async () => {
+    const { currentColumn, waitForColumn, waitForColumnNot } = await import('../src/engine/flash_clock');
+    const { vi } = await import('vitest');
+    vi.useFakeTimers();
+    try {
+      // Advance to column 2 (period 950ms -> [1900, 2850) is column 2)
+      vi.setSystemTime(new Date(1950));
+      const nowSpy = vi.spyOn(performance, 'now').mockImplementation(() => Date.now());
+      expect(currentColumn()).toBe(2);
+
+      // Plain CLICK choreography awaits waitForColumnNot(2): while at 1950ms (col 2), must wait until col != 2
+      let plainClickedCol: number | null = null;
+      const plainPromise = waitForColumnNot(2).then(() => {
+        plainClickedCol = currentColumn();
+      });
+      await vi.advanceTimersByTimeAsync(100);
+      expect(plainClickedCol).toBeNull();
+      await vi.advanceTimersByTimeAsync(900); // now at 2950ms -> col 0
+      await plainPromise;
+      expect(plainClickedCol).not.toBe(2);
+
+      // TIMED_CLICK choreography awaits waitForColumn(2): while at col 0, must wait until col === 2
+      expect(currentColumn()).toBe(0);
+      let timedClickedCol: number | null = null;
+      const timedPromise = waitForColumn(2).then(() => {
+        timedClickedCol = currentColumn();
+      });
+      await vi.advanceTimersByTimeAsync(500);
+      expect(timedClickedCol).toBeNull();
+      await vi.advanceTimersByTimeAsync(1500); // reaches col 2
+      await timedPromise;
+      expect(timedClickedCol).toBe(2);
+
+      nowSpy.mockRestore();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

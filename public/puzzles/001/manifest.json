@@ -1121,7 +1121,7 @@
       "code": "C",
       "title": "14:30 Nozomi • 🍀 ¥13,870",
       "weight": 20,
-      "criteria": "Timed-clicked Green Car seat on Nozomi 24 during active flash discount (特割) for ¥13,870.",
+      "criteria": "Clicked the 🍀 Green Car seat on Nozomi 24 while the flash-sale highlight was on it (¥13,870).",
       "ruleKey": "seat_selected",
       "targetValue": true
     },

@@ -889,7 +889,7 @@ export function evaluateClientSideDecision(
     lower.includes('グリーン') ||
     lower.includes('特割')
   ) {
-    const isTimed = /\b(?:timed|flash|window|wait|moving|sale)\b/i.test(lower);
+    const isTimed = /\b(?:wait|when|until|timed|timing|flash|sale|glow|highlight|lights\s*up)\b/i.test(lower);
     return {
       action: isTimed ? 'TIMED_CLICK' : 'CLICK',
       target_id: 25,

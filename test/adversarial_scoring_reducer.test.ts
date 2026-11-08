@@ -285,8 +285,8 @@ describe('Adversarial Challenge Vector 3: Trap Flag Permanence & Signature Requi
     state = gameReducer(state, {
       type: 'APPLY_AGENT_ACTION',
       payload: {
-        action: { action: 'CLICK', targetId: '#25', thought: 'green car' },
-        instruction: 'click green car',
+        action: { action: 'TIMED_CLICK', targetId: '#25', thought: 'green car' },
+        instruction: 'wait for sale glow then click green car',
       },
     });
 

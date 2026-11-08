@@ -147,7 +147,7 @@ describe('5. ShinkansenSandbox Component', () => {
       />
     );
 
-    const greenBtn = screen.getByRole('button', { name: /🍀 ◯ ¥13,870/i });
+    const greenBtn = screen.getByRole('button', { name: /🍀 ◯ ¥(?:13,870|19,590)/i });
     expect(greenBtn).toBeInTheDocument();
 
     const mv04State = {

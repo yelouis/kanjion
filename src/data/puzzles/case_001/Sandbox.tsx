@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { FieldValue, PuzzleState } from '../../../types/puzzle_data';
 import { CASE_001_PUZZLE } from './puzzle';
+import { currentColumn, msUntilNextColumn } from '../../../engine/flash_clock';
 import { resolveSignatureDrawingSpec } from '../../../utils/text_normalizer';
 
 export interface SandboxProps {
@@ -71,17 +72,30 @@ export const Sandbox: React.FC<SandboxProps> = ({
     typeof signatureProgress === 'number' ? signatureProgress : isSignatureSigned ? 1 : 0;
   const sigSpec = resolveSignatureDrawingSpec(currentSigStroke);
 
-  // Live cycling flash-sale window for the live agent webpage when externalFlashColumn isn't controlled
-  const [internalFlashCol, setInternalFlashCol] = useState<0 | 1 | 2>(2);
+  // Live cycling flash-sale window from the shared flash clock when externalFlashColumn isn't controlled
+  const [, setClockTick] = useState(0);
   useEffect(() => {
     if (externalFlashColumn !== undefined) return;
-    const timer = setInterval(() => {
-      setInternalFlashCol((prev) => ((prev + 1) % 3) as 0 | 1 | 2);
-    }, 950);
-    return () => clearInterval(timer);
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleNext = () => {
+      timer = setTimeout(() => {
+        setClockTick((t) => t + 1);
+        scheduleNext();
+      }, msUntilNextColumn());
+    };
+    scheduleNext();
+    return () => {
+      if (timer !== null) clearTimeout(timer);
+    };
   }, [externalFlashColumn]);
 
-  const activeFlashColumn = externalFlashColumn ?? internalFlashCol;
+  const activeFlashColumn: 0 | 1 | 2 = externalFlashColumn ?? currentColumn();
+  const greenSeatLabel =
+    activeFlashColumn === 2 ? '🍀 ◯ ¥13,870 (特割)' : '🍀 ◯ ¥19,590';
+  const numericFare =
+    typeof fields.fare === 'number' && fields.fare > 0 ? fields.fare : 13870;
+  const formattedFare = `¥${numericFare.toLocaleString('en-US')}`;
+  const isConfirmedWithIns = Boolean(fields.confirmedWithInsurance ?? fields.insuranceAttached);
 
   const STEPPER_INDEX: Record<string, number> = {
     'MV-01': 1,
@@ -634,8 +648,8 @@ export const Sandbox: React.FC<SandboxProps> = ({
                         }`}
                       >
                         {isGreenSelected
-                          ? '✓ 選択中 • 🍀 ◯ ¥13,870 (特割)'
-                          : '🍀 ◯ ¥13,870 (特割)'}
+                          ? `✓ 選択中 • ${greenSeatLabel}`
+                          : greenSeatLabel}
                       </button>
                     </td>
                   </tr>
@@ -691,7 +705,8 @@ export const Sandbox: React.FC<SandboxProps> = ({
                 <div>
                   <div className="text-emerald-800 font-bold">設備・特割運賃</div>
                   <div className="font-black text-emerald-900 mt-0.5">
-                    🍀 グリーン車（特割）¥13,870
+                    🍀 グリーン車{numericFare === 13870 ? '（特割）' : ''}{formattedFare}
+                    {isInsAttached ? ' ＋保険 ¥2,400' : ''}
                   </div>
                 </div>
                 <div>
@@ -907,7 +922,8 @@ export const Sandbox: React.FC<SandboxProps> = ({
                 <div>
                   <div className="text-xs font-bold text-neutral-500">座席・運賃</div>
                   <div className="font-black text-emerald-900">
-                    🍀 グリーン車（特割）¥13,870
+                    🍀 グリーン車{numericFare === 13870 ? '（特割）' : ''}{formattedFare}
+                    {isConfirmedWithIns ? ' ＋保険 ¥2,400' : ''}
                   </div>
                   <div className="text-xs font-bold text-neutral-700 mt-0.5">
                     8号車 12番 A席

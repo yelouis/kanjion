@@ -12,6 +12,7 @@ import {
   CASE_001_PUZZLE,
 } from './data/puzzles/case_001';
 import { elementsOnPage } from './engine/puzzle_engine';
+import { waitForColumn, waitForColumnNot } from './engine/flash_clock';
 import { GameConfig, productionConfig } from './config/game_config';
 
 import {
@@ -263,6 +264,19 @@ export const App: React.FC<AppProps> = ({ config }) => {
         targetElementId: null,
       });
       await sleep(1150);
+
+      // If the resolved element has a timedColumn, wait for (or wait out) the flash column
+      const matchedEl = elementsOnPage(CASE_001_PUZZLE, state.macroViewId).find(
+        (e) => e.key === coords.targetKey
+      );
+      const timedCol = matchedEl?.visual?.timedColumn;
+      if (scale > 0 && timedCol !== undefined) {
+        if (action.action === 'TIMED_CLICK') {
+          await waitForColumn(timedCol);
+        } else if (action.action === 'CLICK') {
+          await waitForColumnNot(timedCol);
+        }
+      }
 
       // Lock target highlight ring onto the element
       setPreviewCursor({

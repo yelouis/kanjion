@@ -26,7 +26,7 @@ describe('Item 2: Case #001 everywhere, no hidden test text, honest share card',
     const steps = [
       'Click the top-left green box',
       'Type TANAKA in the passenger name box',
-      'select nozomi green car',
+      'Wait for the sale glow, then click the green ¥13,870',
       'Draw a signature in the dashed box',
       'confirm booking',
     ];

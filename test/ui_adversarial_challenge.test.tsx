@@ -281,7 +281,7 @@ describe('Adversarial Challenge 3: Anti-Copy & Clipboard Tamper Lockout', () => 
     );
 
     // Find deep child targets: Japanese fare button #25, promo button #12, and simulated URL bar
-    const greenBtn = screen.getByRole('button', { name: /🍀 ◯ ¥13,870/i });
+    const greenBtn = screen.getByRole('button', { name: /🍀 ◯ ¥(?:13,870|19,590)/i });
     const promoBtn = screen.getByRole('button', { name: /今すぐ申し込む/i });
     const urlText = screen.getByText(/sandbox:\/\/kanjion-rail\.example/i);
 
