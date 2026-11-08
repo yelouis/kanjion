@@ -545,4 +545,139 @@ describe('Milestone 4: Puzzle Compilation Tooling Verification Suite', () => {
       expect(err.exitCode).toBe(EXIT_INVARIANT_VIOLATION);
     });
   });
+
+  // =========================================================================
+  // Item 9: Capture pipeline — real SoM images and measured boxes (§11)
+  // =========================================================================
+  describe('Item 9: Capture pipeline — real SoM images and measured boxes (§11)', () => {
+    const generatedManifestPath = path.resolve(
+      __dirname,
+      '../src/data/puzzles/case_001/manifest.generated.json'
+    );
+    const somDir = path.resolve(__dirname, '../public/puzzles/001/som');
+
+    it('★ manifest.generated.json has a box inside 1024x768 for every registry element on every page, and every som/*.png is > 10 KB', async () => {
+      const { CASE_001_PUZZLE } = await import('../src/data/puzzles/case_001/puzzle');
+      expect(fs.existsSync(generatedManifestPath)).toBe(true);
+      const manifest = JSON.parse(fs.readFileSync(generatedManifestPath, 'utf-8'));
+
+      expect(manifest.puzzleId).toBe('001');
+      expect(manifest.stage).toEqual({ w: 1024, h: 768 });
+
+      for (const page of CASE_001_PUZZLE.pages) {
+        const pageEntry = manifest.pages[page.id];
+        expect(pageEntry, `Missing manifest page entry for ${page.id}`).toBeDefined();
+        expect(pageEntry.som).toMatch(/^\/puzzles\/001\/som\/MV-\d{2}\.[0-9a-f]{8}\.png$/);
+
+        const pngFile = path.resolve(__dirname, '../public', pageEntry.som.replace(/^\//, ''));
+        expect(fs.existsSync(pngFile), `Missing PNG file ${pngFile}`).toBe(true);
+        const stat = fs.statSync(pngFile);
+        expect(stat.size).toBeGreaterThan(10 * 1024);
+
+        for (const regEl of page.elements) {
+          const found = pageEntry.elements.find(
+            (e: { mark: number; key: string }) => e.mark === regEl.mark && e.key === regEl.key
+          );
+          expect(found, `Missing element ${regEl.key} (#${regEl.mark}) on ${page.id}`).toBeDefined();
+          const { x, y, w, h } = found.box;
+          expect(w).toBeGreaterThan(0);
+          expect(h).toBeGreaterThan(0);
+          expect(x).toBeGreaterThanOrEqual(0);
+          expect(y).toBeGreaterThanOrEqual(0);
+          expect(x + w).toBeLessThanOrEqual(1024);
+          expect(y + h).toBeLessThanOrEqual(768);
+        }
+      }
+
+      const somFiles = fs.readdirSync(somDir).filter((f) => f.endsWith('.png'));
+      expect(somFiles.length).toBe(CASE_001_PUZZLE.pages.length);
+    });
+
+    it(
+      '★ two captures in a row produce a byte-identical manifest and the same image names, and every manifest box center is within 2 px of live DOM center at 1024x768',
+      () => {
+        const { spawnSync } = require('node:child_process') as typeof import('node:child_process');
+        const rootDir = path.resolve(__dirname, '..');
+
+        // Capture 1
+        const cap1 = spawnSync('npx', ['tsx', 'tools/compile_puzzle.ts', '--case', '001'], {
+          cwd: rootDir,
+          encoding: 'utf-8',
+          timeout: 60000,
+        });
+        expect(cap1.status).toBe(0);
+        const manifest1 = fs.readFileSync(generatedManifestPath, 'utf-8');
+        const files1 = fs.readdirSync(somDir).sort();
+
+        // Capture 2
+        const cap2 = spawnSync('npx', ['tsx', 'tools/compile_puzzle.ts', '--case', '001'], {
+          cwd: rootDir,
+          encoding: 'utf-8',
+          timeout: 60000,
+        });
+        expect(cap2.status).toBe(0);
+        const manifest2 = fs.readFileSync(generatedManifestPath, 'utf-8');
+        const files2 = fs.readdirSync(somDir).sort();
+
+        expect(manifest2).toBe(manifest1);
+        expect(files2).toEqual(files1);
+
+        // Measure live DOM centers in dev server at 1024x768 and compare with manifest box centers
+        const checkScript = `
+          import * as fs from 'node:fs';
+          import { chromium } from '@playwright/test';
+          import { CASE_001_PUZZLE } from './src/data/puzzles/case_001/puzzle';
+
+          (async () => {
+            const { createServer } = await import('vite');
+            const manifest = JSON.parse(fs.readFileSync('./src/data/puzzles/case_001/manifest.generated.json', 'utf-8'));
+            const server = await createServer({ root: process.cwd(), server: { port: 0, strictPort: false }, logLevel: 'silent' });
+            await server.listen();
+            const addr = server.httpServer?.address();
+            const port = typeof addr === 'object' && addr ? addr.port : 5173;
+            const browser = await chromium.launch({ headless: true });
+            try {
+              const ctx = await browser.newContext({ viewport: { width: 1024, height: 768 }, deviceScaleFactor: 1 });
+              const page = await ctx.newPage();
+              for (const pageDef of CASE_001_PUZZLE.pages) {
+                await page.goto('http://127.0.0.1:' + port + '/capture.html?case=001&page=' + pageDef.id, { waitUntil: 'networkidle' });
+                await page.evaluate(async () => { if (document.fonts?.ready) await document.fonts.ready; });
+                const liveCenters = await page.evaluate(() => {
+                  const stage = document.getElementById('sandbox-core') || document.body;
+                  const sr = stage.getBoundingClientRect();
+                  const out = {};
+                  stage.querySelectorAll('[data-el]').forEach((el) => {
+                    const key = el.getAttribute('data-el');
+                    if (!key) return;
+                    const r = el.getBoundingClientRect();
+                    out[key] = { cx: r.left - sr.left + r.width / 2, cy: r.top - sr.top + r.height / 2 };
+                  });
+                  return out;
+                });
+                for (const mel of manifest.pages[pageDef.id].elements) {
+                  const mcx = mel.box.x + mel.box.w / 2;
+                  const mcy = mel.box.y + mel.box.h / 2;
+                  const live = liveCenters[mel.key];
+                  if (!live) throw new Error('Missing live [data-el="' + mel.key + '"] on ' + pageDef.id);
+                  if (Math.abs(mcx - live.cx) > 2 || Math.abs(mcy - live.cy) > 2) {
+                    throw new Error('Center mismatch for ' + mel.key + ' on ' + pageDef.id + ': manifest=(' + mcx + ',' + mcy + ') live=(' + live.cx + ',' + live.cy + ')');
+                  }
+                }
+              }
+            } finally {
+              await browser.close();
+              await server.close();
+            }
+          })().catch((e) => { console.error(e); process.exit(1); });
+        `;
+        const liveCheck = spawnSync('npx', ['tsx', '--eval', checkScript], {
+          cwd: rootDir,
+          encoding: 'utf-8',
+          timeout: 60000,
+        });
+        expect(liveCheck.status, liveCheck.stderr).toBe(0);
+      },
+      120000
+    );
+  });
 });

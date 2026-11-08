@@ -1,0 +1,569 @@
+{
+  "pages": {
+    "MV-01": {
+      "elements": [
+        {
+          "box": {
+            "h": 170,
+            "w": 488,
+            "x": 16,
+            "y": 244
+          },
+          "key": "route_tokaido",
+          "mark": 1
+        },
+        {
+          "box": {
+            "h": 170,
+            "w": 488,
+            "x": 520,
+            "y": 244
+          },
+          "key": "route_tohoku",
+          "mark": 2
+        },
+        {
+          "box": {
+            "h": 150,
+            "w": 488,
+            "x": 16,
+            "y": 430
+          },
+          "key": "route_hokuriku",
+          "mark": 3
+        },
+        {
+          "box": {
+            "h": 150,
+            "w": 488,
+            "x": 520,
+            "y": 430
+          },
+          "key": "route_points",
+          "mark": 4
+        },
+        {
+          "box": {
+            "h": 20,
+            "w": 64,
+            "x": 946,
+            "y": 42
+          },
+          "key": "nav_news",
+          "mark": 11
+        },
+        {
+          "box": {
+            "h": 24,
+            "w": 108,
+            "x": 896,
+            "y": 126
+          },
+          "key": "promo_insurance",
+          "mark": 12
+        },
+        {
+          "box": {
+            "h": 28,
+            "w": 454,
+            "x": 16,
+            "y": 174
+          },
+          "key": "page_title",
+          "mark": 90
+        }
+      ],
+      "som": "/puzzles/001/som/MV-01.e5804f42.png"
+    },
+    "MV-02": {
+      "elements": [
+        {
+          "box": {
+            "h": 20,
+            "w": 64,
+            "x": 946,
+            "y": 42
+          },
+          "key": "nav_news",
+          "mark": 11
+        },
+        {
+          "box": {
+            "h": 24,
+            "w": 108,
+            "x": 896,
+            "y": 126
+          },
+          "key": "promo_insurance",
+          "mark": 12
+        },
+        {
+          "box": {
+            "h": 26,
+            "w": 123,
+            "x": 881,
+            "y": 187
+          },
+          "key": "back",
+          "mark": 14
+        },
+        {
+          "box": {
+            "h": 60,
+            "w": 940,
+            "x": 42,
+            "y": 392
+          },
+          "key": "passenger_name",
+          "mark": 17
+        },
+        {
+          "box": {
+            "h": 28,
+            "w": 478,
+            "x": 20,
+            "y": 178
+          },
+          "key": "page_title",
+          "mark": 90
+        }
+      ],
+      "som": "/puzzles/001/som/MV-02.a86734f4.png"
+    },
+    "MV-03": {
+      "elements": [
+        {
+          "box": {
+            "h": 20,
+            "w": 64,
+            "x": 946,
+            "y": 42
+          },
+          "key": "nav_news",
+          "mark": 11
+        },
+        {
+          "box": {
+            "h": 24,
+            "w": 108,
+            "x": 896,
+            "y": 126
+          },
+          "key": "promo_insurance",
+          "mark": 12
+        },
+        {
+          "box": {
+            "h": 22,
+            "w": 83,
+            "x": 927,
+            "y": 181
+          },
+          "key": "back",
+          "mark": 14
+        },
+        {
+          "box": {
+            "h": 30,
+            "w": 88,
+            "x": 410,
+            "y": 334
+          },
+          "key": "seat_hikari_free",
+          "mark": 21
+        },
+        {
+          "box": {
+            "h": 30,
+            "w": 86,
+            "x": 590,
+            "y": 334
+          },
+          "key": "seat_hikari_reserved",
+          "mark": 22
+        },
+        {
+          "box": {
+            "h": 30,
+            "w": 88,
+            "x": 410,
+            "y": 395
+          },
+          "key": "seat_nozomi_free",
+          "mark": 23
+        },
+        {
+          "box": {
+            "h": 30,
+            "w": 88,
+            "x": 589,
+            "y": 395
+          },
+          "key": "seat_nozomi_reserved",
+          "mark": 24
+        },
+        {
+          "box": {
+            "h": 33,
+            "w": 159,
+            "x": 786,
+            "y": 393
+          },
+          "key": "seat_nozomi_green",
+          "mark": 25
+        },
+        {
+          "box": {
+            "h": 24,
+            "w": 570,
+            "x": 14,
+            "y": 172
+          },
+          "key": "page_title",
+          "mark": 90
+        }
+      ],
+      "som": "/puzzles/001/som/MV-03.9c956c4c.png"
+    },
+    "MV-04": {
+      "elements": [
+        {
+          "box": {
+            "h": 20,
+            "w": 64,
+            "x": 946,
+            "y": 42
+          },
+          "key": "nav_news",
+          "mark": 11
+        },
+        {
+          "box": {
+            "h": 24,
+            "w": 108,
+            "x": 896,
+            "y": 126
+          },
+          "key": "promo_insurance",
+          "mark": 12
+        },
+        {
+          "box": {
+            "h": 26,
+            "w": 111,
+            "x": 897,
+            "y": 183
+          },
+          "key": "back",
+          "mark": 14
+        },
+        {
+          "box": {
+            "h": 112,
+            "w": 956,
+            "x": 34,
+            "y": 360
+          },
+          "key": "signature_pad",
+          "mark": 27
+        },
+        {
+          "box": {
+            "h": 16,
+            "w": 236,
+            "x": 32,
+            "y": 714
+          },
+          "key": "insurance_checkbox",
+          "mark": 28
+        },
+        {
+          "box": {
+            "h": 34,
+            "w": 94,
+            "x": 669,
+            "y": 705
+          },
+          "key": "cancel_booking",
+          "mark": 29
+        },
+        {
+          "box": {
+            "h": 36,
+            "w": 217,
+            "x": 775,
+            "y": 704
+          },
+          "key": "confirm_booking",
+          "mark": 30
+        },
+        {
+          "box": {
+            "h": 28,
+            "w": 683,
+            "x": 16,
+            "y": 174
+          },
+          "key": "page_title",
+          "mark": 90
+        }
+      ],
+      "som": "/puzzles/001/som/MV-04.c3296773.png"
+    },
+    "MV-05": {
+      "elements": [
+        {
+          "box": {
+            "h": 20,
+            "w": 64,
+            "x": 946,
+            "y": 42
+          },
+          "key": "nav_news",
+          "mark": 11
+        },
+        {
+          "box": {
+            "h": 24,
+            "w": 108,
+            "x": 896,
+            "y": 126
+          },
+          "key": "promo_insurance",
+          "mark": 12
+        },
+        {
+          "box": {
+            "h": 28,
+            "w": 462,
+            "x": 204,
+            "y": 378
+          },
+          "key": "page_title",
+          "mark": 90
+        }
+      ],
+      "som": "/puzzles/001/som/MV-05.91f9377b.png"
+    },
+    "MV-07": {
+      "elements": [
+        {
+          "box": {
+            "h": 32,
+            "w": 96,
+            "x": 419,
+            "y": 493
+          },
+          "key": "cancel_confirm",
+          "mark": 71
+        },
+        {
+          "box": {
+            "h": 34,
+            "w": 74,
+            "x": 531,
+            "y": 492
+          },
+          "key": "cancel_dismiss",
+          "mark": 72
+        },
+        {
+          "box": {
+            "h": 28,
+            "w": 392,
+            "x": 316,
+            "y": 400
+          },
+          "key": "page_title",
+          "mark": 90
+        }
+      ],
+      "som": "/puzzles/001/som/MV-07.b2d55ea0.png"
+    },
+    "MV-08": {
+      "elements": [
+        {
+          "box": {
+            "h": 20,
+            "w": 64,
+            "x": 946,
+            "y": 42
+          },
+          "key": "nav_news",
+          "mark": 11
+        },
+        {
+          "box": {
+            "h": 24,
+            "w": 108,
+            "x": 896,
+            "y": 126
+          },
+          "key": "promo_insurance",
+          "mark": 12
+        },
+        {
+          "box": {
+            "h": 28,
+            "w": 69,
+            "x": 703,
+            "y": 360
+          },
+          "key": "news_back",
+          "mark": 81
+        },
+        {
+          "box": {
+            "h": 28,
+            "w": 80,
+            "x": 252,
+            "y": 360
+          },
+          "key": "page_title",
+          "mark": 90
+        }
+      ],
+      "som": "/puzzles/001/som/MV-08.ee206848.png"
+    },
+    "MV-10": {
+      "elements": [
+        {
+          "box": {
+            "h": 20,
+            "w": 64,
+            "x": 946,
+            "y": 42
+          },
+          "key": "nav_news",
+          "mark": 11
+        },
+        {
+          "box": {
+            "h": 24,
+            "w": 108,
+            "x": 896,
+            "y": 126
+          },
+          "key": "promo_insurance",
+          "mark": 12
+        },
+        {
+          "box": {
+            "h": 32,
+            "w": 173,
+            "x": 426,
+            "y": 505
+          },
+          "key": "back",
+          "mark": 14
+        },
+        {
+          "box": {
+            "h": 28,
+            "w": 520,
+            "x": 252,
+            "y": 429
+          },
+          "key": "page_title",
+          "mark": 90
+        }
+      ],
+      "som": "/puzzles/001/som/MV-10.25776776.png"
+    },
+    "MV-11": {
+      "elements": [
+        {
+          "box": {
+            "h": 20,
+            "w": 64,
+            "x": 946,
+            "y": 42
+          },
+          "key": "nav_news",
+          "mark": 11
+        },
+        {
+          "box": {
+            "h": 24,
+            "w": 108,
+            "x": 896,
+            "y": 126
+          },
+          "key": "promo_insurance",
+          "mark": 12
+        },
+        {
+          "box": {
+            "h": 32,
+            "w": 173,
+            "x": 426,
+            "y": 505
+          },
+          "key": "back",
+          "mark": 14
+        },
+        {
+          "box": {
+            "h": 28,
+            "w": 520,
+            "x": 252,
+            "y": 429
+          },
+          "key": "page_title",
+          "mark": 90
+        }
+      ],
+      "som": "/puzzles/001/som/MV-11.937eaf46.png"
+    },
+    "MV-12": {
+      "elements": [
+        {
+          "box": {
+            "h": 20,
+            "w": 64,
+            "x": 946,
+            "y": 42
+          },
+          "key": "nav_news",
+          "mark": 11
+        },
+        {
+          "box": {
+            "h": 24,
+            "w": 108,
+            "x": 896,
+            "y": 126
+          },
+          "key": "promo_insurance",
+          "mark": 12
+        },
+        {
+          "box": {
+            "h": 32,
+            "w": 173,
+            "x": 426,
+            "y": 519
+          },
+          "key": "back",
+          "mark": 14
+        },
+        {
+          "box": {
+            "h": 56,
+            "w": 520,
+            "x": 252,
+            "y": 415
+          },
+          "key": "page_title",
+          "mark": 90
+        }
+      ],
+      "som": "/puzzles/001/som/MV-12.1477038a.png"
+    }
+  },
+  "puzzleId": "001",
+  "stage": {
+    "h": 768,
+    "w": 1024
+  }
+}

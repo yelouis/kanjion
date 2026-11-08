@@ -72,9 +72,9 @@ You are an implementor agent with no memory of this project. This file is your s
 
 | Gate | Command | Result on 2026-11-07 |
 |---|---|---|
-| Unit/component | `npm test` | **450 passed / 24 files** (≈ 10.2 s). Runs the shipped multi-page game via `GameConfig` (items 1–8). |
-| Typecheck + build | `npm run build` | Clean (`tsc -b && vite build`). `dist/assets/index-*.js` 278.59 kB, **85.61 kB gzip**. CSS 37.57 kB. |
-| Compiler | `npx tsx tools/compile_puzzle.ts --case 001 --offline --validate --dry-run` | Exit 0, but it only validates hand-written TypeScript data and captures nothing (F-7). |
+| Unit/component | `npm test` | **452 passed / 24 files** (≈ 21.9 s). Runs the shipped multi-page game via `GameConfig` (items 1–9). |
+| Typecheck + build | `npm run build` | Clean (`tsc -b && vite build`). `dist/assets/index-*.js` 279.35 kB, **85.71 kB gzip**. CSS 348.04 kB (107.14 kB gzip, includes self-hosted `@fontsource/noto-sans-jp`). |
+| Compiler | `npx tsx tools/compile_puzzle.ts --case 001 --validate` | Exit 0; validates 10 content-hashed 1024×768 SoM PNGs in `public/puzzles/001/som/` and measured boxes in `src/data/puzzles/case_001/manifest.generated.json` (item 9). |
 | E2E | `npm run test:e2e` | **1 passed** (`e2e/smoke.e2e.ts` in `desktop-chromium`). |
 | Lint | — | No lint script exists. |
 | Exploit probe | `npx tsx scripts/exploit_probe.mts` | Only the answer-key path reaches 100% (`120 PTS`); F-1, F-2, F-3, F-4, F-5 all blocked/mitigated (items 3–4). |

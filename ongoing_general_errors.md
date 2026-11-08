@@ -109,12 +109,9 @@ Your selection: A
 |---|---|---|---|---|
 | F-3 | Critical | Gibberish and meta-prompts ("asdf qwerty zxcv", "complete the task", "click the winning button") click the winning Confirm button on page 04, because the always-act fallback for MV-04 targets #30. | `src/engine/cloud_connector.ts:1019-1027` | Items 4, 10 |
 | F-6 | High | Players almost never reach a model. Nano is used only if it is already downloaded, the regex wins whenever it matches, and everything else is a ~450-line regex. | `src/engine/cloud_connector.ts:1126-1133`, `:1174-1183`, `:602-1046` | Items 10, 11 |
-| F-7 | High | No model ever receives an image. | All 24 `.webp` files in `public/puzzles/042/views/` are 0 bytes; 11 of 12 SoM SVGs are empty<br>`--case 042` re-serializes the TS fixture: `tools/lib/offline_compiler.ts:108`<br>`template.html` is a hard-coded stub: `:136-160`<br>The game never loads `manifest.json` | Item 9 |
 | F-15 | Low | There is no daily schedule or rollover; the one case is hard-coded. | — | Item 12 |
 | F-16 | Low | Phones show the stage at 0.32×, which is too small to read. | `src/components/SandboxStage.tsx:24-59` | Item 13 |
 | F-17 | Low | Dead code. | `functions/` can't deploy on Spark and nothing calls it<br>Dev-server regex middleware duplicates the agent: `vite.config.ts:10-383`<br>Unused components: `GhostReplay`, `CoordinateRulers`, `DossierLayout`<br>Single-page sandbox branch used only by tests: `src/components/ShinkansenSandbox.tsx:985-1464` | Items 1, 2, 10, 11 |
-| F-19 | Low | `/puzzles/**` is served `immutable` for a year, so regenerating a file under the same name would leave players on stale assets. | `firebase.json:43-47` | Item 9 |
-| F-20 | Low | The Japanese font loads from the Google Fonts CDN, so SoM captures and players' screens can lay out differently. | `index.html:9-11` | Item 9 |
 
 Reproduce F-1 to F-5 with `npx tsx scripts/exploit_probe.mts`.
 
@@ -128,6 +125,7 @@ _(none yet — implementors add entries here as options with a `Your selection:`
 - F-2 — resolved by item 5 (removed all `'TANAKA'` defaults in `2ee1ef3` item 4 and removed `'TANAKA'` page hints and unentered passenger-name fallback labels from `ShinkansenSandbox.tsx`)
 - F-4 — resolved by item 6 (populated elements on all 10 pages in `src/data/puzzles/case_001/puzzle.ts`, derived `CASE_001_MACRO_VIEWS` from `CASE_001_PUZZLE`, and enforced page-scoped mark resolution in `applyDecision`; item 4 `2ee1ef3` added full mark-set regex blocking)
 - F-5 — resolved by item 3 (locked `officialResult` on first official `CLOSE_CASE`, replaced `REOPEN_CASE` with unscored `START_PRACTICE`, and added `kanjion:v1:case:001` persistence across refreshes)
+- F-7 — resolved by item 9 (implemented headless Chromium SoM capture pipeline via `capture.html` and `tools/compile_puzzle.ts`, generated 1024×768 content-hashed SoM PNGs in `public/puzzles/001/som/` and measured bounding boxes in `src/data/puzzles/case_001/manifest.generated.json`, and removed dead `public/puzzles/001/views/`, `template.html`, and `manifest.json`)
 - F-8 — resolved by item 2 (removed all `sr-only` hidden test strings and unused debug toggles; item 1 `5efae7f` removed `NODE_ENV` and `navigator.webdriver` branches, added `GameConfig`, and added Playwright `e2e/smoke.e2e.ts`)
 - F-9 — resolved by item 5 (replaced `えきねっと JR` branding, `eki-net.com/personal` URLs, `JRE POINT`, `Suica`, and `ログアウト` with fictional `かんじおん鉄道` + `新幹線ネット予約`, `sandbox://kanjion-rail.example/reserve/<slug>`, and `お知らせ` button; updated outbound links to `"Inspired by eki-net.com ↗"`)
 - F-10 — resolved by item 5 (removed English glosses, page-number spoilers, and internal view codes from `ShinkansenSandbox.tsx`)
@@ -137,6 +135,8 @@ _(none yet — implementors add entries here as options with a `Your selection:`
 - F-14 — resolved by item 2 (renamed Case #042 to Case #001 everywhere, updated share card URL to `https://kanjion-game.web.app`, and rendered lines 1–2 of `scoreReport.shareableClipping` in `ExhibitsPanel.tsx`)
 - F-17 (part) — resolved by item 2 (deleted unused `GhostReplay.tsx`, `CoordinateRulers.tsx`, and `DossierLayout.tsx`; item 1 `5efae7f` deleted single-page test-only sandbox branch)
 - F-18 — resolved by item 5 (blocked `onPaste` and `onDrop` on the instruction input in `DispatchPad.tsx` and updated placeholder to `'Tell your agent what to do (English, max 60 characters)'`)
+- F-19 — resolved by item 9 (named SoM PNG assets with an 8-char SHA-256 content hash `public/puzzles/001/som/<pageId>.<hash8>.png` referenced from `manifest.generated.json`)
+- F-20 — resolved by item 9 (bundled self-hosted `@fontsource/noto-sans-jp` weights 400, 700, 900 in `src/main.tsx` and `src/capture/main.tsx` and removed Google Fonts CDN `<link>` tags from `index.html`)
 
 ## History
 - **2026-11-07** — Reviewed the build against the original and the updated concept briefs.

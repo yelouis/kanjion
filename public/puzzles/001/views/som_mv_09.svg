@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 768" width="1024" height="768" style="pointer-events:none;">
-  <defs>
-    <filter id="drop-shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#000000" flood-opacity="0.45" />
-    </filter>
-  </defs>
-  <!-- Bounding Reticles -->
-  <!-- Set-of-Mark Badges -->
-</svg>

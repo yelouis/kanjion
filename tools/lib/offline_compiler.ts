@@ -1,9 +1,7 @@
 /**
  * tools/lib/offline_compiler.ts
  *
- * Deterministic offline puzzle compiler using JSDOM and canonical fixtures.
- * Operates without launching a browser binary, guaranteeing 100% test reliability
- * across CI environments, Docker, and headless setups.
+ * Offline puzzle validation and fixture compilation.
  */
 
 import { JSDOM } from 'jsdom';
@@ -32,19 +30,103 @@ import {
   sanitizePuzzleHtml,
 } from './sanitizer';
 import {
-  generateSvgSomOverlay,
-} from './som_annotator';
-import {
   ResourceNotFoundError,
   SchemaInvariantError,
+  GeometryViolationError,
   FileSystemIoError,
   type CompilerOptions,
 } from './types';
 
+export interface GeneratedManifestBox {
+  h: number;
+  w: number;
+  x: number;
+  y: number;
+}
+
+export interface GeneratedManifestElement {
+  box: GeneratedManifestBox;
+  key: string;
+  mark: number;
+}
+
+export interface GeneratedManifestPage {
+  elements: GeneratedManifestElement[];
+  som: string;
+}
+
+export interface GeneratedPuzzleManifest {
+  pages: Record<string, GeneratedManifestPage>;
+  puzzleId: string;
+  stage: {
+    h: number;
+    w: number;
+  };
+}
+
+/**
+ * Validates `CASE_001_PUZZLE` against `src/data/puzzles/case_001/manifest.generated.json`
+ * without launching a browser.
+ */
+export function validateGeneratedCase001Manifest(
+  manifestPath = path.resolve(process.cwd(), 'src/data/puzzles/case_001/manifest.generated.json'),
+  publicDir = path.resolve(process.cwd(), 'public')
+): void {
+  if (!fs.existsSync(manifestPath)) {
+    throw new SchemaInvariantError(
+      `Generated manifest not found at "${manifestPath}". Run: npx tsx tools/compile_puzzle.ts --case 001`
+    );
+  }
+
+  let parsed: GeneratedPuzzleManifest;
+  try {
+    parsed = JSON.parse(fs.readFileSync(manifestPath, 'utf-8')) as GeneratedPuzzleManifest;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new SchemaInvariantError(`Failed to parse generated manifest: ${msg}`);
+  }
+
+  if (parsed.puzzleId !== '001' || parsed.stage?.w !== 1024 || parsed.stage?.h !== 768) {
+    throw new SchemaInvariantError('Generated manifest header is invalid (expected puzzleId "001", stage 1024x768).');
+  }
+
+  for (const page of CASE_001_PUZZLE.pages) {
+    const pageEntry = parsed.pages?.[page.id];
+    if (!pageEntry) {
+      throw new SchemaInvariantError(`Generated manifest is missing page "${page.id}".`);
+    }
+
+    const somRel = pageEntry.som?.replace(/^\//, '') ?? '';
+    const somAbs = path.resolve(publicDir, somRel);
+    if (!somRel || !fs.existsSync(somAbs)) {
+      throw new SchemaInvariantError(`SoM screenshot missing for page "${page.id}": ${somAbs}`);
+    }
+    const stat = fs.statSync(somAbs);
+    if (stat.size <= 10 * 1024) {
+      throw new SchemaInvariantError(
+        `SoM screenshot for page "${page.id}" is too small (${stat.size} bytes; expected > 10 KB).`
+      );
+    }
+
+    for (const regEl of page.elements) {
+      const match = pageEntry.elements?.find((e) => e.mark === regEl.mark && e.key === regEl.key);
+      if (!match || !match.box) {
+        throw new SchemaInvariantError(
+          `Generated manifest page "${page.id}" is missing box for element "${regEl.key}" (mark #${regEl.mark}).`
+        );
+      }
+      const { x, y, w, h } = match.box;
+      if (w <= 0 || h <= 0 || x < 0 || y < 0 || x + w > 1024 || y + h > 768) {
+        throw new GeometryViolationError(
+          `Element "${regEl.key}" (#${regEl.mark}) on "${page.id}" box [${x}, ${y}, ${w}, ${h}] lies outside 1024x768.`
+        );
+      }
+    }
+  }
+}
+
 /**
  * Extracts interactive elements from an HTML template string offline using JSDOM.
- * Uses explicit data-som-id / data-bbox attributes if present, falling back to
- * canonical fixtures for Case File #001 MV-03.
  */
 export function extractElementsOffline(html: string, macroViewId: string): SoMElement[] {
   const dom = new JSDOM(html);
@@ -95,7 +177,6 @@ export function extractElementsOffline(html: string, macroViewId: string): SoMEl
     return elements;
   }
 
-  // Fallback to canonical Case File #001 elements if macroViewId is MV-03
   if (macroViewId === 'MV-03' || macroViewId === 'view_03') {
     return CASE_001_MV03_ELEMENTS;
   }
@@ -104,7 +185,7 @@ export function extractElementsOffline(html: string, macroViewId: string): SoMEl
 }
 
 /**
- * Compiles Case File #001 deterministically in offline mode.
+ * Validates Case File #001 deterministically without launching a browser.
  */
 export function compileOfflineCase001(options: CompilerOptions): PuzzleManifest {
   const manifest = CASE_001_MANIFEST;
@@ -117,76 +198,27 @@ export function compileOfflineCase001(options: CompilerOptions): PuzzleManifest 
   }
 
   if (options.dryRun) {
-    if (options.verbose) {
-      console.log(`[compile] DRY RUN SUCCESS: Validated Case #001 with ${manifest.macroViews.length} views and ${manifest.exhibits.length} exhibits.`);
-    }
     return manifest;
   }
 
-  try {
-    fs.mkdirSync(options.outDir, { recursive: true });
-    const viewsDir = path.join(options.outDir, 'views');
-    fs.mkdirSync(viewsDir, { recursive: true });
+  if (options.validate) {
+    validateGeneratedCase001Manifest();
+  }
 
-    // 1. Write declarative manifest.json
-    const declarative = buildDeclarativeManifest(manifest);
-    const manifestPath = path.join(options.outDir, 'manifest.json');
-    fs.writeFileSync(manifestPath, JSON.stringify(declarative, null, 2), 'utf-8');
-
-    // 2. Write standalone sanitized template.html
-    const templateHtml = `<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>Case File #001 - Tokyo–Osaka Shinkansen</title>
-  <style>
-    html, body {
-      margin: 0; padding: 0;
-      width: 1024px; height: 768px;
-      overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #F4EFE6; color: #111111;
+  const defaultOutDir = path.resolve(process.cwd(), 'public/puzzles/001');
+  if (options.outDir && path.resolve(options.outDir) !== defaultOutDir) {
+    try {
+      fs.mkdirSync(options.outDir, { recursive: true });
+      const declarative = buildDeclarativeManifest(manifest);
+      fs.writeFileSync(
+        path.join(options.outDir, 'manifest.json'),
+        JSON.stringify(declarative, null, 2),
+        'utf-8'
+      );
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new FileSystemIoError(`Failed to write bundle files to "${options.outDir}": ${msg}`);
     }
-    .stage { position: relative; width: 1024px; height: 768px; }
-  </style>
-</head>
-<body>
-  <div class="stage">
-    <div style="padding: 16px;">
-      <h2>えきねっと風 新幹線予約システム (東京 ⇒ 新大阪)</h2>
-      <p>Macro-View 3: Seat Matrix Active</p>
-    </div>
-  </div>
-</body>
-</html>`;
-    const templatePath = path.join(options.outDir, 'template.html');
-    fs.writeFileSync(templatePath, templateHtml, 'utf-8');
-
-    // 3. Generate SVG Set-of-Mark overlays and asset representations for views
-    for (const view of manifest.macroViews) {
-      const viewKey = view.id.toLowerCase().replace('-', '_');
-      const svgSom = generateSvgSomOverlay(view.elements);
-      const svgPath = path.join(viewsDir, `som_${viewKey}.svg`);
-      fs.writeFileSync(svgPath, svgSom, 'utf-8');
-
-      // Also create clean and som dummy WebP or text references for asset bundle completeness
-      const cleanWebp = path.join(viewsDir, `clean_${viewKey}.webp`);
-      const somWebp = path.join(viewsDir, `som_${viewKey}.webp`);
-      if (!fs.existsSync(cleanWebp)) {
-        fs.writeFileSync(cleanWebp, Buffer.from([]));
-      }
-      if (!fs.existsSync(somWebp)) {
-        fs.writeFileSync(somWebp, Buffer.from([]));
-      }
-    }
-
-    if (options.verbose) {
-      console.log(`[compile] Successfully generated bundle at: ${options.outDir}`);
-    }
-  } catch (err: unknown) {
-    if (err instanceof SchemaInvariantError) throw err;
-    const msg = err instanceof Error ? err.message : String(err);
-    throw new FileSystemIoError(`Failed to write bundle files to "${options.outDir}": ${msg}`);
   }
 
   return manifest;
@@ -202,7 +234,6 @@ export function compileFixtureOffline(fixturePath: string, options: CompilerOpti
     throw new ResourceNotFoundError(`Specified fixture path does not exist: "${resolved}"`);
   }
 
-  // Look for puzzle.config.json or manifest.json in the fixture directory
   const configPath = path.join(resolved, 'puzzle.config.json');
   const manifestPath = path.join(resolved, 'manifest.json');
 
@@ -215,7 +246,6 @@ export function compileFixtureOffline(fixturePath: string, options: CompilerOpti
     const raw = fs.readFileSync(configPath, 'utf-8');
     baseManifest = JSON.parse(raw);
   } else {
-    // If it's a directory of HTML templates or single HTML file
     const indexPath = fs.statSync(resolved).isDirectory()
       ? path.join(resolved, 'index.html')
       : resolved;
@@ -231,7 +261,6 @@ export function compileFixtureOffline(fixturePath: string, options: CompilerOpti
 
     const elements = extractElementsOffline(sanitizedHtml, 'MV-03');
 
-    // Build default macro-views using Case 001 structure
     baseManifest = {
       ...CASE_001_MANIFEST,
       macroViews: CASE_001_MACRO_VIEWS.map((mv) =>
@@ -240,7 +269,6 @@ export function compileFixtureOffline(fixturePath: string, options: CompilerOpti
     };
   }
 
-  // Invariant validation
   const validation = validatePuzzleInvariants(baseManifest);
   if (!validation.valid) {
     throw new SchemaInvariantError(
@@ -248,14 +276,19 @@ export function compileFixtureOffline(fixturePath: string, options: CompilerOpti
     );
   }
 
-  if (!options.dryRun) {
-    fs.mkdirSync(options.outDir, { recursive: true });
-    const declarative = buildDeclarativeManifest(baseManifest);
-    fs.writeFileSync(
-      path.join(options.outDir, 'manifest.json'),
-      JSON.stringify(declarative, null, 2),
-      'utf-8'
-    );
+  if (!options.dryRun && options.outDir) {
+    try {
+      fs.mkdirSync(options.outDir, { recursive: true });
+      const declarative = buildDeclarativeManifest(baseManifest);
+      fs.writeFileSync(
+        path.join(options.outDir, 'manifest.json'),
+        JSON.stringify(declarative, null, 2),
+        'utf-8'
+      );
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new FileSystemIoError(`Failed to write fixture output: ${msg}`);
+    }
   }
 
   return baseManifest;

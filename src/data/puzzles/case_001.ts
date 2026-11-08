@@ -17,8 +17,9 @@ import {
 import { ElementDef, FieldValue } from '../../types/puzzle_data';
 import { evaluateExhibitDef, elementsOnPage } from '../../engine/puzzle_engine';
 import { CASE_001_PUZZLE } from './case_001/puzzle';
+import CASE_001_GENERATED_MANIFEST from './case_001/manifest.generated.json';
 
-export { CASE_001_PUZZLE };
+export { CASE_001_PUZZLE, CASE_001_GENERATED_MANIFEST };
 
 /**
  * Initial state fields for Case File #001 at Macro-View 1 (route_select).
