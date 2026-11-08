@@ -503,6 +503,13 @@ export const App: React.FC<AppProps> = ({ config }) => {
               >
                 🔗 Inspired by eki-net.com ↗
               </a>
+
+              <p
+                data-testid="menu-gemini-disclosure"
+                className="p-2 border border-dossier-ink/40 bg-stone-50 text-[11px] leading-snug text-dossier-muted"
+              >
+                🤖 The agent runs on Google Gemini&apos;s free tier. Your instructions are sent to Google to be interpreted.
+              </p>
             </div>
           </div>
         )}

@@ -9,6 +9,7 @@ functions/lib/
 *.local
 .env
 .env.*
+!.env.example
 coverage/
 playwright-report/
 test-results/

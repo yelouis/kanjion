@@ -20,6 +20,6 @@ export default defineConfig({
       'npx vite build --outDir dist-e2e && npx vite preview --outDir dist-e2e --port 4173 --strictPort',
     url: 'http://localhost:4173',
     reuseExistingServer: false,
-    env: { VITE_ANIMATION_SCALE: '0.05' },
+    env: { VITE_ANIMATION_SCALE: '0.05', VITE_AGENT_MODEL_ID: '' },
   },
 });

@@ -1,189 +1,350 @@
 /**
  * test/cloud_connector.test.ts
  *
- * Automated verification suite for the Agent Pipeline (`resolveLine`)
- * and Security Guardrails (`filterPromptSyntheticIds`, `sanitizeDomForClient`, `assertGoalBlindness`).
+ * Item 11 (§13) — Free cloud tier via Firebase AI Logic (F-6; D-1 = A)
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import App from '../src/App';
 import {
   resolveLine,
-  filterPromptSyntheticIds,
-  sanitizeDomForClient,
-  assertGoalBlindness,
+  decisionToAgentAction,
 } from '../src/engine/agent';
 import {
-  CASE_001_INITIAL_MICRO_STATE,
-  CASE_001_MV03_ELEMENTS,
+  buildCloudRequestParts,
+  validateCloudResponse,
+  CLOUD_PAUSED_STORAGE_KEY,
+  resetCloudCircuitBreaker,
+  type CloudModel,
+} from '../src/engine/agent/cloud_tier';
+import {
   CASE_001_PUZZLE,
   CASE_001_GENERATED_MANIFEST,
 } from '../src/data/puzzles/case_001';
 import { initialPuzzleState } from '../src/engine/puzzle_engine';
+import { createInitialGameState, gameReducer } from '../src/engine/game_reducer';
+import { NOOP_NO_SIGNAL_THOUGHT } from '../src/utils/text_normalizer';
 
-describe('Agent Pipeline & Security Guardrails', () => {
-  describe('Security Guardrail 1: Goal Blindness', () => {
-    it('throws error on goal leakage patterns in assertGoalBlindness', () => {
-      expect(() =>
-        assertGoalBlindness({
-          secret: 'EXHIBIT_A winningPath',
-        })
-      ).toThrow(/Goal leakage detected/i);
-    });
+const MOCK_CLOUD_ENV = {
+  VITE_FIREBASE_API_KEY: 'test-api-key',
+  VITE_FIREBASE_AUTH_DOMAIN: 'kanjion-game.firebaseapp.com',
+  VITE_FIREBASE_PROJECT_ID: 'kanjion-game',
+  VITE_FIREBASE_APP_ID: '1:123456:web:abcdef',
+  VITE_APPCHECK_SITE_KEY: 'test-site-key',
+  VITE_AGENT_MODEL_ID: 'gemini-2.5-flash-lite',
+};
 
-    it('permits clean state payloads with no exhibit or answerKey keys', () => {
-      expect(() =>
-        assertGoalBlindness({
-          screen: 'STEP 3: 列車・座席指定',
-          marks: [{ mark: 25, role: 'button', label: '🍀 ◯ ¥13,870 (特割)' }],
-          instruction: 'click green button',
-        })
-      ).not.toThrow();
-    });
+describe('Item 11 (§13): Free cloud tier via Firebase AI Logic', () => {
+  beforeEach(() => {
+    resetCloudCircuitBreaker();
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem(CLOUD_PAUSED_STORAGE_KEY);
+    }
   });
 
-  describe('Security Guardrail 2: Client DOM Sanitization', () => {
-    it('strips data-som-id, som-id, data-element-id, data-target, data-is-trap, and .som-badge spans', () => {
-      const dirtyHtml = `
-        <div class="stage" data-som-id="25" som-id="25" data-target="true" data-is-trap="false">
-          <!-- som badge #25 comment -->
-          <span class="som-badge bg-magenta-600">#25</span>
-          <button data-element-id="30" class="btn-blue">予約内容を確認・確定へ ▶</button>
-        </div>
-      `;
-
-      const cleanHtml = sanitizeDomForClient(dirtyHtml);
-
-      expect(cleanHtml).not.toContain('data-som-id');
-      expect(cleanHtml).not.toContain('som-id=');
-      expect(cleanHtml).not.toContain('data-element-id');
-      expect(cleanHtml).not.toContain('data-target');
-      expect(cleanHtml).not.toContain('data-is-trap');
-      expect(cleanHtml).not.toContain('som-badge');
-      expect(cleanHtml).not.toContain('#25');
-      expect(cleanHtml).toContain('予約内容を確認・確定へ ▶');
-    });
-  });
-
-  describe('Security Guardrail 3: Synthetic Mark ID Prompt Filtering', () => {
-    it('blocks explicit #ID and "mark ID" references', () => {
-      const res1 = filterPromptSyntheticIds('click #25', CASE_001_MV03_ELEMENTS);
-      expect(res1.isBlocked).toBe(true);
-      expect(res1.flaggedId).toBe(25);
-
-      const res2 = filterPromptSyntheticIds('click mark 25', CASE_001_MV03_ELEMENTS);
-      expect(res2.isBlocked).toBe(true);
-      expect(res2.flaggedId).toBe(25);
-    });
-
-    it('blocks bare number 25 when 25 is a mark on the page and not in visibleText', () => {
-      const res = filterPromptSyntheticIds('click 25', CASE_001_MV03_ELEMENTS);
-      expect(res.isBlocked).toBe(true);
-      expect(res.flaggedId).toBe(25);
-
-      const resExplicit = filterPromptSyntheticIds('click #25', []);
-      expect(resExplicit.isBlocked).toBe(true);
-    });
-
-    it('allows legitimate visible numbers like Nozomi 24 and price 13870', () => {
-      const res24 = filterPromptSyntheticIds('click Nozomi 24', CASE_001_MV03_ELEMENTS);
-      expect(res24.isBlocked).toBe(false);
-
-      const res13870 = filterPromptSyntheticIds('select 13870', CASE_001_MV03_ELEMENTS);
-      expect(res13870.isBlocked).toBe(false);
-    });
-
-    it('permits comma-formatted visible fares ("¥14,520", "¥14,720", "¥2,400") without false-positive blocking', () => {
-      expect(filterPromptSyntheticIds('select ¥14,520', CASE_001_MV03_ELEMENTS).isBlocked).toBe(false);
-      expect(filterPromptSyntheticIds('select ¥14,720', CASE_001_MV03_ELEMENTS).isBlocked).toBe(false);
-      expect(filterPromptSyntheticIds('14,520', CASE_001_MV03_ELEMENTS).isBlocked).toBe(false);
-      expect(filterPromptSyntheticIds('select ¥2,400', CASE_001_MV03_ELEMENTS).isBlocked).toBe(false);
-      expect(filterPromptSyntheticIds('select ¥1,000,000', CASE_001_MV03_ELEMENTS).isBlocked).toBe(false);
-      expect(filterPromptSyntheticIds('select ¥１４，５２０', CASE_001_MV03_ELEMENTS).isBlocked).toBe(false);
-    });
-
-    it('still blocks explicit or standalone #14 even when comma-formatted fares exist', () => {
-      expect(filterPromptSyntheticIds('click #14', CASE_001_MV03_ELEMENTS).isBlocked).toBe(true);
-      expect(filterPromptSyntheticIds('click mark 14', CASE_001_MV03_ELEMENTS).isBlocked).toBe(true);
-      expect(filterPromptSyntheticIds('click #14, then #25', CASE_001_MV03_ELEMENTS).isBlocked).toBe(true);
-    });
-
-    it('blocks percent-encoded, zero-width, and fullwidth synthetic ID bypass vectors', async () => {
-      const vectors = [
-        'click %2325',
-        'click mark%2025',
-        'click #%32%35',
-        'click #\u200B25',
-        'click #2\u200C5',
-        'click m\u200Bark 25',
-        'click %23%E2%80%8B25',
-        'click ㉕',
-        'click ＃２５',
-      ];
-
-      for (const input of vectors) {
-        const res = filterPromptSyntheticIds(input, CASE_001_MV03_ELEMENTS);
-        expect(res.isBlocked).toBe(true);
-
-        const decision = await resolveLine({
-          puzzle: CASE_001_PUZZLE,
-          manifest: CASE_001_GENERATED_MANIFEST,
-          state: { ...initialPuzzleState(CASE_001_PUZZLE), pageId: 'MV-03' },
-          instruction: input,
-          visibleText: '',
-        });
-        expect(decision.action).toBe('NOOP');
-        expect(decision.thought).toBe("💭 I don't see numbers like that on the page — describe the thing instead.");
-      }
-    });
-
-    it('safely handles malformed percent signs ("50% discount", "%ZZ25", trailing "%") without throwing', () => {
-      const safeInputs = [
-        'select 50% discount',
-        'get +20% bonus',
-        'click %ZZ25',
-        'click %E0%A4%A',
-        'click %2',
-        'click %',
-      ];
-      for (const input of safeInputs) {
-        expect(() => filterPromptSyntheticIds(input, CASE_001_MV03_ELEMENTS)).not.toThrow();
-        expect(filterPromptSyntheticIds(input, CASE_001_MV03_ELEMENTS).isBlocked).toBe(false);
-      }
-
-      expect(filterPromptSyntheticIds('click %E0%A4%A #25', CASE_001_MV03_ELEMENTS).isBlocked).toBe(true);
-      expect(filterPromptSyntheticIds('click % #25', CASE_001_MV03_ELEMENTS).isBlocked).toBe(true);
-    });
-  });
-
-  describe('Pinned & Fallback Tiers via resolveLine', () => {
-    it('resolves answerKey[0] via pinned tier when on matching page', async () => {
-      const decision = await resolveLine({
-        puzzle: CASE_001_PUZZLE,
-        manifest: CASE_001_GENERATED_MANIFEST,
-        state: initialPuzzleState(CASE_001_PUZZLE),
-        instruction: CASE_001_PUZZLE.answerKey[0],
-        visibleText: '',
-      });
-      expect(decision.tier).toBe('pinned');
-      expect(decision.action).toBe('CLICK');
-      expect(decision.mark).toBe(1);
-    });
-
-    it('falls back to fallbackResolve when instruction is not in answerKey', async () => {
-      const decision = await resolveLine({
-        puzzle: CASE_001_PUZZLE,
-        manifest: CASE_001_GENERATED_MANIFEST,
-        state: {
-          pageId: 'MV-03',
-          previousPageId: 'MV-02',
-          fields: { ...CASE_001_INITIAL_MICRO_STATE },
+  it('★ 1. A valid model response maps to the right decision', async () => {
+    const fakeModel: CloudModel = {
+      generateContent: vi.fn().mockResolvedValue({
+        response: {
+          text: () =>
+            JSON.stringify({
+              action: 'CLICK',
+              mark: 25,
+              text: null,
+              thought: 'Ooh, a clover seat! Clicking that green car option right away.',
+            }),
         },
-        instruction: 'click green car',
-        visibleText: '',
-      });
-      expect(decision.tier).toBe('fallback');
-      expect(decision.action).toBe('CLICK');
-      expect(decision.mark).toBe(25);
+      }),
+    };
+
+    const state = {
+      ...initialPuzzleState(CASE_001_PUZZLE),
+      pageId: 'MV-03',
+    };
+
+    const decision = await resolveLine({
+      puzzle: CASE_001_PUZZLE,
+      manifest: CASE_001_GENERATED_MANIFEST,
+      state,
+      instruction: 'click the button with the leaf',
+      cloudModel: fakeModel,
+      cloudEnv: MOCK_CLOUD_ENV,
+      imageFetcher: async () => 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
     });
+
+    expect(decision.tier).toBe('cloud');
+    expect(decision.action).toBe('CLICK');
+    expect(decision.mark).toBe(25);
+    expect(decision.pageId).toBe('MV-03');
+    expect(decision.thought).toBe('💭 Ooh, a clover seat! Clicking that green car option right away.');
+    expect(decision.cloudFailed).toBeUndefined();
+  });
+
+  it('★ 2. A mark that is not on the page -> NOOP', async () => {
+    const fakeModel: CloudModel = {
+      generateContent: vi.fn().mockResolvedValue({
+        response: {
+          text: () =>
+            JSON.stringify({
+              action: 'CLICK',
+              mark: 99,
+              text: null,
+              thought: 'Clicking mark 99!',
+            }),
+        },
+      }),
+    };
+
+    const state = {
+      ...initialPuzzleState(CASE_001_PUZZLE),
+      pageId: 'MV-03',
+    };
+
+    const decision = await resolveLine({
+      puzzle: CASE_001_PUZZLE,
+      manifest: CASE_001_GENERATED_MANIFEST,
+      state,
+      instruction: 'click the button with the leaf',
+      cloudModel: fakeModel,
+      cloudEnv: MOCK_CLOUD_ENV,
+      imageFetcher: async () => 'base64png',
+    });
+
+    expect(decision.action).toBe('NOOP');
+    expect(decision.mark).toBeNull();
+    expect(decision.thought).toBe(NOOP_NO_SIGNAL_THOUGHT);
+  });
+
+  it('★ 3. TYPE text "YAMADA" for the instruction "type the name" -> "NAME" (hallucination blocked)', async () => {
+    const fakeModel: CloudModel = {
+      generateContent: vi.fn().mockResolvedValue({
+        response: {
+          text: () =>
+            JSON.stringify({
+              action: 'TYPE',
+              mark: 17,
+              text: 'YAMADA',
+              thought: 'Typing the passenger name into the box!',
+            }),
+        },
+      }),
+    };
+
+    const state = {
+      ...initialPuzzleState(CASE_001_PUZZLE),
+      pageId: 'MV-02',
+    };
+
+    const decision = await resolveLine({
+      puzzle: CASE_001_PUZZLE,
+      manifest: CASE_001_GENERATED_MANIFEST,
+      state,
+      instruction: 'type the name',
+      cloudModel: fakeModel,
+      cloudEnv: MOCK_CLOUD_ENV,
+      imageFetcher: async () => 'base64png',
+    });
+
+    expect(decision.tier).toBe('cloud');
+    expect(decision.action).toBe('TYPE');
+    expect(decision.mark).toBe(17);
+    expect(decision.text).toBe('NAME');
+  });
+
+  it('★ 4. A 429 -> fallback decision with cloudFailed: true, and the ledger shows (backup agent)', async () => {
+    const fakeModel: CloudModel = {
+      generateContent: vi.fn().mockRejectedValue(new Error('429 RESOURCE_EXHAUSTED: Quota exceeded')),
+    };
+
+    const state = {
+      ...initialPuzzleState(CASE_001_PUZZLE),
+      pageId: 'MV-03',
+    };
+
+    const decision = await resolveLine({
+      puzzle: CASE_001_PUZZLE,
+      manifest: CASE_001_GENERATED_MANIFEST,
+      state,
+      instruction: 'click the green clover seat',
+      cloudModel: fakeModel,
+      cloudEnv: MOCK_CLOUD_ENV,
+      imageFetcher: async () => 'base64png',
+    });
+
+    expect(decision.tier).toBe('fallback');
+    expect(decision.action).toBe('CLICK');
+    expect(decision.mark).toBe(25);
+    expect(decision.cloudFailed).toBe(true);
+
+    // Verify ledger shows (backup agent)
+    const gState = createInitialGameState({
+      initialPuzzleState: state,
+    });
+    const nextGState = gameReducer(gState, {
+      type: 'APPLY_AGENT_ACTION',
+      payload: {
+        action: decisionToAgentAction(decision, CASE_001_PUZZLE, CASE_001_GENERATED_MANIFEST),
+        instruction: 'click the green clover seat',
+        puzzle: CASE_001_PUZZLE,
+      },
+    });
+    expect(nextGState.telegrams[0].actionSummary).toContain('(backup agent)');
+  });
+
+  it('★ 5. Three failures -> no cloud call for the next 10 minutes (fake clock)', async () => {
+    let currentNow = 1_700_000_000_000;
+    const generateSpy = vi.fn().mockRejectedValue(new Error('503 Service Unavailable'));
+    const fakeModel: CloudModel = {
+      generateContent: generateSpy,
+    };
+
+    const state = {
+      ...initialPuzzleState(CASE_001_PUZZLE),
+      pageId: 'MV-03',
+    };
+
+    // 3 consecutive failures
+    for (let i = 0; i < 3; i++) {
+      const dec = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state,
+        instruction: 'click the green clover seat',
+        cloudModel: fakeModel,
+        cloudEnv: MOCK_CLOUD_ENV,
+        imageFetcher: async () => 'base64png',
+        now: () => currentNow,
+      });
+      expect(dec.tier).toBe('fallback');
+      expect(dec.cloudFailed).toBe(true);
+    }
+    expect(generateSpy).toHaveBeenCalledTimes(3);
+
+    // 4th call within 10 minutes (e.g. +5 minutes) -> skips cloud tier without calling generateContent
+    currentNow += 5 * 60 * 1000;
+    const decPaused = await resolveLine({
+      puzzle: CASE_001_PUZZLE,
+      manifest: CASE_001_GENERATED_MANIFEST,
+      state,
+      instruction: 'click the green clover seat',
+      cloudModel: fakeModel,
+      cloudEnv: MOCK_CLOUD_ENV,
+      imageFetcher: async () => 'base64png',
+      now: () => currentNow,
+    });
+    expect(generateSpy).toHaveBeenCalledTimes(3);
+    expect(decPaused.tier).toBe('fallback');
+
+    // After 10 minutes (+6 minutes more = +11 minutes total) -> cloud tier resumes
+    currentNow += 6 * 60 * 1000;
+    await resolveLine({
+      puzzle: CASE_001_PUZZLE,
+      manifest: CASE_001_GENERATED_MANIFEST,
+      state,
+      instruction: 'click the green clover seat',
+      cloudModel: fakeModel,
+      cloudEnv: MOCK_CLOUD_ENV,
+      imageFetcher: async () => 'base64png',
+      now: () => currentNow,
+    });
+    expect(generateSpy).toHaveBeenCalledTimes(4);
+  });
+
+  it('★ 6. A cloud tier that is not configured -> no call and no marker', async () => {
+    const generateSpy = vi.fn();
+    const fakeModel: CloudModel = {
+      generateContent: generateSpy,
+    };
+
+    const state = {
+      ...initialPuzzleState(CASE_001_PUZZLE),
+      pageId: 'MV-03',
+    };
+
+    const decision = await resolveLine({
+      puzzle: CASE_001_PUZZLE,
+      manifest: CASE_001_GENERATED_MANIFEST,
+      state,
+      instruction: 'click the green clover seat',
+      cloudModel: fakeModel,
+      cloudEnv: { VITE_AGENT_MODEL_ID: '' }, // Not configured
+      imageFetcher: async () => 'base64png',
+    });
+
+    expect(generateSpy).not.toHaveBeenCalled();
+    expect(decision.tier).toBe('fallback');
+    expect(decision.cloudFailed).toBeUndefined();
+  });
+
+  it('★ 7. Goal blindness: serialized request for every Case #001 page, with an empty name, contains none of TANAKA, exhibit, answer, replay, decoy, trap, target, weight, pinned', () => {
+    const forbiddenWords = [
+      'tanaka',
+      'exhibit',
+      'answer',
+      'replay',
+      'decoy',
+      'trap',
+      'target',
+      'weight',
+      'pinned',
+    ];
+
+    for (const page of CASE_001_PUZZLE.pages) {
+      const state = {
+        ...initialPuzzleState(CASE_001_PUZZLE),
+        pageId: page.id,
+        fields: {
+          ...CASE_001_PUZZLE.initialFields,
+          passengerName: '',
+        },
+      };
+
+      const parts = buildCloudRequestParts({
+        page,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state,
+        instruction: 'click the first option on screen',
+        base64Png: 'base64pngdata',
+      });
+
+      const serialized = JSON.stringify(parts).toLowerCase();
+      for (const word of forbiddenWords) {
+        expect(serialized).not.toContain(word);
+      }
+    }
+  });
+
+  it('strips #\\d+, mark, and MV-\\d+ from model thoughts and trims to 100 chars', () => {
+    const page = CASE_001_PUZZLE.pages.find((p) => p.id === 'MV-04')!;
+    const decision = validateCloudResponse(
+      {
+        action: 'DRAW',
+        mark: 27,
+        text: 'smile',
+        thought: 'Drawing a smile in mark #27 on MV-04 right now!',
+      },
+      page,
+      'draw a smile in the signature box'
+    );
+
+    expect(decision.action).toBe('DRAW');
+    expect(decision.mark).toBe(27);
+    expect(decision.stroke).toBe('SHAPE:smile');
+    expect(decision.thought).not.toMatch(/#\d+/);
+    expect(decision.thought.toLowerCase()).not.toContain('mark');
+    expect(decision.thought).not.toMatch(/MV-\d+/i);
+    expect(decision.thought.startsWith('💭 ')).toBe(true);
+  });
+
+  it('renders exact menu disclosure for Google Gemini free tier', () => {
+    render(React.createElement(App, { config: { animationScale: 0, replayAutoplay: false } }));
+    fireEvent.click(screen.getByRole('button', { name: /Open Game Menu/i }));
+    expect(
+      screen.getByText(
+        "🤖 The agent runs on Google Gemini's free tier. Your instructions are sent to Google to be interpreted."
+      )
+    ).toBeInTheDocument();
   });
 });

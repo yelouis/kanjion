@@ -107,10 +107,8 @@ Your selection: A
 
 | ID | Severity | Finding | Where | Fixed by |
 |---|---|---|---|---|
-| F-6 | High | Players almost never reach a model. Nano is used only if it is already downloaded, the regex wins whenever it matches, and everything else is a ~450-line regex. | `src/engine/cloud_connector.ts:1126-1133`, `:1174-1183`, `:602-1046` | Items 10, 11 |
 | F-15 | Low | There is no daily schedule or rollover; the one case is hard-coded. | — | Item 12 |
 | F-16 | Low | Phones show the stage at 0.32×, which is too small to read. | `src/components/SandboxStage.tsx:24-59` | Item 13 |
-| F-17 | Low | Dead code. | `functions/` can't deploy on Spark and nothing calls it | Item 11 |
 
 Verify F-1 to F-5 with `npx vitest run test/exploits.test.ts`.
 
@@ -125,6 +123,7 @@ _(none yet — implementors add entries here as options with a `Your selection:`
 - F-3 — resolved by item 10 (replaced hardcoded `cloud_connector.ts` / `offline_simulator.ts` fallback with unified `resolveLine` and data-driven `fallbackResolve` in `src/engine/agent/`, returning `NOOP` below score 30 and on meta-prompts; item 4 `2ee1ef3` added `NOOP` action and `isMetaPrompt`)
 - F-4 — resolved by item 6 (populated elements on all 10 pages in `src/data/puzzles/case_001/puzzle.ts`, derived `CASE_001_MACRO_VIEWS` from `CASE_001_PUZZLE`, and enforced page-scoped mark resolution in `applyDecision`; item 4 `2ee1ef3` added full mark-set regex blocking)
 - F-5 — resolved by item 3 (locked `officialResult` on first official `CLOSE_CASE`, replaced `REOPEN_CASE` with unscored `START_PRACTICE`, and added `kanjion:v1:case:001` persistence across refreshes)
+- F-6 — resolved by item 11 (implemented lazy-loaded Firebase AI Logic free cloud tier in `src/engine/agent/cloud_tier.ts` with `responseSchema`, SoM PNG + mark metadata request, response validation, 6,000 ms timeout, and 3-failure 10-minute circuit breaker `kanjion:v1:cloud-paused-until`; item 10 `02883e8` unified the agent pipeline)
 - F-7 — resolved by item 9 (implemented headless Chromium SoM capture pipeline via `capture.html` and `tools/compile_puzzle.ts`, generated 1024×768 content-hashed SoM PNGs in `public/puzzles/001/som/` and measured bounding boxes in `src/data/puzzles/case_001/manifest.generated.json`, and removed dead `public/puzzles/001/views/`, `template.html`, and `manifest.json`)
 - F-8 — resolved by item 2 (removed all `sr-only` hidden test strings and unused debug toggles; item 1 `5efae7f` removed `NODE_ENV` and `navigator.webdriver` branches, added `GameConfig`, and added Playwright `e2e/smoke.e2e.ts`)
 - F-9 — resolved by item 5 (replaced `えきねっと JR` branding, `eki-net.com/personal` URLs, `JRE POINT`, `Suica`, and `ログアウト` with fictional `かんじおん鉄道` + `新幹線ネット予約`, `sandbox://kanjion-rail.example/reserve/<slug>`, and `お知らせ` button; updated outbound links to `"Inspired by eki-net.com ↗"`)
@@ -133,7 +132,7 @@ _(none yet — implementors add entries here as options with a `Your selection:`
 - F-12 — resolved by item 6 (replaced `ShinkansenMicroState` and `reduceShinkansenMicroState` with generic data-driven `PuzzleData` + `applyDecision` in `src/engine/puzzle_engine.ts`, rendered `MV-07` promo modal and `MV-08` news modal in `src/data/puzzles/case_001/Sandbox.tsx`, and deleted dead `MV-06` and `MV-09`)
 - F-13 — resolved by item 6 (deleted `pageCoordMap` and hardcoded bounding boxes from case data, annotated every interactive element and `page_title` with `data-mark` and `data-el`, and measured live DOM centers inside `#sandbox-core` divided by stage scale; item 5 `a8e32aa` updated URL bar to use `currentView.simulatedUrl`)
 - F-14 — resolved by item 2 (renamed Case #042 to Case #001 everywhere, updated share card URL to `https://kanjion-game.web.app`, and rendered lines 1–2 of `scoreReport.shareableClipping` in `ExhibitsPanel.tsx`)
-- F-17 (part) — resolved by item 2 (deleted unused `GhostReplay.tsx`, `CoordinateRulers.tsx`, and `DossierLayout.tsx`; item 1 `5efae7f` deleted single-page test-only sandbox branch)
+- F-17 — resolved by item 11 (deleted `functions/` and the `functions` block of `firebase.json`; earlier dead code removed in item 1 `5efae7f`, item 2 `a47a14d`, and item 10 `02883e8`)
 - F-18 — resolved by item 5 (blocked `onPaste` and `onDrop` on the instruction input in `DispatchPad.tsx` and updated placeholder to `'Tell your agent what to do (English, max 60 characters)'`)
 - F-19 — resolved by item 9 (named SoM PNG assets with an 8-char SHA-256 content hash `public/puzzles/001/som/<pageId>.<hash8>.png` referenced from `manifest.generated.json`)
 - F-20 — resolved by item 9 (bundled self-hosted `@fontsource/noto-sans-jp` weights 400, 700, 900 in `src/main.tsx` and `src/capture/main.tsx` and removed Google Fonts CDN `<link>` tags from `index.html`)

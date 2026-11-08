@@ -14,6 +14,11 @@ import {
   buildDefaultVisibleTextForPage,
   filterPromptSyntheticIds,
 } from './guardrails';
+import {
+  resolveWithCloud,
+  type CloudEnv,
+  type CloudModel,
+} from './cloud_tier';
 import * as fallbackModule from './fallback';
 import type { AgentDecision } from './fallback';
 
@@ -30,6 +35,19 @@ export {
   sanitizeDomForClient,
 } from './guardrails';
 export type { SyntheticIdFilterResult } from './guardrails';
+export {
+  buildCloudRequestParts,
+  CLOUD_PAUSED_STORAGE_KEY,
+  CLOUD_SYSTEM_INSTRUCTION,
+  isCloudConfigured,
+  isCloudPaused,
+  resetCloudCircuitBreaker,
+  resolveWithCloud,
+  validateCloudResponse,
+  type CloudEnv,
+  type CloudModel,
+  type CloudModelResponse,
+} from './cloud_tier';
 
 export interface ResolveLineContext {
   puzzle: PuzzleData;
@@ -39,6 +57,10 @@ export interface ResolveLineContext {
   visibleText?: string;
   disablePinned?: boolean;
   cloudResolver?: () => Promise<AgentDecision | null>;
+  cloudModel?: CloudModel | null;
+  cloudEnv?: CloudEnv;
+  imageFetcher?: (url: string) => Promise<string>;
+  now?: () => number;
 }
 
 export async function resolveLine(ctx: ResolveLineContext): Promise<AgentDecision> {
@@ -128,7 +150,7 @@ export async function resolveLine(ctx: ResolveLineContext): Promise<AgentDecisio
     }
   }
 
-  // 4. Cloud — item 11 (or injected cloudResolver)
+  // 4. Cloud — Firebase AI Logic free tier (or injected cloudResolver)
   let cloudFailed = false;
   if (ctx.cloudResolver) {
     try {
@@ -138,6 +160,23 @@ export async function resolveLine(ctx: ResolveLineContext): Promise<AgentDecisio
       }
       cloudFailed = true;
     } catch {
+      cloudFailed = true;
+    }
+  } else {
+    const cloudResult = await resolveWithCloud({
+      puzzle,
+      manifest,
+      state,
+      instruction,
+      cloudModel: ctx.cloudModel,
+      cloudEnv: ctx.cloudEnv,
+      imageFetcher: ctx.imageFetcher,
+      now: ctx.now,
+    });
+    if (cloudResult.decision) {
+      return cloudResult.decision;
+    }
+    if (cloudResult.attempted) {
       cloudFailed = true;
     }
   }
