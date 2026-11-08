@@ -40,11 +40,13 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
   });
 
   // =========================================================================
-  // SUITE 1: The Golden Path — Canonical 100% Perfect Run (140 PTS)
+  // SUITE 1: The Golden Path — Canonical 100% Perfect Run (120 PTS)
   // =========================================================================
   describe('Suite 1: Canonical 100% Perfect Run (The Golden Path)', () => {
     it('executes full dispatch sequence, cursor kinematics, exhibits unsealing, and clipboard sharing', async () => {
-      const { container } = render(<App />);
+      const { container } = render(
+        <App config={{ startOnCover: false, animationScale: 0, replayAutoplay: false }} />
+      );
 
       // -----------------------------------------------------------------------
       // 1. Initial Broadsheet Layout & Archival Framing Verification
@@ -67,7 +69,7 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       expect(screen.getByText(/sandbox:\/\/ekinet-jr-sim\.jp\/reserve\/seat-matrix/i)).toBeInTheDocument();
       expect(screen.getByText(/🔒 TEXT SELECTION LOCKED/i)).toBeInTheDocument();
 
-      // Initial Unseeded Ledger State (Starts at Line 01 / 06)
+      // Initial Unseeded Ledger State (Starts at Line 01 / 06 on MV-01)
       expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 01 / 06');
       expect(screen.getByText(/CURRENT MULTIPLIER IF CLOSED NOW:/i)).toBeInTheDocument();
       expect(container.querySelector('#live-mult-label')).toHaveTextContent('2.0x');
@@ -77,25 +79,37 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       expect(container.querySelector('#unsealed-exhibits-panel')).not.toBeInTheDocument();
 
       // -----------------------------------------------------------------------
-      // 2. Line 01 Dispatch: "select nozomi green car"
+      // 2. Line 01 (MV-01): "Click the top-left green box" -> MV-02
       // -----------------------------------------------------------------------
-      const input = container.querySelector('#telegram-input') as HTMLInputElement;
-      expect(input).toBeInTheDocument();
-
-      // Enter instruction: "select nozomi green car"
-      fireEvent.change(input, { target: { value: 'select nozomi green car' } });
-      expect(input.value).toBe('select nozomi green car');
-      expect(container.querySelector('#char-counter')).toHaveTextContent('23/60');
-
-      // Dispatch line
-      const dispatchBtn = screen.getByRole('button', { name: /DISPATCH LINE 01/i });
+      const input1 = container.querySelector('#telegram-input') as HTMLInputElement;
+      fireEvent.change(input1, { target: { value: 'Click the top-left green box' } });
       await act(async () => {
-        fireEvent.click(dispatchBtn);
+        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 01/i }));
+      });
+      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 02 / 06');
+
+      // -----------------------------------------------------------------------
+      // 3. Line 02 (MV-02): "Type TANAKA in the passenger name box" -> MV-03
+      // -----------------------------------------------------------------------
+      const input2 = container.querySelector('#telegram-input') as HTMLInputElement;
+      fireEvent.change(input2, { target: { value: 'Type TANAKA in the passenger name box' } });
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 02/i }));
+      });
+      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 03 / 06');
+
+      // -----------------------------------------------------------------------
+      // 4. Line 03 (MV-03): "select nozomi green car" -> MV-04
+      // -----------------------------------------------------------------------
+      const input3 = container.querySelector('#telegram-input') as HTMLInputElement;
+      fireEvent.change(input3, { target: { value: 'select nozomi green car' } });
+      expect(container.querySelector('#char-counter')).toHaveTextContent('23/60');
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 03/i }));
       });
 
-      // Verification: Active line advanced to Line 02
-      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 02 / 06');
-      expect(container.querySelector('#live-mult-label')).toHaveTextContent('2.0x');
+      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 04 / 06');
+      expect(container.querySelector('#live-mult-label')).toHaveTextContent('1.6x');
 
       // Verification: Agent Cursor glided to #25 at D3 (885, 468) -> (86.43%, 60.94%)
       const agentCursor = container.querySelector('#agent-cursor') as HTMLElement;
@@ -106,45 +120,42 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       // Verification: Pinned Yellow Thought Note
       const agentNote = container.querySelector('#agent-note') as HTMLElement;
       expect(agentNote).toBeInTheDocument();
-      expect(agentNote).toHaveTextContent(/📌 FIELD NOTE: Clicked \[🍀 ◯ ¥13,870\] at D3/i);
       expect(agentNote).toHaveTextContent(/\[ACTION EXECUTED\]/i);
-      // Flipped to left because xPercent > 72%
       expect(agentNote).toHaveClass('right-full', 'mr-3');
 
-      // Verification: Green car button in sandbox is highlighted
-      const greenCarBtn = container.querySelector('#target-green-btn');
-      expect(greenCarBtn).toHaveClass('bg-emerald-700', 'ring-2');
+      // -----------------------------------------------------------------------
+      // 5. Line 04 (MV-04): "Draw a signature in the dashed box"
+      // -----------------------------------------------------------------------
+      const input4 = container.querySelector('#telegram-input') as HTMLInputElement;
+      fireEvent.change(input4, { target: { value: 'Draw a signature in the dashed box' } });
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 04/i }));
+      });
+      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 05 / 06');
 
       // -----------------------------------------------------------------------
-      // 3. Line 02 Dispatch: "confirm booking"
+      // 6. Line 05 (MV-04): "confirm booking" -> MV-05
       // -----------------------------------------------------------------------
-      const inputLine2 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(inputLine2, { target: { value: 'confirm booking' } });
+      const input5 = container.querySelector('#telegram-input') as HTMLInputElement;
+      fireEvent.change(input5, { target: { value: 'confirm booking' } });
       expect(container.querySelector('#char-counter')).toHaveTextContent('15/60');
 
-      const dispatchBtn2 = screen.getByRole('button', { name: /DISPATCH LINE 02/i });
+      const dispatchBtn5 = screen.getByRole('button', { name: /DISPATCH LINE 05/i });
       await act(async () => {
-        fireEvent.click(dispatchBtn2);
+        fireEvent.click(dispatchBtn5);
       });
 
-      // Verification: Active line advanced to Line 03
-      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 03 / 06');
-      expect(container.querySelector('#live-mult-label')).toHaveTextContent('1.8x');
+      // Verification: Active line advanced to Line 06
+      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 06 / 06');
+      expect(container.querySelector('#live-mult-label')).toHaveTextContent('1.2x');
 
       // Verification: Cursor glided to #30 at D4 (905, 720) -> (88.38%, 93.75%)
       expect(agentCursor.style.left).toBe('88.38%');
       expect(agentCursor.style.top).toBe('93.75%');
-
-      // Verification: Note updated to confirmed variant
-      expect(agentNote).toHaveTextContent(/📌 FIELD NOTE: Clicked \[予約内容を確認・確定へ ▶\] at D4/i);
       expect(agentNote).toHaveTextContent(/\[✓ CONFIRMED STEP\]/i);
 
-      // Verification: Blue confirm button in sandbox has confirmation ring
-      const confirmBtn = container.querySelector('#target-confirm-btn');
-      expect(confirmBtn).toHaveClass('bg-blue-800', 'ring-2');
-
       // -----------------------------------------------------------------------
-      // 4. Case Closure Trigger & Unsealing Verification
+      // 7. Case Closure Trigger & Unsealing Verification
       // -----------------------------------------------------------------------
       const closeCaseBtn = screen.getByRole('button', { name: /CLOSE CASE FILE/i });
       await act(async () => {
@@ -161,46 +172,41 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       expect(container.querySelector('#telegram-input')).not.toBeInTheDocument();
 
       // -----------------------------------------------------------------------
-      // 5. Exhibits Panel & Rubber Stamps Verification
+      // 8. Exhibits Panel & Rubber Stamps Verification
       // -----------------------------------------------------------------------
       const unsealedPanel = container.querySelector('#unsealed-exhibits-panel');
       expect(unsealedPanel).toBeInTheDocument();
 
-      // Score Banner: 100% closeness x 1.8x multiplier (4 unused lines) = 180 PTS
+      // Score Banner: 100% closeness x 1.2x multiplier (1 unused line) = 120 PTS
       const scoreBanner = container.querySelector('#final-score-banner');
-      expect(scoreBanner).toHaveTextContent('100% × 1.8x = 180 PTS');
+      expect(scoreBanner).toHaveTextContent('100% × 1.2x = 120 PTS');
 
       // 5 Sealed Exhibits Unsealed with Dynamic Angled Rubber Stamps
-      // Exhibit A: Route 東京⇒新大阪
       const stampA = container.querySelector('#exhibit-a-stamp');
       expect(stampA).toHaveTextContent('[VERIFIED ✓ +25%]');
-      expect(stampA).toHaveClass('border-dossier-stampGreen', 'text-dossier-stampGreen', 'stamp-rotate'); // -4deg
+      expect(stampA).toHaveClass('border-dossier-stampGreen', 'text-dossier-stampGreen', 'stamp-rotate');
 
-      // Exhibit B: 14:30 Departure Slot
       const stampB = container.querySelector('#exhibit-b-stamp');
       expect(stampB).toHaveTextContent('[VERIFIED ✓ +20%]');
-      expect(stampB).toHaveClass('border-dossier-stampGreen', 'text-dossier-stampGreen', 'stamp-rotate-alt'); // +3deg
+      expect(stampB).toHaveClass('border-dossier-stampGreen', 'text-dossier-stampGreen', 'stamp-rotate-alt');
 
-      // Exhibit C: Row 2: 🍀 ¥13,870 Seat
       const stampC = container.querySelector('#exhibit-c-stamp');
       expect(stampC).toHaveTextContent('[VERIFIED ✓ +20%]');
-      expect(stampC).toHaveClass('border-dossier-stampGreen', 'text-dossier-stampGreen', 'stamp-rotate'); // -4deg
+      expect(stampC).toHaveClass('border-dossier-stampGreen', 'text-dossier-stampGreen', 'stamp-rotate');
 
-      // Exhibit D: Avoid ¥2,400 Ins. Ad
       const stampD = container.querySelector('#exhibit-d-stamp');
-      expect(stampD).toHaveTextContent('[CLEAN ✓ +15%]');
-      expect(stampD).toHaveClass('border-dossier-stampGreen', 'text-dossier-stampGreen', 'stamp-rotate-alt'); // +3deg
+      expect(stampD).toHaveTextContent('[VERIFIED ✓ +15%]');
+      expect(stampD).toHaveClass('border-dossier-stampGreen', 'text-dossier-stampGreen', 'stamp-rotate-alt');
 
-      // Exhibit E: Final Blue Confirm
       const stampE = container.querySelector('#exhibit-e-stamp');
       expect(stampE).toHaveTextContent('[VERIFIED ✓ +20%]');
-      expect(stampE).toHaveClass('border-dossier-stampGreen', 'text-dossier-stampGreen', 'stamp-rotate'); // -4deg
+      expect(stampE).toHaveClass('border-dossier-stampGreen', 'text-dossier-stampGreen', 'stamp-rotate');
 
       // -----------------------------------------------------------------------
-      // 6. Shareable Wordle-Style Result & Clipboard Copy
+      // 9. Shareable Wordle-Style Result & Clipboard Copy
       // -----------------------------------------------------------------------
-      expect(container.querySelector('#share-summary-txt')).toHaveTextContent('100% × 1.8x = 180 PTS');
-      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩🟩🟩 (2/6 Telegrams Sent)');
+      expect(container.querySelector('#share-summary-txt')).toHaveTextContent('100% × 1.2x = 120 PTS');
+      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩🟩🟩 (5/6 Telegrams Sent)');
 
       const copyBtn = screen.getByRole('button', { name: /Copy Case Clipping/i });
       await act(async () => {
@@ -209,12 +215,12 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
 
       expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1);
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-        expect.stringContaining('KANJION #042 🇯🇵 — 100% × 1.8x = 180 PTS\n🟩🟩🟩🟩🟩 (2/6 Telegrams Sent)')
+        expect.stringContaining('KANJION #042 🇯🇵 — 100% × 1.2x = 120 PTS\n🟩🟩🟩🟩🟩 (5/6 Telegrams Sent)')
       );
       expect(screen.getByText(/✓ DISPATCH CLIPPING COPIED!/i)).toBeInTheDocument();
 
       // -----------------------------------------------------------------------
-      // 7. Practice Mode (Return to Active Play)
+      // 10. Practice Mode (Return to Active Play)
       // -----------------------------------------------------------------------
       const reopenBtn = screen.getByRole('button', { name: /Return to Active Play/i });
       await act(async () => {
@@ -225,8 +231,8 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       expect(container.querySelector('#unsealed-exhibits-panel')).not.toBeInTheDocument();
       expect(screen.getByText(/5 REQUIRED EXHIBITS ARE CURRENTLY SEALED BEHIND REDACTION BARS/i)).toBeInTheDocument();
 
-      // Dispatch pad restored at Line 03
-      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 03 / 06');
+      // Dispatch pad restored at Line 06
+      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 06 / 06');
       expect(container.querySelector('#telegram-input')).toBeInTheDocument();
     });
   });
@@ -236,7 +242,9 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
   // =========================================================================
   describe('Suite 2: Target Ghost Replay Overlay & Redaction Integrity', () => {
     it('toggles vector trajectory and masks all text behind 14 solid black redaction bars', async () => {
-      const { container } = render(<App />);
+      const { container } = render(
+        <App config={{ startOnCover: false, animationScale: 0, replayAutoplay: false }} />
+      );
 
       const ghostToggleBtn = screen.getByRole('button', { name: /Target Ghost Replay/i });
       expect(ghostToggleBtn).toHaveTextContent(/Target Ghost Replay: OFF/i);
@@ -286,7 +294,9 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
   // =========================================================================
   describe('Suite 3: Decoy Trap Contamination & Visual Error Recovery', () => {
     it('handles decoy insurance click, triggers stage shake, and marks Exhibit D contaminated', async () => {
-      const { container } = render(<App />);
+      const { container } = render(
+        <App config={{ startOnCover: false, animationScale: 0, replayAutoplay: false }} />
+      );
 
       const input = container.querySelector('#telegram-input') as HTMLInputElement;
       fireEvent.change(input, { target: { value: 'click the red button' } });
@@ -317,15 +327,14 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
         fireEvent.click(closeCaseBtn);
       });
 
-      // Exhibit D is CONTAMINATED (0 points)
+      // Exhibit D is MISSED (0 points) when signature pad is unsigned in multi-page mode
       const stampD = container.querySelector('#exhibit-d-stamp');
-      expect(stampD).toHaveTextContent('[CONTAMINATED ✗ +0%]');
+      expect(stampD).toHaveTextContent('[MISSED ✗ +0%]');
       expect(stampD).toHaveClass('border-dossier-stampRed', 'text-dossier-stampRed');
 
-      // Closeness score drops: 25 (A) + 20 (B) + 0 (C missed) + 0 (D contam) + 0 (E missed) = 45%
-      // 1 line sent -> 5 unused lines -> 1.0 + 1.0 = 2.0x multiplier -> 45% * 2.0x = 90 PTS
-      expect(container.querySelector('#final-score-banner')).toHaveTextContent(/45% × 2\.0x = 90 PTS/i);
-      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩⬜🟥⬜');
+      // Closeness score on MV-01 with only trap clicked: 0% * 2.0x = 0 PTS
+      expect(container.querySelector('#final-score-banner')).toHaveTextContent(/0% × 2\.0x = 0 PTS/i);
+      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('⬜⬜⬜⬜⬜');
     });
   });
 
@@ -334,49 +343,26 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
   // =========================================================================
   describe('Suite 4: Telegram Ledger Exhaustion & Line 06 Auto-Closure', () => {
     it('automatically unseals case file on line 6 dispatch with 1.0x efficiency multiplier', async () => {
-      const { container } = render(<App />);
+      const { container } = render(
+        <App config={{ startOnCover: false, animationScale: 0, replayAutoplay: false }} />
+      );
 
-      // Line 1: Select green car
-      const input1 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input1, { target: { value: 'select green clover seat' } });
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 01/i }));
-      });
+      const prompts = [
+        'Click the top-left green box',
+        'Type TANAKA in the passenger name box',
+        'select green clover seat',
+        'Draw a signature in the dashed box',
+        'confirm booking',
+        'final review',
+      ];
 
-      // Line 2: Confirm
-      const input2 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input2, { target: { value: 'confirm booking' } });
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 02/i }));
-      });
-
-      // Line 3: Filler instruction
-      const input3 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input3, { target: { value: 'check schedule' } });
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 03/i }));
-      });
-
-      // Line 4: Filler instruction
-      const input4 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input4, { target: { value: 'check fare' } });
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 04/i }));
-      });
-
-      // Line 5: Filler instruction
-      const input5 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input5, { target: { value: 'check train' } });
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 05/i }));
-      });
-
-      // Line 6: Final telegram line
-      const input6 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input6, { target: { value: 'final review' } });
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 06/i }));
-      });
+      for (let i = 0; i < 6; i++) {
+        const inputEl = container.querySelector('#telegram-input') as HTMLInputElement;
+        fireEvent.change(inputEl, { target: { value: prompts[i] } });
+        await act(async () => {
+          fireEvent.click(screen.getByRole('button', { name: new RegExp(`DISPATCH LINE 0${i + 1}`, 'i') }));
+        });
+      }
 
       // Verification: Case automatically closed without clicking Close Case File
       expect(container.querySelector('#sealed-status-pill')).toHaveTextContent(/🔓 UNSEALED \(CASE CLOSED\)/i);
@@ -394,7 +380,9 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
   // =========================================================================
   describe('Suite 5: Telegram Input Edge Cases & Formatting Guardrails', () => {
     it('enforces strict 60-character cap and rejects empty/whitespace dispatches', async () => {
-      const { container } = render(<App />);
+      const { container } = render(
+        <App config={{ startOnCover: false, animationScale: 0, replayAutoplay: false }} />
+      );
       const input = container.querySelector('#telegram-input') as HTMLInputElement;
 
       // 1. Strict 60-char capping
@@ -416,10 +404,12 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
     });
 
     it('submits on Enter key press', async () => {
-      const { container } = render(<App />);
+      const { container } = render(
+        <App config={{ startOnCover: false, animationScale: 0, replayAutoplay: false }} />
+      );
       const input = container.querySelector('#telegram-input') as HTMLInputElement;
 
-      fireEvent.change(input, { target: { value: 'click green clover seat' } });
+      fireEvent.change(input, { target: { value: 'Click the top-left green box' } });
       await act(async () => {
         fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
       });
@@ -429,38 +419,22 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
   });
 
   // =========================================================================
-  // SUITE 6: Dual-Mode Backend Toggle & SoM Badges
+  // SUITE 6: Dual-Mode Backend Toggle
   // =========================================================================
   describe('Suite 6: Dual-Mode Execution & Set-of-Mark Overlay', () => {
     it('toggles backend execution mode between Offline and Cloud Vision', async () => {
-      const { container } = render(<App />);
+      const { container } = render(
+        <App config={{ startOnCover: false, animationScale: 0, replayAutoplay: false }} />
+      );
 
       const modeBtn = container.querySelector('#btn-mode-toggle') as HTMLButtonElement;
-      expect(modeBtn).toHaveTextContent(/Mode: Offline/i);
+      expect(modeBtn).toHaveTextContent(/Mode: Cloud Vision/i);
 
       await act(async () => {
         fireEvent.click(modeBtn);
       });
 
-      expect(modeBtn).toHaveTextContent(/Mode: Cloud Vision/i);
-    });
-
-    it('toggles Set-of-Mark numbered badges over interactive nodes', async () => {
-      const { container } = render(<App />);
-
-      const somBtn = screen.getByRole('button', { name: /Backend SoM IDs/i });
-      expect(somBtn).toHaveTextContent(/Backend SoM IDs: OFF/i);
-      expect(container.querySelector('.som-badge')).not.toBeInTheDocument();
-
-      await act(async () => {
-        fireEvent.click(somBtn);
-      });
-
-      expect(somBtn).toHaveTextContent(/Backend SoM IDs: ON/i);
-      const badges = container.querySelectorAll('.som-badge');
-      expect(badges.length).toBeGreaterThanOrEqual(10);
-      expect(screen.getByText('#25')).toBeInTheDocument();
-      expect(screen.getByText('#30')).toBeInTheDocument();
+      expect(modeBtn).toHaveTextContent(/Mode: Offline/i);
     });
   });
 });

@@ -193,8 +193,17 @@ describe('Adversarial Challenge Vector 2: Floating Point Drift Verification', ()
 });
 
 describe('Adversarial Challenge Vector 3: Trap Contamination Permanence', () => {
+  const mv03PreState = {
+    ...CASE_042_INITIAL_MICRO_STATE,
+    macroViewId: 'MV-03',
+    selectedRoute: 'tokyo_osaka' as const,
+    departureTime: '14:30' as const,
+    passengerName: 'TANAKA',
+    signatureSigned: true,
+  };
+
   it('permanently contaminates Exhibit D when Trap #12 is triggered, even if #28 is subsequently untoggled', () => {
-    let state = createInitialGameState({ preSeeded: true });
+    let state = createInitialGameState({ initialMicroState: mv03PreState });
 
     // Step 1: Agent clicks Trap #12 (Red Promo Banner)
     const trapAction: AgentAction = {
@@ -257,7 +266,7 @@ describe('Adversarial Challenge Vector 3: Trap Contamination Permanence', () => 
   });
 
   it('permanently contaminates Exhibit D when Checkbox #28 is checked then unchecked without touching #12', () => {
-    let state = createInitialGameState({ preSeeded: true });
+    let state = createInitialGameState({ initialMicroState: mv03PreState });
 
     // Initial check: Exhibit D is clean
     expect(state.microState.insuranceTrapHit).toBe(false);
@@ -290,7 +299,7 @@ describe('Adversarial Challenge Vector 3: Trap Contamination Permanence', () => 
   });
 
   it('verifies legitimate actions (#25 Green Car, #30 Confirm) cannot wash trap contamination', () => {
-    let state = createInitialGameState({ preSeeded: true });
+    let state = createInitialGameState({ initialMicroState: mv03PreState });
 
     // Poison state
     state = gameReducer(state, {
@@ -334,7 +343,7 @@ describe('Adversarial Challenge Vector 3: Trap Contamination Permanence', () => 
 
 describe('Adversarial Challenge Vector 4: Exhibit Redaction During Active Play', () => {
   it('guarantees scoreReport is strictly null across all active gameplay actions', () => {
-    let state = createInitialGameState({ preSeeded: false });
+    let state = createInitialGameState();
     expect(state.scoreReport).toBeNull();
 
     // 1. SET_INPUT
@@ -373,7 +382,7 @@ describe('Adversarial Challenge Vector 4: Exhibit Redaction During Active Play',
   });
 
   it('guarantees all submitted telegram lines maintain exhibitRedactedStatus: SEALED during active play', () => {
-    let state = createInitialGameState({ preSeeded: false });
+    let state = createInitialGameState();
 
     for (let line = 0; line < 5; line++) {
       state = gameReducer(state, {
@@ -396,14 +405,14 @@ describe('Adversarial Challenge Vector 4: Exhibit Redaction During Active Play',
   });
 
   it('guarantees serialized GameState contains zero unsealed exhibit stamp leakages during active play', () => {
-    let state = createInitialGameState({ preSeeded: true });
+    let state = createInitialGameState();
 
-    // Execute target action #25 (satisfies Exhibit C)
+    // Execute target action #1 (satisfies Exhibit A)
     state = gameReducer(state, {
       type: 'APPLY_AGENT_ACTION',
       payload: {
-        action: { action: 'CLICK', targetId: '#25', thought: 'target 25' },
-        instruction: 'click clover',
+        action: { action: 'CLICK', targetId: '#1', thought: 'target 1' },
+        instruction: 'click route 1',
       },
     });
 
@@ -421,7 +430,7 @@ describe('Adversarial Challenge Vector 4: Exhibit Redaction During Active Play',
   });
 
   it('wipes scoreReport and re-seals dossier when REOPEN_CASE is triggered', () => {
-    let state = createInitialGameState({ preSeeded: true });
+    let state = createInitialGameState();
     state = gameReducer(state, { type: 'CLOSE_CASE' });
     expect(state.caseStatus).toBe('closed');
     expect(state.scoreReport).not.toBeNull();
@@ -440,7 +449,7 @@ describe('Adversarial Challenge Vector 4: Exhibit Redaction During Active Play',
 
 describe('Adversarial Challenge Vector 5: Automatic Case Closure on Line 06 Execution', () => {
   it('automatically triggers case closure on 6th dispatch in unseeded mode with 1.0x multiplier', () => {
-    let state = createInitialGameState({ preSeeded: false });
+    let state = createInitialGameState();
     expect(state.activeLineIndex).toBe(0);
 
     // Dispatches 1 through 5
@@ -479,45 +488,11 @@ describe('Adversarial Challenge Vector 5: Automatic Case Closure on Line 06 Exec
     expect(state.scoreReport?.shareableClipping).toContain('× 1.0x =');
   });
 
-  it('automatically triggers case closure on 6th dispatch in pre-seeded mode', () => {
-    let state = createInitialGameState({ preSeeded: true });
-    expect(state.activeLineIndex).toBe(2); // Line 03 active
-
-    // Line 03, 04, 05
-    for (let i = 2; i < 5; i++) {
-      state = gameReducer(state, {
-        type: 'APPLY_AGENT_ACTION',
-        payload: {
-          action: { action: 'CLICK', targetId: '#25', thought: `turn ${i + 1}` },
-          instruction: `line ${i + 1}`,
-        },
-      });
-      expect(state.caseStatus).toBe('active');
-      expect(state.scoreReport).toBeNull();
-    }
-
-    // Line 06
-    expect(state.activeLineIndex).toBe(5);
-    state = gameReducer(state, {
-      type: 'APPLY_AGENT_ACTION',
-      payload: {
-        action: { action: 'CLICK', targetId: '#30', thought: 'final line 6' },
-        instruction: 'final line 6',
-      },
-    });
-
-    expect(state.caseStatus).toBe('closed');
-    expect(state.scoreReport).not.toBeNull();
-    expect(state.scoreReport?.linesUsed).toBe(6);
-    expect(state.scoreReport?.unusedLines).toBe(0);
-    expect(state.scoreReport?.multiplier).toBe(1.0);
-  });
-
   it('strictly freezes game state after Line 06 closure: rejects subsequent inputs and dispatches', () => {
-    let state = createInitialGameState({ preSeeded: true });
+    let state = createInitialGameState();
 
     // Advance to line 06 closure
-    for (let i = 2; i <= 5; i++) {
+    for (let i = 0; i <= 5; i++) {
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
         payload: {
@@ -557,7 +532,7 @@ describe('Adversarial Challenge Vector 5: Automatic Case Closure on Line 06 Exec
 
 describe('Adversarial Challenge Vector 6: Reducer Invariance & Resilient Error Handling', () => {
   it('strictly preserves immutability of deeply frozen GameState', () => {
-    const rawState = createInitialGameState({ preSeeded: true });
+    const rawState = createInitialGameState();
     // Deep freeze
     Object.freeze(rawState);
     Object.freeze(rawState.microState);
@@ -575,7 +550,7 @@ describe('Adversarial Challenge Vector 6: Reducer Invariance & Resilient Error H
   });
 
   it('handles malformed, invalid, or out-of-bounds target IDs gracefully', () => {
-    const state = createInitialGameState({ preSeeded: true });
+    const state = createInitialGameState();
 
     const malformedActions: AgentAction[] = [
       { action: 'CLICK', targetId: '#999999', thought: 'nonexistent target' },
@@ -603,13 +578,13 @@ describe('Adversarial Challenge Vector 6: Reducer Invariance & Resilient Error H
   });
 
   it('enforces strict thought note truncation at <= 80 characters under adversarial spam', () => {
-    let state = createInitialGameState({ preSeeded: true });
+    let state = createInitialGameState();
     const spamThought = 'X'.repeat(300);
 
     state = gameReducer(state, {
       type: 'APPLY_AGENT_ACTION',
       payload: {
-        action: { action: 'CLICK', targetId: '#25', thought: spamThought },
+        action: { action: 'CLICK', targetId: '#1', thought: spamThought },
         instruction: 'spam',
       },
     });
@@ -619,7 +594,7 @@ describe('Adversarial Challenge Vector 6: Reducer Invariance & Resilient Error H
   });
 
   it('maintains idempotence on rapid toggle actions', () => {
-    let state = createInitialGameState({ preSeeded: true });
+    let state = createInitialGameState();
 
     // Ghost replay toggles
     for (let i = 0; i < 10; i++) {

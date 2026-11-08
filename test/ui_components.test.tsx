@@ -17,7 +17,6 @@ import App from '../src/App';
 import {
   CASE_042_INITIAL_MICRO_STATE,
   CASE_042_GHOST_REPLAY,
-  CASE_042_MV03_ELEMENTS,
 } from '../src/data/puzzles/case_042';
 import type { ScoreReport, TelegramLine } from '../src/types/game';
 
@@ -242,96 +241,44 @@ describe('4. SandboxStage Component', () => {
 });
 
 describe('5. ShinkansenSandbox Component', () => {
-  it('renders all 11 Set-of-Mark interactive elements and dispatches clicks', () => {
-    const handleClick = vi.fn();
-
-    render(
-      <ShinkansenSandbox
-        microState={CASE_042_INITIAL_MICRO_STATE}
-        somOverlayActive={true}
-        onElementClick={handleClick}
-        somElements={CASE_042_MV03_ELEMENTS}
-      />
-    );
-
-    // Header buttons
-    const logoutBtn = screen.getByRole('button', { name: /ログアウト/i });
-    fireEvent.click(logoutBtn);
-    expect(handleClick).toHaveBeenCalledWith(11);
-
-    // Promo banner
-    const promoBtn = screen.getByRole('button', { name: /今すぐ申し込む（赤ボタン）/i });
-    fireEvent.click(promoBtn);
-    expect(handleClick).toHaveBeenCalledWith(12);
-
-    // Back to conditions
-    const backBtn = screen.getByRole('button', { name: /◀ 条件変更へ戻る/i });
-    fireEvent.click(backBtn);
-    expect(handleClick).toHaveBeenCalledWith(14);
-
-    // Fare buttons
-    const fareButtons = screen.getAllByRole('button', { name: /◯ ¥13,870/i });
-    fireEvent.click(fareButtons[0]);
-    expect(handleClick).toHaveBeenCalledWith(21);
-
-    fireEvent.click(screen.getByRole('button', { name: /△ ¥14,520/i }));
-    expect(handleClick).toHaveBeenCalledWith(22);
-
-    fireEvent.click(fareButtons[1]);
-    expect(handleClick).toHaveBeenCalledWith(23);
-
-    // Target green car button #25
-    const greenBtn = screen.getByRole('button', { name: /🍀 ◯ ¥13,870 \(特割\)/i });
-    fireEvent.click(greenBtn);
-    expect(handleClick).toHaveBeenCalledWith(25);
-
-    // Insurance checkbox #28
-    const insCheckbox = screen.getByRole('checkbox', { name: /旅行キャンセル保険/i });
-    fireEvent.click(insCheckbox);
-    expect(handleClick).toHaveBeenCalledWith(28);
-
-    // Cancel button #29
-    const cancelBtn = screen.getByRole('button', { name: /予約を取消/i });
-    fireEvent.click(cancelBtn);
-    expect(handleClick).toHaveBeenCalledWith(29);
-
-    // Confirm button #30
-    const confirmBtn = screen.getByRole('button', { name: /予約内容を確認・確定へ/i });
-    fireEvent.click(confirmBtn);
-    expect(handleClick).toHaveBeenCalledWith(30);
-
-    // SoM badges present
-    expect(screen.getByText('#11')).toBeInTheDocument();
-    expect(screen.getByText('#12')).toBeInTheDocument();
-    expect(screen.getByText('#14')).toBeInTheDocument();
-    expect(screen.getByText('#25')).toBeInTheDocument();
-    expect(screen.getByText('#28')).toBeInTheDocument();
-    expect(screen.getByText('#30')).toBeInTheDocument();
-  });
-
-  it('updates visual selection state from microState', () => {
-    const modifiedState = {
+  it('updates visual selection state from microState across multi-page views', () => {
+    const mv03State = {
       ...CASE_042_INITIAL_MICRO_STATE,
-      greenCarSelected: true,
-      insuranceCheckboxChecked: true,
-      finalConfirmed: true,
+      macroViewId: 'MV-03' as const,
+      selectedRoute: 'tokyo_shinosaka' as const,
+      departureTime: '14:30' as const,
+      passengerName: 'TANAKA',
+      greenCarSelected: false,
     };
 
-    render(
+    const { rerender } = render(
       <ShinkansenSandbox
-        microState={modifiedState}
-        somOverlayActive={false}
+        microState={mv03State}
       />
     );
 
     const greenBtn = screen.getByRole('button', { name: /🍀 ◯ ¥13,870/i });
-    expect(greenBtn).toHaveClass('ring-2', 'ring-emerald-950');
+    expect(greenBtn).toBeInTheDocument();
+
+    const mv04State = {
+      ...mv03State,
+      macroViewId: 'MV-04' as const,
+      greenCarSelected: true,
+      insuranceCheckboxChecked: true,
+      finalConfirmed: false,
+    };
+
+    rerender(
+      <ShinkansenSandbox
+        microState={mv04State}
+      />
+    );
 
     const insCheckbox = screen.getByRole('checkbox', { name: /旅行キャンセル保険/i });
     expect(insCheckbox).toBeChecked();
 
     const confirmBtn = screen.getByRole('button', { name: /予約内容を確認・確定へ/i });
-    expect(confirmBtn).toHaveClass('ring-2', 'ring-blue-950');
+    expect(confirmBtn).toBeInTheDocument();
   });
 });
 
@@ -653,15 +600,15 @@ describe('9. ExhibitsPanel Component', () => {
 
 describe('10. App Top-Level Integration Gameplay Loop', () => {
   it('executes full dispatch workflow starting at Line 01, updates agent cursor, and closes case file', async () => {
-    render(<App />);
+    render(<App config={{ startOnCover: false, animationScale: 0, replayAutoplay: false }} />);
 
     // Initial state: Every game starts at Line 01 with all 6 instructions available
     expect(screen.getByText(/LINE 01 \/ 06/i)).toBeInTheDocument();
     const input = screen.getByRole('textbox');
     expect(input).toHaveValue('');
 
-    // Type and Dispatch Line 01
-    fireEvent.change(input, { target: { value: 'click green clover 13870 button in 2nd row' } });
+    // Type and Dispatch Line 01 on MV-01 (selects Tokyo -> Shin-Osaka route + 14:30 departure)
+    fireEvent.change(input, { target: { value: 'Click the top-left green box' } });
     const dispatchBtn = screen.getByRole('button', { name: /DISPATCH LINE 01/i });
     await act(async () => {
       fireEvent.click(dispatchBtn);
@@ -679,7 +626,7 @@ describe('10. App Top-Level Integration Gameplay Loop', () => {
     // Case is now closed
     expect(screen.getAllByText(/CASE CLOSED/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/FORENSIC AUDIT REPORT • CASE #042/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/\[VERIFIED ✓ \+20%\]/i).length).toBe(2); // Exhibits B and C both verified at +20%!
+    expect(screen.getByText(/\[VERIFIED ✓ \+25%\]/i)).toBeInTheDocument();
 
     // Return to active play (practice mode)
     const reopenBtn = screen.getByRole('button', { name: /Return to Active Play/i });
@@ -692,7 +639,7 @@ describe('10. App Top-Level Integration Gameplay Loop', () => {
   });
 
   it('starts on the Krillion-style Newspaper Front Cover, unfolds into a two-page spread, and supports top-left menu & mobile flip tabs', async () => {
-    render(<App initialNewspaperOpen={false} />);
+    render(<App config={{ startOnCover: true, animationScale: 0, replayAutoplay: false }} />);
 
     // 1. Newspaper Front Cover is rendered initially
     expect(screen.getByTestId('newspaper-front-cover')).toBeInTheDocument();

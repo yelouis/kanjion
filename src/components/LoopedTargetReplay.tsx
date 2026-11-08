@@ -10,6 +10,8 @@ export interface LoopedTargetReplayProps {
   isExpanded?: boolean;
   /** Callback to toggle expanded/compact replay size */
   onToggleExpand?: () => void;
+  /** Whether the replay automatically loops */
+  autoplay?: boolean;
 }
 
 interface ReplayTargets {
@@ -45,6 +47,7 @@ export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({
   className = '',
   isExpanded = false,
   onToggleExpand,
+  autoplay = true,
 }) => {
   const [phase, setPhase] = useState<number>(0); // 0 to 100
   const [isPaused, setIsPaused] = useState<boolean>(false);
@@ -81,12 +84,12 @@ export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({
 
   // Continuous 100-tick loop (115ms per tick = 11.5s unhurried 5-page multi-modal cycle)
   useEffect(() => {
-    if (isPaused || process.env.NODE_ENV === 'test') return;
+    if (isPaused || !autoplay) return;
     const interval = setInterval(() => {
       setPhase((prev) => (prev + 1) % 100);
     }, 115);
     return () => clearInterval(interval);
-  }, [isPaused]);
+  }, [isPaused, autoplay]);
 
   const startPos = { x: 512, y: 140 };
   const lerp = (a: number, b: number, t: number) => a + (b - a) * Math.max(0, Math.min(1, t));
@@ -367,11 +370,8 @@ export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({
           {/* Exact 1:1 Unredacted Multi-Page Shinkansen Webpage */}
           <ShinkansenSandbox
             microState={replayMicroState}
-            somOverlayActive={false}
             activeFlashColumn={activeFlashColumn}
             signatureProgress={sigProgress}
-            multiPageMode={true}
-            instantPageFlip={true}
           />
 
           {/* Animated Mouse Cursor + Click Glow Only (No Text Callouts) */}

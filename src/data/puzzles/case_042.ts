@@ -25,9 +25,11 @@ import { tupleToBoundingBox } from '../../utils/coordinate_projector';
  * Pre-seeded with Exhibits A & B satisfied by prior turns in the canonical narrative.
  */
 export const CASE_042_INITIAL_MICRO_STATE: ShinkansenMicroState = {
-  macroViewId: 'MV-03',
-  selectedRoute: 'tokyo_osaka',
-  departureTime: '14:30',
+  macroViewId: 'MV-01',
+  selectedRoute: 'none',
+  departureTime: 'none',
+  passengerName: '',
+  signatureSigned: false,
   trainName: 'none',
   seatClass: 'none',
   fare: 0,

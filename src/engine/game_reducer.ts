@@ -42,7 +42,6 @@ export type GameAction =
       type: 'RESET_GAME';
       payload?: {
         caseNumber?: string;
-        preSeeded?: boolean;
         initialMicroState?: ShinkansenMicroState;
       };
     };
@@ -341,88 +340,32 @@ function resolveCursorPosition(
  */
 export function createInitialGameState(options?: {
   caseNumber?: string;
-  preSeeded?: boolean;
   initialMicroState?: ShinkansenMicroState;
 }): GameState {
   const caseNumber = options?.caseNumber ?? '#042';
-  const preSeeded = options?.preSeeded ?? true;
   const microState = options?.initialMicroState
     ? { ...options.initialMicroState }
     : { ...CASE_042_INITIAL_MICRO_STATE };
 
-  let telegrams: TelegramLine[];
-  let activeLineIndex: number;
-  let currentInput: string;
-  let cursorThought: string;
-
-  if (preSeeded) {
-    telegrams = [
-      {
-        lineNumber: 1,
-        text: 'select tokyo to shin-osaka tab',
-        submitted: true,
-        actionSummary: 'Agent clicked [東海道新幹線 東京⇒新大阪]',
-        exhibitRedactedStatus: 'SEALED',
-      },
-      {
-        lineNumber: 2,
-        text: 'set departure dropdown to 14:30',
-        submitted: true,
-        actionSummary: 'Agent selected [14:30発]',
-        exhibitRedactedStatus: 'SEALED',
-      },
-      {
-        lineNumber: 3,
-        text: '',
-        submitted: false,
-        exhibitRedactedStatus: 'SEALED',
-      },
-      {
-        lineNumber: 4,
-        text: '',
-        submitted: false,
-        exhibitRedactedStatus: 'SEALED',
-      },
-      {
-        lineNumber: 5,
-        text: '',
-        submitted: false,
-        exhibitRedactedStatus: 'SEALED',
-      },
-      {
-        lineNumber: 6,
-        text: '',
-        submitted: false,
-        exhibitRedactedStatus: 'SEALED',
-      },
-    ];
-    activeLineIndex = 2; // Line 03 is active
-    currentInput = 'click green clover 13870 button in 2nd row';
-    cursorThought = '📌 FIELD AGENT: Awaiting Telegram 03...';
-  } else {
-    telegrams = Array.from({ length: 6 }, (_, i) => ({
-      lineNumber: i + 1,
-      text: '',
-      submitted: false,
-      exhibitRedactedStatus: 'SEALED' as const,
-    }));
-    activeLineIndex = 0;
-    currentInput = '';
-    cursorThought = '📌 FIELD AGENT: Awaiting Telegram 01...';
-  }
+  const telegrams: TelegramLine[] = Array.from({ length: 6 }, (_, i) => ({
+    lineNumber: i + 1,
+    text: '',
+    submitted: false,
+    exhibitRedactedStatus: 'SEALED' as const,
+  }));
 
   return {
     caseNumber,
     caseStatus: 'active',
-    activeLineIndex,
+    activeLineIndex: 0,
     telegrams,
-    currentInput,
-    macroViewId: microState.macroViewId || 'MV-03',
+    currentInput: '',
+    macroViewId: microState.macroViewId || 'MV-01',
     microState,
     agentCursor: {
       xPercent: 65,
       yPercent: 55,
-      thought: cursorThought,
+      thought: '📌 FIELD AGENT: Awaiting Telegram 01...',
       variant: 'idle',
       isShaking: false,
     },

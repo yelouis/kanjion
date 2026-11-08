@@ -43,6 +43,7 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
     it('evaluates clean decoy trap avoidance with [CLEAN ✓] badge', () => {
       const cleanState: ShinkansenMicroState = {
         ...CASE_042_INITIAL_MICRO_STATE,
+        signatureSigned: true,
         insuranceTrapHit: false,
         insuranceCheckboxChecked: false,
       };
@@ -55,6 +56,7 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
     it('evaluates decoy trap contamination with [CONTAMINATED ✗] badge and 0 points', () => {
       const contaminatedState: ShinkansenMicroState = {
         ...CASE_042_INITIAL_MICRO_STATE,
+        signatureSigned: true,
         insuranceTrapHit: true,
       };
       const evalD = evaluateExhibit(CASE_042_EXHIBITS[3], contaminatedState, 3);
@@ -88,9 +90,12 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
         ...CASE_042_INITIAL_MICRO_STATE,
         selectedRoute: 'tokyo_osaka',
         departureTime: '14:30',
+        passengerName: 'TANAKA',
         greenCarSelected: true,
         trainName: 'Nozomi 24',
         fare: 13870,
+        signatureSigned: true,
+        signatureStroke: 'SHAPE:signature',
         insuranceTrapHit: false,
         insuranceCheckboxChecked: false,
         finalConfirmed: true,
@@ -105,9 +110,11 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
         ...CASE_042_INITIAL_MICRO_STATE,
         selectedRoute: 'tokyo_osaka',
         departureTime: '14:30',
+        passengerName: 'TANAKA',
         greenCarSelected: true,
         trainName: 'Nozomi 24',
         fare: 13870,
+        signatureSigned: true,
         insuranceTrapHit: true, // Contaminates Exhibit D (15%)
         finalConfirmed: true,
       };
@@ -116,11 +123,17 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
       expect(closeness).toBe(85);
     });
 
-    it('calculates 45% closeness for initial state before green car and confirm', () => {
-      // In initial state: Exhibit A (25) + Exhibit B (20) + Exhibit D (15 Clean) = 60
-      const evals = evaluateAllExhibits(CASE_042_EXHIBITS, CASE_042_INITIAL_MICRO_STATE);
+    it('calculates 45% closeness after route and passenger name before green car and confirm', () => {
+      // Exhibit A (25) + Exhibit B (20) = 45
+      const mv03State: ShinkansenMicroState = {
+        ...CASE_042_INITIAL_MICRO_STATE,
+        selectedRoute: 'tokyo_osaka',
+        departureTime: '14:30',
+        passengerName: 'TANAKA',
+      };
+      const evals = evaluateAllExhibits(CASE_042_EXHIBITS, mv03State);
       const closeness = calculateClosenessScore(evals);
-      expect(closeness).toBe(60);
+      expect(closeness).toBe(45);
     });
 
     it('calculates 0% closeness when all conditions are failed or contaminated', () => {
@@ -232,9 +245,12 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
         ...CASE_042_INITIAL_MICRO_STATE,
         selectedRoute: 'tokyo_osaka',
         departureTime: '14:30',
+        passengerName: 'TANAKA',
         greenCarSelected: true,
         trainName: 'Nozomi 24',
         fare: 13870,
+        signatureSigned: true,
+        signatureStroke: 'SHAPE:signature',
         insuranceTrapHit: false,
         insuranceCheckboxChecked: false,
         finalConfirmed: true,

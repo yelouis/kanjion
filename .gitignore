@@ -1,5 +1,6 @@
 node_modules/
 dist/
+dist-e2e/
 functions/node_modules/
 functions/lib/
 .firebase/

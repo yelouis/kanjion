@@ -127,7 +127,7 @@ describe('CHALLENGER M3: Empirical Verification & Adversarial Stress Suite', () 
     });
 
     it('fuzz-tests 100 random multi-byte strings to confirm strict 60-char ceiling', () => {
-      const state = createInitialGameState({ preSeeded: false });
+      const state = createInitialGameState({});
       const testLengths = [59, 60, 61, 75, 100, 250, 1000];
 
       for (const len of testLengths) {
@@ -239,7 +239,7 @@ describe('CHALLENGER M3: Empirical Verification & Adversarial Stress Suite', () 
   // =========================================================================
   describe('Challenge 3: Line Progression and +20% Efficiency Bonus Watermark', () => {
     it('empirically verifies sequential progression through lines 01 to 06 and checks watermark count', () => {
-      let state = createInitialGameState({ preSeeded: false });
+      let state = createInitialGameState({});
       expect(state.activeLineIndex).toBe(0);
       expect(state.caseStatus).toBe('active');
 
@@ -307,7 +307,7 @@ describe('CHALLENGER M3: Empirical Verification & Adversarial Stress Suite', () 
     });
 
     it('empirically verifies early closure at Line 03 locks in 1.6x multiplier for 3 unused lines', () => {
-      let state = createInitialGameState({ preSeeded: false });
+      let state = createInitialGameState({});
 
       // Submit Line 01 & 02
       state = gameReducer(state, {
@@ -414,7 +414,7 @@ describe('CHALLENGER M3: Empirical Verification & Adversarial Stress Suite', () 
     });
 
     it('empirically verifies reducer rejects SET_INPUT and APPLY_AGENT_ACTION after case closure', () => {
-      let state = createInitialGameState({ preSeeded: false });
+      let state = createInitialGameState({});
       state = gameReducer(state, { type: 'CLOSE_CASE' });
       expect(state.caseStatus).toBe('closed');
 

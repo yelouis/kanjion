@@ -3,6 +3,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 
 import {
   SandboxStage,
+  ShinkansenSandbox,
   CoordinateRulers,
   GhostReplay,
   ExhibitsPanel,
@@ -336,17 +337,24 @@ describe('Adversarial Challenge 3: Anti-Copy & Clipboard Tamper Lockout', () => 
   });
 
   it('verifies deep event bubbling protection from child elements within the sandbox', () => {
-    const handleClick = vi.fn();
+    const mv03State = {
+      ...CASE_042_INITIAL_MICRO_STATE,
+      macroViewId: 'MV-03' as const,
+      selectedRoute: 'tokyo_shinosaka' as const,
+      departureTime: '14:30' as const,
+      passengerName: 'TANAKA',
+    };
     render(
       <SandboxStage
         macroViewId="MV-03"
-        microState={CASE_042_INITIAL_MICRO_STATE}
+        microState={mv03State}
         agentCursor={defaultCursor}
         ghostReplayActive={false}
         somOverlayActive={true}
         stageShake={false}
-        onElementClick={handleClick}
-      />
+      >
+        <ShinkansenSandbox microState={mv03State} />
+      </SandboxStage>
     );
 
     // Find deep child targets: Japanese fare button #25, promo button #12, and simulated URL bar

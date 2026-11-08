@@ -200,7 +200,7 @@ describe('Cloud Vision LLM Connector & Security Guardrails', () => {
       expect(sanitized).not.toHaveProperty('exhibits');
       expect(sanitized).not.toHaveProperty('targetWaypoints');
       expect(sanitized).not.toHaveProperty('ghostReplay');
-      expect(sanitized).toHaveProperty('macroViewId', 'MV-03');
+      expect(sanitized).toHaveProperty('macroViewId', 'MV-01');
       expect(sanitized).toHaveProperty('fare', 0);
     });
 

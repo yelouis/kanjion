@@ -35,29 +35,31 @@ import type { ShinkansenMicroState } from '../src/types/engine';
 import type { StampStatus } from '../src/types/game';
 
 describe('1. Broadsheet App Shell & Scaffolding', () => {
+  const testConfig = { startOnCover: false, animationScale: 0, replayAutoplay: false };
+
   it('mounts the broadsheet layout with masthead header and metadata', () => {
-    render(React.createElement(App));
+    render(React.createElement(App, { config: testConfig }));
     expect(screen.getByText('KANJION')).toBeInTheDocument();
     expect(screen.getByText(/CASE FILE #042/i)).toBeInTheDocument();
     expect(screen.getByText(/6-LINE WESTERN UNION DISPATCH PAD/i)).toBeInTheDocument();
   });
 
   it('mounts the two-page newspaper spread with left agent page and right target replay', () => {
-    render(React.createElement(App));
+    render(React.createElement(App, { config: testConfig }));
     expect(screen.getByTestId('newspaper-left-page')).toBeInTheDocument();
     expect(screen.getByTestId('newspaper-right-page')).toBeInTheDocument();
     expect(screen.getByTestId('looped-target-replay')).toBeInTheDocument();
   });
 
   it('starts every game on Line 01 with all 6 instruction slots available', () => {
-    render(React.createElement(App));
+    render(React.createElement(App, { config: testConfig }));
     expect(screen.getByText(/LINE 01 \/ 06/i)).toBeInTheDocument();
     expect(screen.getByRole('textbox')).toHaveValue('');
     expect(screen.getAllByText(/KEEP BLANK FOR \+20% EFFICIENCY MULTIPLIER/i).length).toBe(5);
   });
 
   it('unseals the 5 declassified exhibits with rubber ink stamps upon closing the case file', () => {
-    render(React.createElement(App));
+    render(React.createElement(App, { config: testConfig }));
     // Exhibits are sealed initially
     expect(screen.getByText(/██ SEALED UNTIL CASE CLOSED ██/i)).toBeInTheDocument();
     expect(screen.queryByText(/FORENSIC AUDIT REPORT/i)).not.toBeInTheDocument();
@@ -74,7 +76,7 @@ describe('1. Broadsheet App Shell & Scaffolding', () => {
     expect(screen.getByText(/Row 2: 🍀 ¥13,870 Seat/i)).toBeInTheDocument();
     expect(screen.getByText(/Sign Digital Authorization Pad/i)).toBeInTheDocument();
     expect(screen.getByText(/Final Blue Confirm/i)).toBeInTheDocument();
-    expect(screen.getByText(/\[VERIFIED ✓ \+25%\]/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/\[MISSED ✗ \+0%\]/i).length).toBe(5);
   });
 });
 
@@ -266,22 +268,27 @@ describe('4. Case File #042 Data Integrity & Checkpoint Evaluation', () => {
     expect(totalWeight).toBe(100);
   });
 
-  it('evaluates initial micro-state to 60% closeness (A verified: 25, B verified: 20, D clean: 15, C/E missed)', () => {
+  it('evaluates initial micro-state (MV-01) to 0% closeness (all 5 exhibits missed)', () => {
     const evals = CASE_042_EXHIBITS.map((ex) => ex.evaluate(CASE_042_INITIAL_MICRO_STATE));
     const statuses = evals.map((e) => e.status as StampStatus);
-    expect(statuses).toEqual(['VERIFIED', 'VERIFIED', 'MISSED', 'CLEAN', 'MISSED']);
+    expect(statuses).toEqual(['MISSED', 'MISSED', 'MISSED', 'MISSED', 'MISSED']);
 
     const awardedTotal = evals.reduce((sum, e) => sum + e.awardedPoints, 0);
-    expect(awardedTotal).toBe(60); // 25 + 20 + 0 + 15 + 0 = 60
+    expect(awardedTotal).toBe(0);
   });
 
   it('evaluates winning micro-state to 100% closeness', () => {
     const winningState: ShinkansenMicroState = {
       ...CASE_042_INITIAL_MICRO_STATE,
+      selectedRoute: 'tokyo_osaka',
+      departureTime: '14:30',
+      passengerName: 'TANAKA',
       trainName: 'Nozomi 24',
       seatClass: 'green_car',
       fare: 13870,
       greenCarSelected: true,
+      signatureSigned: true,
+      signatureStroke: 'SHAPE:signature',
       insuranceTrapHit: false,
       insuranceCheckboxChecked: false,
       finalConfirmed: true,
@@ -289,7 +296,7 @@ describe('4. Case File #042 Data Integrity & Checkpoint Evaluation', () => {
 
     const evals = CASE_042_EXHIBITS.map((ex) => ex.evaluate(winningState));
     const statuses = evals.map((e) => e.status as StampStatus);
-    expect(statuses).toEqual(['VERIFIED', 'VERIFIED', 'VERIFIED', 'CLEAN', 'VERIFIED']);
+    expect(statuses).toEqual(['VERIFIED', 'VERIFIED', 'VERIFIED', 'VERIFIED', 'VERIFIED']);
 
     const awardedTotal = evals.reduce((sum, e) => sum + e.awardedPoints, 0);
     expect(awardedTotal).toBe(100);
@@ -298,6 +305,7 @@ describe('4. Case File #042 Data Integrity & Checkpoint Evaluation', () => {
   it('evaluates contaminated decoy trap state properly', () => {
     const trapState: ShinkansenMicroState = {
       ...CASE_042_INITIAL_MICRO_STATE,
+      signatureSigned: true,
       insuranceTrapHit: true,
     };
 

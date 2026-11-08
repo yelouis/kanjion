@@ -54,7 +54,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       const [state, dispatch] = useReducer(
         gameReducer,
         undefined,
-        () => createInitialGameState({ caseNumber: '#042', preSeeded: false })
+        () => createInitialGameState({ caseNumber: '#042' })
       );
 
       const engine = new OfflineSimulationEngine(CASE_042_MACRO_VIEWS);
@@ -113,7 +113,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       expect(container.querySelector('#live-mult-label')).toHaveTextContent('2.0x');
       expect(screen.getByText(/5 REQUIRED EXHIBITS ARE CURRENTLY SEALED/i)).toBeInTheDocument();
 
-      // --- Turn 1: Dispatch Line 01 ---
+      // --- Turn 1 (MV-01): Dispatch Line 01 ---
       const input1 = container.querySelector('#telegram-input') as HTMLInputElement;
       fireEvent.change(input1, { target: { value: 'click tokyo to shin-osaka route' } });
       expect(container.querySelector('#char-counter')).toHaveTextContent('31/60');
@@ -129,9 +129,9 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       expect(screen.getByText(/LINE 01:/i)).toBeInTheDocument();
       expect(screen.getByText(/Exhibit Status: ██ REDACTED ██/i)).toBeInTheDocument();
 
-      // --- Turn 2: Dispatch Line 02 ---
+      // --- Turn 2 (MV-02): Dispatch Line 02 ---
       const input2 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input2, { target: { value: 'set departure dropdown to 14:30' } });
+      fireEvent.change(input2, { target: { value: 'Type TANAKA in the passenger name box' } });
       const dispatchBtn2 = screen.getByRole('button', { name: /DISPATCH LINE 02/i });
       await act(async () => {
         fireEvent.click(dispatchBtn2);
@@ -142,7 +142,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       expect(container.querySelector('#live-mult-label')).toHaveTextContent('1.8x'); // 2 lines used -> 4 unused -> 1.0 + 4*0.2 = 1.8x
       expect(screen.getByText(/LINE 02:/i)).toBeInTheDocument();
 
-      // --- Turn 3: Dispatch Line 03 ---
+      // --- Turn 3 (MV-03): Dispatch Line 03 ---
       const input3 = container.querySelector('#telegram-input') as HTMLInputElement;
       fireEvent.change(input3, { target: { value: 'select nozomi green car' } });
       const dispatchBtn3 = screen.getByRole('button', { name: /DISPATCH LINE 03/i });
@@ -165,53 +165,56 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       expect(container.querySelector('#telegram-input')).not.toBeInTheDocument();
 
       // Verification: Unsealed Exhibits & Closeness Calculation
-      // Exhibits A (+25%), B (+20%), C (+20%), D Clean (+15%), E Missed (+0%) = 80%
+      // Exhibits A (+25%), B (+20%), C (+20%), D Missed (+0%), E Missed (+0%) = 65%
       // Multiplier: 3 lines used (Lines 1, 2, 3) -> 3 lines unused -> 1.0 + 3*0.2 = 1.6x
-      // Final Score: round(80 * 1.6) = 128 PTS
+      // Final Score: round(65 * 1.6) = 104 PTS
       const unsealedPanel = container.querySelector('#unsealed-exhibits-panel');
       expect(unsealedPanel).toBeInTheDocument();
-      expect(container.querySelector('#final-score-banner')).toHaveTextContent('80% × 1.6x = 128 PTS');
+      expect(container.querySelector('#final-score-banner')).toHaveTextContent('65% × 1.6x = 104 PTS');
 
       // Verify Rubber Stamp statuses
       expect(container.querySelector('#exhibit-a-stamp')).toHaveTextContent('[VERIFIED ✓ +25%]');
       expect(container.querySelector('#exhibit-b-stamp')).toHaveTextContent('[VERIFIED ✓ +20%]');
       expect(container.querySelector('#exhibit-c-stamp')).toHaveTextContent('[VERIFIED ✓ +20%]');
-      expect(container.querySelector('#exhibit-d-stamp')).toHaveTextContent('[CLEAN ✓ +15%]');
+      expect(container.querySelector('#exhibit-d-stamp')).toHaveTextContent('[MISSED ✗ +0%]');
       expect(container.querySelector('#exhibit-e-stamp')).toHaveTextContent('[MISSED ✗ +0%]');
 
       // Verify Shareable Wordle emoji row
-      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩🟩⬜ (3/6 Telegrams Sent)');
+      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩⬜⬜ (3/6 Telegrams Sent)');
     });
 
     it('empirically verifies golden path progression in top-level <App /> starting at Line 01', async () => {
-      const { container } = render(<App />);
+      const { container } = render(
+        <App config={{ startOnCover: false, animationScale: 0, replayAutoplay: false }} />
+      );
 
       // Starts at Line 01 with all 6 instructions available
       expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 01 / 06');
 
-      // Send Line 01: Green car
-      const input1 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input1, { target: { value: 'select nozomi green car' } });
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 01/i }));
-      });
-      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 02 / 06');
+      const steps = [
+        'Click the top-left green box',
+        'Type TANAKA in the passenger name box',
+        'select nozomi green car',
+        'Draw a signature in the dashed box',
+        'confirm booking',
+      ];
 
-      // Send Line 02: Confirm booking (query input fresh)
-      const input2 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input2, { target: { value: 'confirm booking' } });
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 02/i }));
-      });
-      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 03 / 06');
+      for (let i = 0; i < steps.length; i++) {
+        const inputEl = container.querySelector('#telegram-input') as HTMLInputElement;
+        fireEvent.change(inputEl, { target: { value: steps[i] } });
+        await act(async () => {
+          fireEvent.click(screen.getByRole('button', { name: new RegExp(`DISPATCH LINE 0${i + 1}`, 'i') }));
+        });
+        expect(container.querySelector('#active-line-label')).toHaveTextContent(`LINE 0${i + 2} / 06`);
+      }
 
-      // Close Case: 2 lines used, 4 unused -> 100% x 1.8x = 180 PTS
+      // Close Case: 5 lines used, 1 unused -> 100% x 1.2x = 120 PTS
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /CLOSE CASE FILE/i }));
       });
 
-      expect(container.querySelector('#final-score-banner')).toHaveTextContent('100% × 1.8x = 180 PTS');
-      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩🟩🟩 (2/6 Telegrams Sent)');
+      expect(container.querySelector('#final-score-banner')).toHaveTextContent('100% × 1.2x = 120 PTS');
+      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩🟩🟩 (5/6 Telegrams Sent)');
     });
   });
 
@@ -220,7 +223,9 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
   // =========================================================================
   describe('Domain 2: Decoy Trap Interaction (#12 Red Button)', () => {
     it('empirically triggers stage shake and contaminates Exhibit D via natural language dispatch', async () => {
-      const { container } = render(<App />);
+      const { container } = render(
+        <App config={{ startOnCover: false, animationScale: 0, replayAutoplay: false }} />
+      );
 
       const input = container.querySelector('#telegram-input') as HTMLInputElement;
       fireEvent.change(input, { target: { value: 'click the red button' } });
@@ -244,19 +249,21 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       });
       expect(stageCore).not.toHaveClass('shake-anim');
 
-      // 4. Close case and verify Exhibit D contamination
+      // 4. Close case and verify Exhibit D is not verified
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /CLOSE CASE FILE/i }));
       });
 
       const stampD = container.querySelector('#exhibit-d-stamp');
-      expect(stampD).toHaveTextContent('[CONTAMINATED ✗ +0%]');
+      expect(stampD).toHaveTextContent('[MISSED ✗ +0%]');
       expect(stampD).toHaveClass('border-dossier-stampRed', 'text-dossier-stampRed');
-      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩⬜🟥⬜');
+      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('⬜⬜⬜⬜⬜');
     });
 
     it('empirically blocks direct manual webpage clicks in prompt-only mode without contaminating Exhibit D', async () => {
-      const { container } = render(<App />);
+      const { container } = render(
+        <App config={{ startOnCover: false, animationScale: 0, replayAutoplay: false }} />
+      );
 
       // Direct click on the red promo insurance button (#12) in the Japanese sandbox
       const promoBtn = container.querySelector('#btn-promo-insurance') as HTMLButtonElement;
@@ -271,56 +278,50 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       const stageCore = container.querySelector('#sandbox-core');
       expect(stageCore).not.toHaveClass('shake-anim');
 
-      // Verify checkbox remains UNCHECKED (#ins-checkbox)
-      const insCheckbox = container.querySelector('#ins-checkbox') as HTMLInputElement;
-      expect(insCheckbox?.checked).toBe(false);
-
-      // Close case and verify Exhibit D remains CLEAN (not contaminated by manual click)
+      // Close case and verify Exhibit D was not contaminated by manual click
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /CLOSE CASE FILE/i }));
       });
 
       const stampD = container.querySelector('#exhibit-d-stamp');
-      expect(stampD).toHaveTextContent('[CLEAN ✓ +15%]');
+      expect(stampD).toHaveTextContent('[MISSED ✗ +0%]');
     });
 
-    it('empirically enforces trap irreversibility: subsequent green car pick does NOT undo contamination', async () => {
-      const { container } = render(<App />);
+    it('empirically enforces trap detour: subsequent green car pick still requires returning from MV-06', async () => {
+      const { container } = render(
+        <App config={{ startOnCover: false, animationScale: 0, replayAutoplay: false }} />
+      );
 
-      // Turn 1: Hit trap
-      const input1 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input1, { target: { value: 'click the red button' } });
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 01/i }));
-      });
+      const prompts = [
+        'click the red button',
+        'click return button',
+        'Click the top-left green box',
+        'Type TANAKA in the passenger name box',
+        'select nozomi green car',
+      ];
 
-      // Turn 2: Pick correct green car (query input fresh)
-      const input2 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input2, { target: { value: 'select nozomi green car' } });
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 02/i }));
-      });
-
-      // Turn 3: Confirm booking (query input fresh)
-      const input3 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input3, { target: { value: 'confirm booking' } });
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 03/i }));
-      });
+      for (let i = 0; i < prompts.length; i++) {
+        const inputEl = container.querySelector('#telegram-input') as HTMLInputElement;
+        fireEvent.change(inputEl, { target: { value: prompts[i] } });
+        await act(async () => {
+          fireEvent.click(screen.getByRole('button', { name: new RegExp(`DISPATCH LINE 0${i + 1}`, 'i') }));
+        });
+      }
 
       // Close case
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /CLOSE CASE FILE/i }));
       });
 
-      // Exhibit C is verified, Exhibit E is verified, but Exhibit D REMAINS contaminated
+      // Exhibits A, B, C verified, Exhibit D and E missed (ran out of steps to sign & confirm)
+      expect(container.querySelector('#exhibit-a-stamp')).toHaveTextContent('[VERIFIED ✓ +25%]');
+      expect(container.querySelector('#exhibit-b-stamp')).toHaveTextContent('[VERIFIED ✓ +20%]');
       expect(container.querySelector('#exhibit-c-stamp')).toHaveTextContent('[VERIFIED ✓ +20%]');
-      expect(container.querySelector('#exhibit-e-stamp')).toHaveTextContent('[VERIFIED ✓ +20%]');
-      expect(container.querySelector('#exhibit-d-stamp')).toHaveTextContent('[CONTAMINATED ✗ +0%]');
-      // Closeness is 25 (A) + 20 (B) + 20 (C) + 0 (D contaminated) + 20 (E) = 85%
-      // 3 lines used, 3 unused -> 1.6x multiplier -> round(85 * 1.6) = 136 PTS
-      expect(container.querySelector('#final-score-banner')).toHaveTextContent('85% × 1.6x = 136 PTS');
-      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩🟥🟩 (3/6 Telegrams Sent)');
+      expect(container.querySelector('#exhibit-d-stamp')).toHaveTextContent('[MISSED ✗ +0%]');
+      // Closeness is 25 (A) + 20 (B) + 20 (C) + 0 (D missed) + 0 (E missed) = 65%
+      // 5 lines used, 1 unused -> 1.2x multiplier -> round(65 * 1.2) = 78 PTS
+      expect(container.querySelector('#final-score-banner')).toHaveTextContent('65% × 1.2x = 78 PTS');
+      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩⬜⬜ (5/6 Telegrams Sent)');
     });
   });
 
@@ -329,7 +330,9 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
   // =========================================================================
   describe('Domain 3: Practice Mode Loop & State Resealing', () => {
     it('empirically reseals exhibits, restores dispatch pad, and maintains sandbox consistency on reopen', async () => {
-      const { container } = render(<App />);
+      const { container } = render(
+        <App config={{ startOnCover: false, animationScale: 0, replayAutoplay: false }} />
+      );
 
       // Close case immediately
       const closeBtn = screen.getByRole('button', { name: /CLOSE CASE FILE/i });
@@ -363,7 +366,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 01 / 06');
 
       // 5. Player can continue typing and dispatching in practice mode
-      fireEvent.change(restoredInput, { target: { value: 'select nozomi green car' } });
+      fireEvent.change(restoredInput, { target: { value: 'Click the top-left green box' } });
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 01/i }));
       });
@@ -374,7 +377,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
         fireEvent.click(screen.getByRole('button', { name: /CLOSE CASE FILE/i }));
       });
       expect(container.querySelector('#unsealed-exhibits-panel')).toBeInTheDocument();
-      expect(container.querySelector('#exhibit-c-stamp')).toHaveTextContent('[VERIFIED ✓ +20%]');
+      expect(container.querySelector('#exhibit-a-stamp')).toHaveTextContent('[VERIFIED ✓ +25%]');
     });
   });
 
@@ -383,14 +386,16 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
   // =========================================================================
   describe('Domain 4: Line 06 Exhaustion & Auto-Closure Trigger', () => {
     it('empirically triggers automatic case closure on 6th telegram dispatch with 1.0x multiplier', async () => {
-      const { container } = render(<App />);
+      const { container } = render(
+        <App config={{ startOnCover: false, animationScale: 0, replayAutoplay: false }} />
+      );
 
       const prompts = [
-        'select tokyo to shin-osaka',
-        'set departure 14:30',
+        'Click the top-left green box',
+        'Type TANAKA in the passenger name box',
         'select nozomi green car',
+        'Draw a signature in the dashed box',
         'confirm booking',
-        'inspect fare details',
         'final dispatch confirmation',
       ];
 
@@ -419,7 +424,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
   // =========================================================================
   describe('Domain 5: Clipboard Copy Feedback & Forensic Formatting', () => {
     it('empirically verifies clipboard export format, tactile UI feedback, and revert timer', async () => {
-      render(<App />);
+      render(<App config={{ startOnCover: false, animationScale: 0, replayAutoplay: false }} />);
 
       // Close case
       await act(async () => {
@@ -465,7 +470,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
     it('empirically handles clipboard write rejection without throwing UI errors', async () => {
       vi.mocked(navigator.clipboard.writeText).mockRejectedValueOnce(new Error('Clipboard permission denied'));
 
-      render(<App />);
+      render(<App config={{ startOnCover: false, animationScale: 0, replayAutoplay: false }} />);
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /CLOSE CASE FILE/i }));
       });

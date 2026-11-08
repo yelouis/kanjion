@@ -4,15 +4,14 @@ import { OfflineSimulationEngine } from './engine/offline_simulator';
 import {
   CloudVisionConnector,
   BrowserGeminiNanoTransport,
-  MockVisionLLMTransport,
 } from './engine/cloud_connector';
 import { calculateEfficiencyMultiplier } from './engine/scoring';
 import {
   CASE_042_MACRO_VIEWS,
   CASE_042_EXHIBITS,
   CASE_042_GHOST_REPLAY,
-  CASE_042_INITIAL_MICRO_STATE,
 } from './data/puzzles/case_042';
+import { GameConfig, productionConfig } from './config/game_config';
 
 import {
   MastheadHeader,
@@ -29,47 +28,31 @@ import {
 export type MobileActivePage = 'agent' | 'replay';
 
 export interface AppProps {
-  /**
-   * Optional override for whether the newspaper starts unfolded.
-   * Defaults to false in browser (starts on Newspaper Front Cover) and true in unit tests.
-   */
-  initialNewspaperOpen?: boolean;
+  config?: Partial<GameConfig>;
 }
 
-export const App: React.FC<AppProps> = ({
-  initialNewspaperOpen = process.env.NODE_ENV === 'test',
-}) => {
-  const browserInitialMicroState =
-    process.env.NODE_ENV === 'test'
-      ? undefined
-      : {
-          ...CASE_042_INITIAL_MICRO_STATE,
-          macroViewId: 'MV-01',
-          selectedRoute: 'none' as const,
-          departureTime: 'none' as const,
-          passengerName: '',
-          signatureSigned: false,
-        };
+export const App: React.FC<AppProps> = ({ config }) => {
+  const resolvedConfig = useMemo(
+    () => ({ ...productionConfig(), ...config }),
+    [config]
+  );
 
-  // 1. Every game starts on Line 01 (preSeeded: false) with all 6 instruction slots available!
+  // 1. Every game starts on Line 01 with all 6 instruction slots available!
   const [state, dispatch] = useReducer(
     gameReducer,
     undefined,
     () =>
       createInitialGameState({
         caseNumber: '#042',
-        preSeeded: false,
-        initialMicroState: browserInitialMicroState,
       })
   );
 
   // 2. Newspaper Fold State, Top-Left Menu Drawer, & Mobile Page Tab
-  // In production/browser gameplay, rely directly on gemini-2.5-flash-lite ('cloud' mode).
-  const [isNewspaperOpen, setIsNewspaperOpen] = useState<boolean>(initialNewspaperOpen);
-  const [menuOpen, setMenuOpen] = useState<boolean>(false);
-  const [engineMode, setEngineMode] = useState<'offline' | 'cloud'>(
-    process.env.NODE_ENV === 'test' ? 'offline' : 'cloud'
+  const [isNewspaperOpen, setIsNewspaperOpen] = useState<boolean>(
+    !resolvedConfig.startOnCover
   );
+  const [menuOpen, setMenuOpen] = useState<boolean>(false);
+  const [engineMode, setEngineMode] = useState<'offline' | 'cloud'>('cloud');
   const [mobilePage, setMobilePage] = useState<MobileActivePage>('agent');
   const [isReplayExpanded, setIsReplayExpanded] = useState<boolean>(false);
 
@@ -94,10 +77,7 @@ export const App: React.FC<AppProps> = ({
   );
 
   const cloudEngine = useMemo(() => {
-    const transport =
-      process.env.NODE_ENV === 'test'
-        ? new MockVisionLLMTransport()
-        : new BrowserGeminiNanoTransport();
+    const transport = new BrowserGeminiNanoTransport();
     return new CloudVisionConnector({
       puzzleId: 'case_042',
       macroViews: CASE_042_MACRO_VIEWS,
@@ -182,73 +162,73 @@ export const App: React.FC<AppProps> = ({
         instruction
       );
 
-      // In live browser gameplay, choreograph the mouse glide + character-by-character typing / signature drawing
+      // Choreograph the mouse glide + character-by-character typing / signature drawing
       // on the current screen BEFORE committing the page transition so the player feels in direct control!
-      if (process.env.NODE_ENV !== 'test') {
-        const isAutomatedBrowser =
-          typeof navigator !== 'undefined' && Boolean(navigator.webdriver);
-        const speedFactor = isAutomatedBrowser ? 0.08 : 1;
-        const sleep = (ms: number) =>
-          new Promise((resolve) => setTimeout(resolve, Math.max(10, Math.round(ms * speedFactor))));
+      const scale = resolvedConfig.animationScale;
+      const sleep = (ms: number) =>
+        scale === 0
+          ? Promise.resolve()
+          : new Promise<void>((resolve) =>
+              setTimeout(resolve, Math.round(ms * scale))
+            );
 
-        const coords = getTargetCoordinates(action.targetId, action.targetCoordinate);
+      const coords = getTargetCoordinates(action.targetId, action.targetCoordinate);
 
-        // Phase 1: Smoothly glide the mouse cursor across the current page to the target element (~1.15s)
-        setPreviewCursor({
-          xPercent: coords.xPercent,
-          yPercent: coords.yPercent,
-          thought: action.thought,
-          targetElementId: null,
-        });
-        await sleep(1150);
+      // Phase 1: Smoothly glide the mouse cursor across the current page to the target element (~1.15s)
+      setPreviewCursor({
+        xPercent: coords.xPercent,
+        yPercent: coords.yPercent,
+        thought: action.thought,
+        targetElementId: null,
+      });
+      await sleep(1150);
 
-        // Lock target highlight ring onto the element
-        setPreviewCursor({
-          xPercent: coords.xPercent,
-          yPercent: coords.yPercent,
-          thought: action.thought,
-          targetElementId: action.targetId ?? null,
-        });
+      // Lock target highlight ring onto the element
+      setPreviewCursor({
+        xPercent: coords.xPercent,
+        yPercent: coords.yPercent,
+        thought: action.thought,
+        targetElementId: action.targetId ?? null,
+      });
 
-        // Phase 2: Perform visible typing, signature drawing, or button click hold on the current page
-        if (action.action === 'TYPE') {
-          const textToType = (action.textValue || 'TANAKA').toUpperCase();
-          for (let i = 1; i <= textToType.length; i++) {
-            setPreviewTypedText(textToType.slice(0, i));
-            await sleep(220);
-          }
-          await sleep(650);
-        } else if (action.action === 'DRAW') {
-          const strokeSpec = action.textValue || 'T. Tanaka';
-          setPreviewSignatureStroke(strokeSpec);
-          const steps = 6;
-          for (let i = 1; i <= steps; i++) {
-            const p = i / steps;
-            setPreviewSignatureProgress(p);
-            const curveYOffset =
-              strokeSpec === 'SHAPE:smile'
-                ? Math.sin(p * Math.PI) * 5
-                : strokeSpec === 'SHAPE:frown'
-                ? -Math.sin(p * Math.PI) * 5
-                : Math.sin(p * Math.PI * 2) * 1.5;
-            setPreviewCursor({
-              xPercent: Number((26 + p * 48).toFixed(1)),
-              yPercent: Number((coords.yPercent + curveYOffset).toFixed(1)),
-              thought: action.thought,
-              targetElementId: null,
-            });
-            await sleep(180);
-          }
-          await sleep(500);
-        } else {
-          await sleep(700);
+      // Phase 2: Perform visible typing, signature drawing, or button click hold on the current page
+      if (action.action === 'TYPE') {
+        const textToType = (action.textValue || 'TANAKA').toUpperCase();
+        for (let i = 1; i <= textToType.length; i++) {
+          setPreviewTypedText(textToType.slice(0, i));
+          await sleep(220);
         }
-
-        setPreviewCursor(null);
-        setPreviewTypedText(null);
-        setPreviewSignatureProgress(undefined);
-        setPreviewSignatureStroke(undefined);
+        await sleep(650);
+      } else if (action.action === 'DRAW') {
+        const strokeSpec = action.textValue || 'T. Tanaka';
+        setPreviewSignatureStroke(strokeSpec);
+        const steps = 6;
+        for (let i = 1; i <= steps; i++) {
+          const p = i / steps;
+          setPreviewSignatureProgress(p);
+          const curveYOffset =
+            strokeSpec === 'SHAPE:smile'
+              ? Math.sin(p * Math.PI) * 5
+              : strokeSpec === 'SHAPE:frown'
+              ? -Math.sin(p * Math.PI) * 5
+              : Math.sin(p * Math.PI * 2) * 1.5;
+          setPreviewCursor({
+            xPercent: Number((26 + p * 48).toFixed(1)),
+            yPercent: Number((coords.yPercent + curveYOffset).toFixed(1)),
+            thought: action.thought,
+            targetElementId: null,
+          });
+          await sleep(180);
+        }
+        await sleep(500);
+      } else {
+        await sleep(700);
       }
+
+      setPreviewCursor(null);
+      setPreviewTypedText(null);
+      setPreviewSignatureProgress(undefined);
+      setPreviewSignatureStroke(undefined);
 
       dispatch({
         type: 'APPLY_AGENT_ACTION',
@@ -312,8 +292,6 @@ export const App: React.FC<AppProps> = ({
       type: 'RESET_GAME',
       payload: {
         caseNumber: '#042',
-        preSeeded: false,
-        initialMicroState: browserInitialMicroState,
       },
     });
     setMenuOpen(false);
@@ -543,11 +521,9 @@ export const App: React.FC<AppProps> = ({
                   >
                     <ShinkansenSandbox
                       microState={displayedMicroState}
-                      somOverlayActive={state.somOverlayActive}
                       onBlockedManualClick={handleBlockedManualClick}
                       signatureProgress={previewSignatureProgress}
                       signatureStroke={previewSignatureStroke}
-                      multiPageMode={process.env.NODE_ENV !== 'test'}
                     />
 
                     <GhostReplay
@@ -596,6 +572,7 @@ export const App: React.FC<AppProps> = ({
                   <LoopedTargetReplay
                     isExpanded={isReplayExpanded}
                     onToggleExpand={() => setIsReplayExpanded((prev) => !prev)}
+                    autoplay={resolvedConfig.replayAutoplay}
                   />
                 </section>
               </div>

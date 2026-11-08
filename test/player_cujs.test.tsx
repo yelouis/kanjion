@@ -34,7 +34,6 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
   it('CUJ 2: Casual Visual English Prompts traverse all 5 pages to 100% x 1.2x = 120 PTS', () => {
     let game = createInitialGameState({
       caseNumber: '#042',
-      preSeeded: false,
       initialMicroState: createBrowserStartState(),
     });
 
@@ -191,7 +190,6 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
   it('CUJ 13: 6-Line Exhaustion Auto-Closes Case File with 1.0x multiplier', () => {
     let game = createInitialGameState({
       caseNumber: '#042',
-      preSeeded: false,
       initialMicroState: createBrowserStartState(),
     });
 
@@ -272,7 +270,6 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
 
     let game = createInitialGameState({
       caseNumber: '#042',
-      preSeeded: false,
       initialMicroState: createBrowserStartState(),
     });
 

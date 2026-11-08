@@ -3,7 +3,7 @@
  *
  * Automated verification suite for the Game State Reducer:
  * - Pure immutable state updates
- * - Micro-state transitions for Case File #042
+ * - Micro-state transitions starting from MV-01
  * - Redacted telegram ledger protocol (SEALED during active play)
  * - Cursor kinematics, variants, and thought note <= 80 chars
  * - Stage error shake on decoy traps
@@ -25,35 +25,44 @@ describe('Game State Reducer & Micro-State Transitions', () => {
   let initialState: GameState;
 
   beforeEach(() => {
-    initialState = createInitialGameState({ preSeeded: true });
+    initialState = createInitialGameState();
   });
 
-  describe('createInitialGameState', () => {
-    it('creates pre-seeded initial state with lines 1 & 2 submitted and Line 3 active', () => {
-      expect(initialState.caseStatus).toBe('active');
-      expect(initialState.activeLineIndex).toBe(2); // Line 03 is active
-      expect(initialState.telegrams.length).toBe(6);
-      expect(initialState.telegrams[0].submitted).toBe(true);
-      expect(initialState.telegrams[1].submitted).toBe(true);
-      expect(initialState.telegrams[2].submitted).toBe(false);
-      expect(initialState.telegrams[0].exhibitRedactedStatus).toBe('SEALED');
-      expect(initialState.telegrams[1].exhibitRedactedStatus).toBe('SEALED');
-      expect(initialState.currentInput).toBe('click green clover 13870 button in 2nd row');
-      expect(initialState.scoreReport).toBeNull();
+  function advanceToMv03(state: GameState): GameState {
+    let s = gameReducer(state, {
+      type: 'APPLY_AGENT_ACTION',
+      payload: {
+        action: { action: 'CLICK', targetId: '#1', thought: 'select tokaido route' },
+        instruction: 'click the top-left green box',
+      },
     });
+    s = gameReducer(s, {
+      type: 'APPLY_AGENT_ACTION',
+      payload: {
+        action: { action: 'TYPE', targetId: '#17', textValue: 'TANAKA', thought: 'type tanaka' },
+        instruction: 'type TANAKA in the passenger name box',
+      },
+    });
+    return s;
+  }
 
-    it('creates fresh unseeded initial state when preSeeded is false', () => {
-      const freshState = createInitialGameState({ preSeeded: false });
+  describe('createInitialGameState', () => {
+    it('creates fresh unseeded initial state starting on MV-01 at Line 01', () => {
+      const freshState = createInitialGameState();
+      expect(freshState.caseStatus).toBe('active');
+      expect(freshState.macroViewId).toBe('MV-01');
       expect(freshState.activeLineIndex).toBe(0);
       expect(freshState.currentInput).toBe('');
+      expect(freshState.scoreReport).toBeNull();
       for (const t of freshState.telegrams) {
         expect(t.submitted).toBe(false);
         expect(t.exhibitRedactedStatus).toBe('SEALED');
       }
     });
 
-    it('directly mutates micro-state using reduceShinkansenMicroState', () => {
-      const res = reduceShinkansenMicroState(initialState.microState, {
+    it('directly mutates micro-state using reduceShinkansenMicroState from MV-03', () => {
+      const mv03State = advanceToMv03(initialState);
+      const res = reduceShinkansenMicroState(mv03State.microState, {
         action: 'CLICK',
         targetId: '#25',
         thought: 'direct test',
@@ -61,7 +70,7 @@ describe('Game State Reducer & Micro-State Transitions', () => {
       expect(res.nextState.greenCarSelected).toBe(true);
       expect(res.summary).toBe('Agent clicked [🍀 ◯ ¥13,870]');
       expect(res.isTrap).toBe(false);
-      expect(res.nextMacroViewId).toBe('MV-03');
+      expect(res.nextMacroViewId).toBe('MV-04');
     });
   });
 
@@ -116,6 +125,7 @@ describe('Game State Reducer & Micro-State Transitions', () => {
 
   describe('APPLY_AGENT_ACTION: Target #25 (Green Car Discount Fare)', () => {
     it('mutates micro-state satisfying Exhibit C, updates cursor, and keeps ledger SEALED', () => {
+      const mv03State = advanceToMv03(initialState);
       const greenCarAction: AgentAction = {
         action: 'CLICK',
         targetId: '#25',
@@ -125,7 +135,7 @@ describe('Game State Reducer & Micro-State Transitions', () => {
         isTrap: false,
       };
 
-      const next = gameReducer(initialState, {
+      const next = gameReducer(mv03State, {
         type: 'APPLY_AGENT_ACTION',
         payload: {
           action: greenCarAction,
@@ -152,7 +162,6 @@ describe('Game State Reducer & Micro-State Transitions', () => {
       expect(next.telegrams[2].submitted).toBe(true);
       expect(next.telegrams[2].text).toBe('click green clover 13870 button in 2nd row');
       expect(next.telegrams[2].actionSummary).toBe('Agent clicked [🍀 ◯ ¥13,870]');
-      // STRICT REDACTION CHECK: Exhibit status MUST be SEALED during active play
       expect(next.telegrams[2].exhibitRedactedStatus).toBe('SEALED');
 
       // 4. Input & lifecycle
@@ -163,7 +172,7 @@ describe('Game State Reducer & Micro-State Transitions', () => {
   });
 
   describe('APPLY_AGENT_ACTION: Decoy Traps (#12 Promo Banner & #11 Logout)', () => {
-    it('handles #12 red promo banner click: contaminates Exhibit D and triggers stage shake', () => {
+    it('handles #12 red promo banner click: sets insuranceTrapHit and triggers stage shake', () => {
       const bannerAction: AgentAction = {
         action: 'CLICK',
         targetId: '#12',
@@ -185,7 +194,16 @@ describe('Game State Reducer & Micro-State Transitions', () => {
       expect(next.agentCursor.isShaking).toBe(true);
     });
 
-    it('toggles #28 insurance checkbox cleanly', () => {
+    it('toggles #28 insurance checkbox cleanly on MV-04', () => {
+      const mv03State = advanceToMv03(initialState);
+      const mv04State = gameReducer(mv03State, {
+        type: 'APPLY_AGENT_ACTION',
+        payload: {
+          action: { action: 'CLICK', targetId: '#25', thought: 'green car' },
+          instruction: 'click green car',
+        },
+      });
+
       const chkAction: AgentAction = {
         action: 'CLICK',
         targetId: '#28',
@@ -195,13 +213,13 @@ describe('Game State Reducer & Micro-State Transitions', () => {
         isTrap: true,
       };
 
-      const next = gameReducer(initialState, {
+      const next = gameReducer(mv04State, {
         type: 'APPLY_AGENT_ACTION',
         payload: { action: chkAction, instruction: 'check insurance' },
       });
 
       expect(next.microState.insuranceCheckboxChecked).toBe(true);
-      expect(next.telegrams[2].actionSummary).toBe('Agent checked [旅行キャンセル保険を追加]');
+      expect(next.telegrams[3].actionSummary).toBe('Agent checked [旅行キャンセル保険を追加]');
 
       // Toggle off
       const next2 = gameReducer(next, {
@@ -209,12 +227,21 @@ describe('Game State Reducer & Micro-State Transitions', () => {
         payload: { action: chkAction, instruction: 'check insurance' },
       });
       expect(next2.microState.insuranceCheckboxChecked).toBe(false);
-      expect(next2.telegrams[3].actionSummary).toBe('Agent unchecked [旅行キャンセル保険を追加]');
+      expect(next2.telegrams[4].actionSummary).toBe('Agent unchecked [旅行キャンセル保険を追加]');
     });
   });
 
   describe('APPLY_AGENT_ACTION: Target #30 (Confirm Booking CTA)', () => {
     it('sets finalConfirmed = true and transitions macro-view to MV-05', () => {
+      const mv03State = advanceToMv03(initialState);
+      const mv04State = gameReducer(mv03State, {
+        type: 'APPLY_AGENT_ACTION',
+        payload: {
+          action: { action: 'CLICK', targetId: '#25', thought: 'green car' },
+          instruction: 'click green car',
+        },
+      });
+
       const confirmAction: AgentAction = {
         action: 'CLICK',
         targetId: '#30',
@@ -223,7 +250,7 @@ describe('Game State Reducer & Micro-State Transitions', () => {
         thought: '📌 FIELD NOTE: Clicked [予約内容を確認・確定へ ▶] at D4',
       };
 
-      const next = gameReducer(initialState, {
+      const next = gameReducer(mv04State, {
         type: 'APPLY_AGENT_ACTION',
         payload: { action: confirmAction, instruction: 'confirm booking' },
       });
@@ -248,20 +275,19 @@ describe('Game State Reducer & Micro-State Transitions', () => {
 
       expect(next.agentCursor.variant).toBe('confused');
       expect(next.microState).toEqual(initialState.microState);
-      expect(next.telegrams[2].submitted).toBe(true);
-      expect(next.telegrams[2].actionSummary).toContain('Instruction unclear');
+      expect(next.telegrams[0].submitted).toBe(true);
+      expect(next.telegrams[0].actionSummary).toContain('Instruction unclear');
     });
   });
 
   describe('Case Closure Lifecycles (Line 06 Auto-Closure vs Manual CLOSE_CASE)', () => {
     it('auto-closes case upon Line 06 completion with 0 unused lines (1.0x multiplier)', () => {
-      // Simulate state at Line 06 (activeLineIndex = 5)
       let state = { ...initialState };
-      for (let i = 2; i < 5; i++) {
+      for (let i = 0; i < 5; i++) {
         state = gameReducer(state, {
           type: 'APPLY_AGENT_ACTION',
           payload: {
-            action: { action: 'CLICK', targetId: '#25', thought: 'test' },
+            action: { action: 'CONFUSED', thought: 'test' },
             instruction: `turn ${i + 1}`,
           },
         });
@@ -274,8 +300,8 @@ describe('Game State Reducer & Micro-State Transitions', () => {
       const finalState = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
         payload: {
-          action: { action: 'CLICK', targetId: '#30', thought: 'final confirm' },
-          instruction: 'confirm at D4',
+          action: { action: 'CLICK', targetId: '#1', thought: 'route' },
+          instruction: 'click route 1',
         },
       });
 
@@ -289,16 +315,22 @@ describe('Game State Reducer & Micro-State Transitions', () => {
     });
 
     it('evaluates early manual closure via CLOSE_CASE awarding efficiency bonus', () => {
-      // Satisfy winning conditions in Line 03 and Line 04
-      const state3 = gameReducer(initialState, {
+      let s = advanceToMv03(initialState);
+      s = gameReducer(s, {
         type: 'APPLY_AGENT_ACTION',
         payload: {
           action: { action: 'CLICK', targetId: '#25', thought: 'green car' },
           instruction: 'click green car',
         },
       });
-
-      const state4 = gameReducer(state3, {
+      s = gameReducer(s, {
+        type: 'APPLY_AGENT_ACTION',
+        payload: {
+          action: { action: 'DRAW', targetId: '#27', textValue: 'SHAPE:signature', thought: 'sign' },
+          instruction: 'draw signature',
+        },
+      });
+      s = gameReducer(s, {
         type: 'APPLY_AGENT_ACTION',
         payload: {
           action: { action: 'CLICK', targetId: '#30', thought: 'confirm' },
@@ -306,8 +338,8 @@ describe('Game State Reducer & Micro-State Transitions', () => {
         },
       });
 
-      // Player manually closes case after 4 lines dispatched
-      const closedState = gameReducer(state4, {
+      // Player manually closes case after 5 lines dispatched
+      const closedState = gameReducer(s, {
         type: 'CLOSE_CASE',
         payload: { exhibits: CASE_042_EXHIBITS },
       });
@@ -315,10 +347,10 @@ describe('Game State Reducer & Micro-State Transitions', () => {
       expect(closedState.caseStatus).toBe('closed');
       expect(closedState.scoreReport).not.toBeNull();
       expect(closedState.scoreReport?.closenessScore).toBe(100);
-      expect(closedState.scoreReport?.linesUsed).toBe(4);
-      expect(closedState.scoreReport?.unusedLines).toBe(2);
-      expect(closedState.scoreReport?.multiplier).toBe(1.4);
-      expect(closedState.scoreReport?.finalScore).toBe(140);
+      expect(closedState.scoreReport?.linesUsed).toBe(5);
+      expect(closedState.scoreReport?.unusedLines).toBe(1);
+      expect(closedState.scoreReport?.multiplier).toBe(1.2);
+      expect(closedState.scoreReport?.finalScore).toBe(120);
     });
   });
 
@@ -364,7 +396,8 @@ describe('Game State Reducer & Micro-State Transitions', () => {
       };
       const reset = gameReducer(modified, { type: 'RESET_GAME' });
       expect(reset.caseStatus).toBe('active');
-      expect(reset.currentInput).toBe('click green clover 13870 button in 2nd row');
+      expect(reset.currentInput).toBe('');
+      expect(reset.activeLineIndex).toBe(0);
     });
   });
 

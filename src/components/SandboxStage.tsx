@@ -1,21 +1,10 @@
 import React, { useRef, useState, useLayoutEffect } from 'react';
 import type { SandboxStageProps } from '../types/ui';
-import ShinkansenSandbox from './ShinkansenSandbox';
-import GhostReplay from './GhostReplay';
-import AgentCursor from './AgentCursor';
-import { CASE_042_GHOST_REPLAY } from '../data/puzzles/case_042';
 
 export const SandboxStage: React.FC<SandboxStageProps & { children?: React.ReactNode }> = ({
-  macroViewId = 'MV-03',
-  microState,
-  agentCursor,
-  ghostReplayActive,
-  somOverlayActive,
+  macroViewId = 'MV-01',
   stageShake,
   scaleFactor: externalScale,
-  somElements,
-  ghostReplay,
-  onElementClick,
   children,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -119,38 +108,7 @@ export const SandboxStage: React.FC<SandboxStageProps & { children?: React.React
 
         {/* 1024x736 Interactive Content Region */}
         <div className="relative w-full h-[736px] overflow-hidden flex-1">
-          {children ? (
-            children
-          ) : (
-            <>
-              {/* Default Sandbox DOM clone */}
-              <ShinkansenSandbox
-                microState={microState}
-                somOverlayActive={somOverlayActive}
-                onElementClick={onElementClick}
-                somElements={somElements}
-              />
-
-              {/* Default Ghost Replay Overlay */}
-              <GhostReplay
-                active={ghostReplayActive}
-                onToggle={() => {}}
-                trajectory={ghostReplay ?? CASE_042_GHOST_REPLAY}
-              />
-
-              {/* Default Agent Cursor */}
-              {agentCursor && (
-                <AgentCursor
-                  xPercent={agentCursor.xPercent}
-                  yPercent={agentCursor.yPercent}
-                  thoughtText={agentCursor.thought}
-                  variant={agentCursor.variant}
-                  isTrap={agentCursor.variant === 'trap'}
-                  isShaking={agentCursor.isShaking}
-                />
-              )}
-            </>
-          )}
+          {children}
         </div>
       </div>
     </div>

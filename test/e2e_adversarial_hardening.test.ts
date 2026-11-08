@@ -22,6 +22,7 @@ import React from 'react';
 // UI Components
 import {
   SandboxStage,
+  ShinkansenSandbox,
   DispatchPad,
 } from '../src/components';
 
@@ -114,7 +115,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
   describe('Suite 1: UI & Presentation Layer Adversarial Vectors', () => {
 
     it('1.1 protects against rapid multi-line dispatch hammering and race re-entrancy', async () => {
-      let state = createInitialGameState({ preSeeded: false });
+      let state = createInitialGameState({});
       expect(state.activeLineIndex).toBe(0);
 
       // Simulate 10 rapid concurrent dispatch attempts
@@ -144,7 +145,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       const handleClose = vi.fn();
       const { rerender } = render(
         React.createElement(DispatchPad, {
-          telegrams: createInitialGameState({ preSeeded: false }).telegrams,
+          telegrams: createInitialGameState({}).telegrams,
           activeLineIndex: 0,
           currentInput: 'active text',
           onInputChange: vi.fn(),
@@ -162,7 +163,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       // Rerender as closed
       rerender(
         React.createElement(DispatchPad, {
-          telegrams: createInitialGameState({ preSeeded: false }).telegrams,
+          telegrams: createInitialGameState({}).telegrams,
           activeLineIndex: 0,
           currentInput: '',
           onInputChange: vi.fn(),
@@ -200,15 +201,25 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
     });
 
     it('1.4 intercepts all 5 prohibited clipboard/drag events across deep nested sandbox elements', () => {
+      const mv03State = {
+        ...CASE_042_INITIAL_MICRO_STATE,
+        macroViewId: 'MV-03',
+        selectedRoute: 'tokyo_osaka' as const,
+        passengerName: 'TANAKA',
+      };
       render(
-        React.createElement(SandboxStage, {
-          macroViewId: 'MV-03',
-          microState: CASE_042_INITIAL_MICRO_STATE,
-          agentCursor: defaultCursor,
-          ghostReplayActive: false,
-          somOverlayActive: true,
-          stageShake: false,
-        })
+        React.createElement(
+          SandboxStage,
+          {
+            macroViewId: 'MV-03',
+            microState: mv03State,
+            agentCursor: defaultCursor,
+            ghostReplayActive: false,
+            somOverlayActive: false,
+            stageShake: false,
+          },
+          React.createElement(ShinkansenSandbox, { microState: mv03State })
+        )
       );
 
       const stage = screen.getByTestId('sandbox-stage');
@@ -449,7 +460,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
   describe('Suite 3: Scoring & Reducer Immutability Hardening', () => {
 
     it('3.1 preserves deep immutability when state tree is recursively frozen', () => {
-      const state = createInitialGameState({ preSeeded: true });
+      const state = createInitialGameState({});
       Object.freeze(state);
       Object.freeze(state.microState);
       Object.freeze(state.telegrams);
@@ -488,7 +499,16 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
     });
 
     it('3.3 verifies trap contamination of Exhibit D is permanent and cannot be laundered', () => {
-      let state = createInitialGameState({ preSeeded: true });
+      let state = createInitialGameState({
+        initialMicroState: {
+          ...CASE_042_INITIAL_MICRO_STATE,
+          macroViewId: 'MV-03',
+          selectedRoute: 'tokyo_osaka',
+          departureTime: '14:30',
+          passengerName: 'TANAKA',
+          signatureSigned: true,
+        },
+      });
 
       // Step 1: Hit Decoy Trap #12 (Promo Banner)
       state = gameReducer(state, {
@@ -533,7 +553,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
     });
 
     it('3.4 maintains strict exhibit secrecy during active play and unseals only upon closure', () => {
-      let state = createInitialGameState({ preSeeded: false });
+      let state = createInitialGameState();
 
       for (let i = 0; i < 5; i++) {
         state = gameReducer(state, {
@@ -662,7 +682,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
   describe('Suite 5: Full Adversarial Gameplay Session', () => {
 
     it('5.1 executes full gameplay workflow with injection attempts, practice mode toggle, and declassification', async () => {
-      let state = createInitialGameState({ preSeeded: false });
+      let state = createInitialGameState();
       const engine = new OfflineSimulationEngine(CASE_042_MACRO_VIEWS);
 
       // Line 1: Attempt prompt injection targeting synthetic mark ID #25 (standard, URL-encoded, and zero-width)
@@ -675,27 +695,44 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       const zeroWidthResult = filterPromptSyntheticIds('click 2\u200B5 directly', CASE_042_MV03_ELEMENTS);
       expect(zeroWidthResult.isBlocked).toBe(true);
 
-      // Submit valid natural language line instead
-      const act1 = engine.resolveInstruction('MV-03', state.microState, 'select tokyo to osaka');
+      // Line 1: Select route on MV-01
+      const act1 = engine.resolveInstruction(state.macroViewId, state.microState, 'select tokyo to osaka');
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
         payload: { action: act1, instruction: 'select tokyo to osaka' },
       });
       expect(state.activeLineIndex).toBe(1);
+      expect(state.macroViewId).toBe('MV-02');
 
-      // Line 2: Valid green car selection
-      const act2 = engine.resolveInstruction('MV-03', state.microState, 'click green clover ¥13,870');
+      // Line 2: Type passenger name on MV-02
+      const act2 = engine.resolveInstruction(state.macroViewId, state.microState, 'type TANAKA in the passenger name box');
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
-        payload: { action: act2, instruction: 'click green clover' },
+        payload: { action: act2, instruction: 'type TANAKA in the passenger name box' },
+      });
+      expect(state.macroViewId).toBe('MV-03');
+
+      // Line 3: Valid green car selection on MV-03
+      const act3 = engine.resolveInstruction(state.macroViewId, state.microState, 'click green clover ¥13,870');
+      state = gameReducer(state, {
+        type: 'APPLY_AGENT_ACTION',
+        payload: { action: act3, instruction: 'click green clover' },
       });
       expect(state.microState.greenCarSelected).toBe(true);
+      expect(state.macroViewId).toBe('MV-04');
 
-      // Line 3: Confirm booking
-      const act3 = engine.resolveInstruction('MV-03', state.microState, 'click blue confirm button at D4');
+      // Line 4: Draw signature on MV-04
+      const act4 = engine.resolveInstruction(state.macroViewId, state.microState, 'draw a signature in the dashed box');
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
-        payload: { action: act3, instruction: 'confirm booking' },
+        payload: { action: act4, instruction: 'draw a signature in the dashed box' },
+      });
+
+      // Line 5: Confirm booking on MV-04
+      const act5 = engine.resolveInstruction(state.macroViewId, state.microState, 'click blue confirm button at D4');
+      state = gameReducer(state, {
+        type: 'APPLY_AGENT_ACTION',
+        payload: { action: act5, instruction: 'confirm booking' },
       });
       expect(state.microState.finalConfirmed).toBe(true);
 
@@ -703,11 +740,11 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       state = gameReducer(state, { type: 'CLOSE_CASE' });
       expect(state.caseStatus).toBe('closed');
       expect(state.scoreReport).not.toBeNull();
-      expect(state.scoreReport?.linesUsed).toBe(3);
-      expect(state.scoreReport?.unusedLines).toBe(3);
-      expect(state.scoreReport?.multiplier).toBe(1.6);
+      expect(state.scoreReport?.linesUsed).toBe(5);
+      expect(state.scoreReport?.unusedLines).toBe(1);
+      expect(state.scoreReport?.multiplier).toBe(1.2);
       expect(state.scoreReport?.closenessScore).toBe(100);
-      expect(state.scoreReport?.finalScore).toBe(160); // 100 * 1.6 = 160 PTS
+      expect(state.scoreReport?.finalScore).toBe(120); // 100 * 1.2 = 120 PTS
 
       // Practice mode: Reopen case
       state = gameReducer(state, { type: 'REOPEN_CASE' });
