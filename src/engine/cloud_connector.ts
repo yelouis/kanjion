@@ -705,22 +705,6 @@ export function evaluateClientSideDecision(
     }
   }
 
-  // 2. Page 02 Departure Slot (#16) & TYPE Task (#17 Passenger Name)
-  if (
-    macroViewId === 'MV-02' &&
-    (/\b(?:departure|14:30|dropdown|time\s*slot|next\s*page)\b/i.test(lower) ||
-      lower.includes('14:30発') ||
-      lower.includes('入力完了'))
-  ) {
-    return {
-      action: 'CLICK',
-      target_id: 16,
-      text_value: null,
-      scroll_direction: null,
-      thought: '💭 Locking in the 14:30 departure slot — just enough time to grab a station bento!',
-    };
-  }
-
   const isExplicitSignaturePrompt =
     !lower.includes('sign out') &&
     (/\b(?:draw|sign|signature|signiture|autograph|stroke|scribble|sketch|doodle|pad|dashed|smile|smiley|frown|heart|star|circle|squiggle|squiggly|sqiggly)\b/i.test(
@@ -1071,7 +1055,7 @@ export class BrowserGeminiNanoTransport implements VisionLLMTransport {
       case 'MV-01':
         return [1, 2, 3, 4, 11, 12];
       case 'MV-02':
-        return [16, 17, 14, 11, 12];
+        return [17, 14, 11, 12];
       case 'MV-03':
         return [21, 22, 23, 24, 25, 28, 29, 14, 11, 12];
       case 'MV-04':
@@ -1081,7 +1065,7 @@ export class BrowserGeminiNanoTransport implements VisionLLMTransport {
       case 'MV-12':
         return [14, 11, 12];
       default:
-        return [1, 2, 3, 4, 11, 12, 14, 16, 17, 21, 22, 23, 24, 25, 27, 28, 29, 30];
+        return [1, 2, 3, 4, 11, 12, 14, 17, 21, 22, 23, 24, 25, 27, 28, 29, 30];
     }
   }
 
@@ -1420,15 +1404,6 @@ export class CloudVisionConnector implements AgentExecutionConnector {
           gridRef: 'C3',
           thought: decision.thought || '⚠️ FIELD NOTE: Clicked [JRE POINT・Suica連携] (Wrong Portal MV-12)',
           isTrap: true,
-        };
-      }
-      if (decision.target_id === 16) {
-        return {
-          action: 'CLICK',
-          targetId: '#16',
-          targetCoordinate: { x: 450, y: 215 },
-          gridRef: 'B2',
-          thought: decision.thought || '📌 FIELD NOTE: Selected [14:30発] departure slot',
         };
       }
       if (decision.target_id === 17) {

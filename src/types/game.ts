@@ -10,11 +10,10 @@ import { AgentAction, ShinkansenMicroState } from './engine';
 /**
  * Status resulting from evaluating an exhibit checkpoint against the final micro-state:
  * - VERIFIED: Target condition met in final state (full points awarded).
- * - CLEAN: Decoy/trap condition successfully avoided (full points awarded).
  * - CONTAMINATED: Decoy/trap condition was triggered (0 points awarded).
  * - MISSED: Required target condition was not met (0 points awarded).
  */
-export type StampStatus = 'VERIFIED' | 'CONTAMINATED' | 'MISSED' | 'CLEAN';
+export type StampStatus = 'VERIFIED' | 'CONTAMINATED' | 'MISSED';
 
 /**
  * Evaluated exhibit badge rendered on the declassified Polaroid exhibit card.
@@ -111,6 +110,10 @@ export interface AgentCursorState {
 export interface GameState {
   /** Case number identifier (e.g. '#001'). */
   caseNumber: string;
+  /** Run mode: 'official' on initial run, 'practice' after starting unscored practice. */
+  mode: 'official' | 'practice';
+  /** Official first-close score report locked permanently for this case. */
+  officialResult: ScoreReport | null;
   /** Current case status: 'active' during play, 'closed' upon submission. */
   caseStatus: 'active' | 'closed';
   /** Zero-based index of the active input row (0 = Line 01, 5 = Line 06). */

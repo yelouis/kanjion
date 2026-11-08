@@ -3,11 +3,13 @@ import React, { useState } from 'react';
 export interface NewspaperFrontCoverProps {
   caseNumber: string;
   onOpenNewspaper: () => void;
+  solvedScore?: number | null;
 }
 
 export const NewspaperFrontCover: React.FC<NewspaperFrontCoverProps> = ({
   caseNumber,
   onOpenNewspaper,
+  solvedScore = null,
 }) => {
   const [showHowToPlay, setShowHowToPlay] = useState<boolean>(false);
 
@@ -36,6 +38,15 @@ export const NewspaperFrontCover: React.FC<NewspaperFrontCoverProps> = ({
         <p className="font-mono-clean font-black text-sm sm:text-base uppercase tracking-[0.25em] text-red-800">
           THE DAILY DOSSIER
         </p>
+
+        {typeof solvedScore === 'number' && (
+          <div
+            data-testid="cover-solved-stamp"
+            className="px-3 py-1 border-2 border-dossier-stampGreen text-dossier-stampGreen font-mono-clean font-black text-sm uppercase tracking-wider stamp-rotate"
+          >
+            SOLVED — {solvedScore} PTS
+          </div>
+        )}
 
         {/* Krillion-Style One-Sentence Rule Hook */}
         <p

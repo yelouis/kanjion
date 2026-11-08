@@ -192,17 +192,16 @@ describe('Adversarial Challenge Vector 2: Floating Point Drift Verification', ()
   });
 });
 
-describe('Adversarial Challenge Vector 3: Trap Contamination Permanence', () => {
+describe('Adversarial Challenge Vector 3: Trap Flag Permanence & Signature Requirement', () => {
   const mv03PreState = {
     ...CASE_001_INITIAL_MICRO_STATE,
     macroViewId: 'MV-03',
     selectedRoute: 'tokyo_osaka' as const,
     departureTime: '14:30' as const,
     passengerName: 'TANAKA',
-    signatureSigned: true,
   };
 
-  it('permanently contaminates Exhibit D when Trap #12 is triggered, even if #28 is subsequently untoggled', () => {
+  it('permanently records insuranceTrapHit when Trap #12 is triggered, even if #28 is subsequently untoggled', () => {
     let state = createInitialGameState({ initialMicroState: mv03PreState });
 
     // Step 1: Agent clicks Trap #12 (Red Promo Banner)
@@ -223,12 +222,19 @@ describe('Adversarial Challenge Vector 3: Trap Contamination Permanence', () => 
     expect(state.microState.insuranceCheckboxChecked).toBe(true);
     expect(state.stageShake).toBe(true);
 
-    // Verify Exhibit D is CONTAMINATED at this stage
+    // Without a signature stroke, Exhibit D is MISSED
     const evalDuring = evaluateExhibit(CASE_001_EXHIBITS[3], state.microState, 3);
-    expect(evalDuring.status).toBe('CONTAMINATED');
+    expect(evalDuring.status).toBe('MISSED');
     expect(evalDuring.awardedPoints).toBe(0);
 
-    // Step 2: Player attempts to fix the mistake by untoggling checkbox #28
+    // Step 2: Advance to MV-04 so #28 is on the page, then untoggle checkbox #28
+    state = gameReducer(state, {
+      type: 'APPLY_AGENT_ACTION',
+      payload: {
+        action: { action: 'CLICK', targetId: '#25', gridRef: 'D3', thought: 'Green car' },
+        instruction: 'click green car',
+      },
+    });
     const untoggleAction: AgentAction = {
       action: 'CLICK',
       targetId: '#28',
@@ -246,34 +252,26 @@ describe('Adversarial Challenge Vector 3: Trap Contamination Permanence', () => 
     // CRITICAL SECURITY INVARIANT: insuranceTrapHit MUST REMAIN TRUE PERMANENTLY
     expect(state.microState.insuranceTrapHit).toBe(true);
 
-    // Verify Exhibit D CANNOT be cleaned
-    const evalAfterUntoggle = evaluateExhibit(CASE_001_EXHIBITS[3], state.microState, 3);
-    expect(evalAfterUntoggle.status).toBe('CONTAMINATED');
-    expect(evalAfterUntoggle.stampText).toBe('[CONTAMINATED ✗ +0%]');
-    expect(evalAfterUntoggle.awardedPoints).toBe(0);
-
     // Step 3: Player tries to toggle #28 on and off multiple times
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 3; i++) {
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
         payload: { action: untoggleAction, instruction: `toggle ${i}` },
       });
-      // Exhibit D MUST REMAIN CONTAMINATED regardless of parity
-      const evalLoop = evaluateExhibit(CASE_001_EXHIBITS[3], state.microState, 3);
-      expect(evalLoop.status).toBe('CONTAMINATED');
       expect(state.microState.insuranceTrapHit).toBe(true);
     }
   });
 
-  it('permanently contaminates Exhibit D when Checkbox #28 is checked then unchecked without touching #12', () => {
-    let state = createInitialGameState({ initialMicroState: mv03PreState });
+  it('permanently sets insuranceTrapHit when Checkbox #28 is checked then unchecked on MV-04', () => {
+    let state = createInitialGameState({
+      initialMicroState: { ...mv03PreState, macroViewId: 'MV-04' },
+    });
 
-    // Initial check: Exhibit D is clean
     expect(state.microState.insuranceTrapHit).toBe(false);
     expect(state.microState.insuranceCheckboxChecked).toBe(false);
     const evalInitial = evaluateExhibit(CASE_001_EXHIBITS[3], state.microState, 3);
-    expect(evalInitial.status).toBe('CLEAN');
-    expect(evalInitial.awardedPoints).toBe(15);
+    expect(evalInitial.status).toBe('MISSED');
+    expect(evalInitial.awardedPoints).toBe(0);
 
     // 1. Check checkbox #28
     const chkAction: AgentAction = { action: 'CLICK', targetId: '#28', gridRef: 'B4', thought: 'check box' };
@@ -292,25 +290,12 @@ describe('Adversarial Challenge Vector 3: Trap Contamination Permanence', () => 
     expect(state.microState.insuranceCheckboxChecked).toBe(false);
     // Must remain poisoned
     expect(state.microState.insuranceTrapHit).toBe(true);
-
-    const evalFinal = evaluateExhibit(CASE_001_EXHIBITS[3], state.microState, 3);
-    expect(evalFinal.status).toBe('CONTAMINATED');
-    expect(evalFinal.awardedPoints).toBe(0);
   });
 
-  it('verifies legitimate actions (#25 Green Car, #30 Confirm) cannot wash trap contamination', () => {
+  it('verifies skipping the signature pad (#27) leaves Exhibit D MISSED and caps closeness at 85%', () => {
     let state = createInitialGameState({ initialMicroState: mv03PreState });
 
-    // Poison state
-    state = gameReducer(state, {
-      type: 'APPLY_AGENT_ACTION',
-      payload: {
-        action: { action: 'CLICK', targetId: '#12', thought: 'banner trap', isTrap: true },
-        instruction: 'click promo',
-      },
-    });
-
-    // Execute winning targets
+    // Execute winning seat + confirm without signing #27
     state = gameReducer(state, {
       type: 'APPLY_AGENT_ACTION',
       payload: {
@@ -335,9 +320,9 @@ describe('Adversarial Challenge Vector 3: Trap Contamination Permanence', () => 
     expect(state.scoreReport?.closenessScore).toBe(85);
 
     const evalD = state.scoreReport?.exhibitEvaluations.find((e) => e.id === 'exhibit_d');
-    expect(evalD?.status).toBe('CONTAMINATED');
+    expect(evalD?.status).toBe('MISSED');
     expect(evalD?.awardedPoints).toBe(0);
-    expect(state.scoreReport?.emojiRow).toBe('🟩🟩🟩🟥🟩');
+    expect(state.scoreReport?.emojiRow).toBe('🟩🟩🟩⬜🟩');
   });
 });
 
@@ -421,16 +406,19 @@ describe('Adversarial Challenge Vector 4: Exhibit Redaction During Active Play',
     expect(serialized).not.toContain('awardedPoints');
   });
 
-  it('wipes scoreReport and re-seals dossier when REOPEN_CASE is triggered', () => {
+  it('wipes scoreReport, preserves officialResult, and re-seals dossier when START_PRACTICE is triggered', () => {
     let state = createInitialGameState();
     state = gameReducer(state, { type: 'CLOSE_CASE' });
     expect(state.caseStatus).toBe('closed');
     expect(state.scoreReport).not.toBeNull();
+    expect(state.officialResult).not.toBeNull();
 
-    // Reopen case file for practice mode
-    state = gameReducer(state, { type: 'REOPEN_CASE' });
+    // Start practice mode
+    state = gameReducer(state, { type: 'START_PRACTICE' });
+    expect(state.mode).toBe('practice');
     expect(state.caseStatus).toBe('active');
     expect(state.scoreReport).toBeNull();
+    expect(state.officialResult).not.toBeNull();
 
     // Telegram lines remain sealed
     for (const t of state.telegrams) {

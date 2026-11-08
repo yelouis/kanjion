@@ -107,11 +107,9 @@ Your selection: A
 
 | ID | Severity | Finding | Where | Fixed by |
 |---|---|---|---|---|
-| F-1 | Critical | A 4-line shortcut scores **140**, beating the 120-point answer key, without typing a name or signing. "next page" clicks element #16, which is drawn nowhere on the page. That click sets `passengerName = 'TANAKA'` and `signatureSigned = true`, and Exhibit D then stamps CLEAN. Reproduced in the live UI. | `src/engine/game_reducer.ts:144-150`; `src/data/puzzles/case_042.ts:401`, `:440-459`; `src/engine/cloud_connector.ts:708-722` | Item 3 |
 | F-2 | Critical | The answer "TANAKA" is the agent's default and is printed on the page. | TYPE defaults: `src/engine/cloud_connector.ts:758`, `:1440`; `src/engine/game_reducer.ts:153`; `src/App.tsx:215`; `src/engine/offline_simulator.ts:133-135`<br>Prompts: `src/engine/cloud_connector.ts:1146`; `functions/src/index.ts:288`<br>Page hints: `src/components/ShinkansenSandbox.tsx:426`, `:443`, `:455`<br>Shown when nothing was typed: `:484`, `:709`, `:886`<br>Gating message: `src/engine/game_reducer.ts:92`<br>Default signature thought "drawing a very fancy squiggly "T. Tanaka"": `src/utils/text_normalizer.ts:408` | Items 4, 5 |
 | F-3 | Critical | Gibberish and meta-prompts ("asdf qwerty zxcv", "complete the task", "click the winning button") click the winning Confirm button on page 04, because the always-act fallback for MV-04 targets #30. | `src/engine/cloud_connector.ts:1019-1027` | Items 4, 10 |
 | F-4 | High | The mark-ID guardrail only works on page 03. It checks the current view's element list, which is empty on 11 of 12 views, so "#1", "#17" and "#30" get through. | `src/engine/cloud_connector.ts:1300`; `src/data/puzzles/case_042.ts:245-369` | Items 4, 6 |
-| F-5 | High | An unsealed result can be re-scored with "Return to Active Play", and a refresh restarts the case. | `src/engine/game_reducer.ts:572-582`; `src/components/ExhibitsPanel.tsx:226-235` | Item 3 |
 | F-6 | High | Players almost never reach a model. Nano is used only if it is already downloaded, the regex wins whenever it matches, and everything else is a ~450-line regex. | `src/engine/cloud_connector.ts:1126-1133`, `:1174-1183`, `:602-1046` | Items 10, 11 |
 | F-7 | High | No model ever receives an image. | All 24 `.webp` files in `public/puzzles/042/views/` are 0 bytes; 11 of 12 SoM SVGs are empty<br>`--case 042` re-serializes the TS fixture: `tools/lib/offline_compiler.ts:108`<br>`template.html` is a hard-coded stub: `:136-160`<br>The game never loads `manifest.json` | Item 9 |
 | F-9 | Medium | The sandbox impersonates a real railway brand. | `src/components/ShinkansenSandbox.tsx:121`, `:202`, `:131-138` | Item 5 |
@@ -134,6 +132,8 @@ Reproduce F-1 to F-5 with `npx tsx scripts/exploit_probe.mts`.
 _(none yet — implementors add entries here as options with a `Your selection:` line)_
 
 ## Resolved
+- F-1 — resolved by item 3 (deleted hidden shortcut #16, gated Exhibit B on `passengerName === 'TANAKA'` and Exhibit D on non-empty `signatureStroke`, removed `CLEAN` and `signatureSigned`, and added BFS solvability proof that minimum steps to 100% = 5)
+- F-5 — resolved by item 3 (locked `officialResult` on first official `CLOSE_CASE`, replaced `REOPEN_CASE` with unscored `START_PRACTICE`, and added `kanjion:v1:case:001` persistence across refreshes)
 - F-8 — resolved by item 2 (removed all `sr-only` hidden test strings and unused debug toggles; item 1 `5efae7f` removed `NODE_ENV` and `navigator.webdriver` branches, added `GameConfig`, and added Playwright `e2e/smoke.e2e.ts`)
 - F-14 — resolved by item 2 (renamed Case #042 to Case #001 everywhere, updated share card URL to `https://kanjion-game.web.app`, and rendered lines 1–2 of `scoreReport.shareableClipping` in `ExhibitsPanel.tsx`)
 - F-17 (part) — resolved by item 2 (deleted unused `GhostReplay.tsx`, `CoordinateRulers.tsx`, and `DossierLayout.tsx`; item 1 `5efae7f` deleted single-page test-only sandbox branch)

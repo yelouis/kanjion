@@ -111,8 +111,6 @@ export interface ShinkansenMicroState {
   };
   /** Passenger name typed into the reservation input field (e.g. 'TANAKA'). */
   passengerName?: string;
-  /** True if the passenger drew/signed the digital authorization signature pad (#27). */
-  signatureSigned?: boolean;
   /** Signature label or stroke rendered inside the signature pad. */
   signatureStroke?: string;
   /** True if the timed flash-sale window was clicked on the green seat button. */

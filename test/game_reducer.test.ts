@@ -355,14 +355,17 @@ describe('Game State Reducer & Micro-State Transitions', () => {
   });
 
   describe('Practice Mode & Toggles', () => {
-    it('reopens closed case for practice without losing micro-state', () => {
+    it('starts fresh unscored practice run while preserving officialResult', () => {
       const closed = gameReducer(initialState, { type: 'CLOSE_CASE' });
       expect(closed.caseStatus).toBe('closed');
+      expect(closed.officialResult).not.toBeNull();
 
-      const reopened = gameReducer(closed, { type: 'REOPEN_CASE' });
-      expect(reopened.caseStatus).toBe('active');
-      expect(reopened.scoreReport).toBeNull();
-      expect(reopened.microState).toEqual(closed.microState);
+      const practice = gameReducer(closed, { type: 'START_PRACTICE' });
+      expect(practice.mode).toBe('practice');
+      expect(practice.caseStatus).toBe('active');
+      expect(practice.scoreReport).toBeNull();
+      expect(practice.officialResult).toEqual(closed.officialResult);
+      expect(practice.activeLineIndex).toBe(0);
     });
 
     it('clears stage shake on CLEAR_STAGE_SHAKE', () => {

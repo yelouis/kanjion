@@ -28,7 +28,6 @@ export const CASE_001_INITIAL_MICRO_STATE: ShinkansenMicroState = {
   selectedRoute: 'none',
   departureTime: 'none',
   passengerName: '',
-  signatureSigned: false,
   trainName: 'none',
   seatClass: 'none',
   fare: 0,
@@ -393,13 +392,11 @@ export const CASE_001_EXHIBITS: ExhibitDefinition[] = [
   {
     id: 'exhibit_b',
     code: 'B',
-    title: '14:30 Departure Slot',
+    title: 'Passenger Name: TANAKA',
     weight: 20,
-    criteria: 'Entered passenger name (TANAKA) and configured 14:30 departure slot on Page 2.',
+    criteria: 'Typed the passenger name TANAKA on page 02.',
     evaluate: (state: ShinkansenMicroState) => {
-      const verified =
-        state.departureTime === '14:30' &&
-        (state.passengerName === undefined || state.passengerName.toUpperCase() === 'TANAKA');
+      const verified = state.passengerName === 'TANAKA';
       return {
         status: verified ? 'VERIFIED' : 'MISSED',
         awardedPoints: verified ? 20 : 0,
@@ -429,34 +426,11 @@ export const CASE_001_EXHIBITS: ExhibitDefinition[] = [
     weight: 15,
     criteria: 'Signed the JR Digital Signature Verification Pad (自署・サイン欄) to authorize ticket issuance.',
     evaluate: (state: ShinkansenMicroState) => {
-      // If the player explicitly drew/signed the Digital Authorization Pad, Exhibit D is verified!
-      if (state.signatureStroke) {
-        return {
-          status: 'VERIFIED',
-          awardedPoints: 15,
-          stampText: '[VERIFIED ✓ +15%]',
-        };
-      }
-      // In multi-page browser mode, if the signature pad was not signed, it is simply MISSED (never confusingly CONTAMINATED).
-      if (state.signatureSigned === false) {
-        return {
-          status: 'MISSED',
-          awardedPoints: 0,
-          stampText: '[MISSED ✗ +0%]',
-        };
-      }
-      const contaminated = Boolean(state.insuranceTrapHit || state.insuranceCheckboxChecked);
-      if (contaminated) {
-        return {
-          status: 'CONTAMINATED',
-          awardedPoints: 0,
-          stampText: '[CONTAMINATED ✗ +0%]',
-        };
-      }
+      const verified = typeof state.signatureStroke === 'string' && state.signatureStroke.trim().length > 0;
       return {
-        status: 'CLEAN',
-        awardedPoints: 15,
-        stampText: '[CLEAN ✓ +15%]',
+        status: verified ? 'VERIFIED' : 'MISSED',
+        awardedPoints: verified ? 15 : 0,
+        stampText: verified ? '[VERIFIED ✓ +15%]' : '[MISSED ✗ +0%]',
       };
     },
   },

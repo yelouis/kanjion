@@ -72,7 +72,7 @@ export function evaluateAllExhibits(
  */
 export function calculateClosenessScore(evaluations: ExhibitEvaluation[]): number {
   const sum = evaluations.reduce((acc, curr) => {
-    if (curr.status === 'VERIFIED' || curr.status === 'CLEAN') {
+    if (curr.status === 'VERIFIED') {
       return acc + (curr.awardedPoints ?? curr.weight);
     }
     return acc;
@@ -120,7 +120,7 @@ export function calculateFinalScore(closeness: number, multiplier: number): numb
 
 /**
  * Generates visual emoji matrix row for shareable clipping.
- * - 🟩 for VERIFIED or CLEAN
+ * - 🟩 for VERIFIED
  * - 🟥 for CONTAMINATED
  * - ⬜ for MISSED
  *
@@ -131,7 +131,6 @@ export function generateEmojiRow(evaluations: ExhibitEvaluation[]): string {
     .map((e) => {
       switch (e.status) {
         case 'VERIFIED':
-        case 'CLEAN':
           return '🟩';
         case 'CONTAMINATED':
           return '🟥';

@@ -1,5 +1,14 @@
 import '@testing-library/jest-dom';
-import { vi } from 'vitest';
+import { vi, beforeEach } from 'vitest';
+
+beforeEach(() => {
+  try {
+    window.localStorage?.clear?.();
+    window.sessionStorage?.clear?.();
+  } catch {
+    // Ignore storage clear errors in restricted environments
+  }
+});
 
 // Mock Element.prototype.scrollIntoView
 Element.prototype.scrollIntoView = vi.fn();

@@ -99,7 +99,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
           <ExhibitsPanel
             caseClosed={state.caseStatus === 'closed'}
             scoreReport={state.scoreReport}
-            onReopenCase={() => dispatch({ type: 'REOPEN_CASE' })}
+            onReopenCase={() => dispatch({ type: 'START_PRACTICE' })}
           />
         </div>
       );
@@ -345,8 +345,8 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       expect(container.querySelector('#sealed-status-pill')).toHaveTextContent(/🔓 UNSEALED/i);
       expect(container.querySelector('#telegram-input')).not.toBeInTheDocument();
 
-      // Click "← Return to Active Play"
-      const reopenBtn = screen.getByRole('button', { name: /Return to Active Play/i });
+      // Click "↺ Practice this case (unscored)"
+      const reopenBtn = screen.getByRole('button', { name: /Practice this case \(unscored\)/i });
       await act(async () => {
         fireEvent.click(reopenBtn);
       });
@@ -357,8 +357,8 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       // 2. Sealed teaser preview is restored
       expect(screen.getByText(/5 REQUIRED EXHIBITS ARE CURRENTLY SEALED/i)).toBeInTheDocument();
 
-      // 3. Status pill is restored to sealed
-      expect(container.querySelector('#sealed-status-pill')).toHaveTextContent(/██ SEALED UNTIL CASE CLOSED ██/i);
+      // 3. Status pill shows practice mode
+      expect(container.querySelector('#sealed-status-pill')).toHaveTextContent(/PRACTICE — NOT SCORED/i);
 
       // 4. Dispatch pad input is restored and operational at Line 01
       const restoredInput = container.querySelector('#telegram-input') as HTMLInputElement;

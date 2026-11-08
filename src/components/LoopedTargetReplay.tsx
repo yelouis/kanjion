@@ -279,7 +279,7 @@ export const LoopedTargetReplay: React.FC<LoopedTargetReplayProps> = ({
     trainName: greenSelected ? 'Nozomi 24' : 'none',
     seatClass: greenSelected ? 'green_car' : 'none',
     fare: greenSelected ? 13870 : 0,
-    signatureSigned: sigProgress >= 1,
+    signatureStroke: sigProgress >= 1 ? 'SHAPE:signature' : undefined,
     finalConfirmed,
   };
 

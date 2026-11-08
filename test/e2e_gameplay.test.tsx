@@ -219,9 +219,9 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       expect(screen.getByText(/✓ DISPATCH CLIPPING COPIED!/i)).toBeInTheDocument();
 
       // -----------------------------------------------------------------------
-      // 10. Practice Mode (Return to Active Play)
+      // 10. Practice Mode (Practice this case (unscored))
       // -----------------------------------------------------------------------
-      const reopenBtn = screen.getByRole('button', { name: /Return to Active Play/i });
+      const reopenBtn = screen.getByRole('button', { name: /Practice this case \(unscored\)/i });
       await act(async () => {
         fireEvent.click(reopenBtn);
       });
@@ -230,8 +230,8 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       expect(container.querySelector('#unsealed-exhibits-panel')).not.toBeInTheDocument();
       expect(screen.getByText(/5 REQUIRED EXHIBITS ARE CURRENTLY SEALED BEHIND REDACTION BARS/i)).toBeInTheDocument();
 
-      // Dispatch pad restored at Line 06
-      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 06 / 06');
+      // Dispatch pad reset at Line 01 in practice mode
+      expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 01 / 06');
       expect(container.querySelector('#telegram-input')).toBeInTheDocument();
     });
   });

@@ -14,10 +14,12 @@ export const MastheadHeader: React.FC<ExtendedMastheadProps> = ({
   difficultyBadge,
   caseStatus,
   exhibitCount = 5,
+  mode = 'official',
   dateSlug,
   minimalCleanHeader = false,
 }) => {
   const isClosed = caseStatus === 'closed';
+  const isPractice = mode === 'practice';
 
   return (
     <header className="border-b-4 border-double border-dossier-ink pb-3 mb-4">
@@ -59,12 +61,18 @@ export const MastheadHeader: React.FC<ExtendedMastheadProps> = ({
             <span
               id="sealed-status-pill"
               className={`px-1.5 py-0.5 font-black uppercase text-xs transition-colors ${
-                isClosed
+                isPractice
+                  ? 'bg-amber-700 text-white'
+                  : isClosed
                   ? 'bg-emerald-800 text-white'
                   : 'bg-red-800 text-amber-200'
               }`}
             >
-              {isClosed ? '🔓 UNSEALED (CASE CLOSED)' : '██ SEALED UNTIL CASE CLOSED ██'}
+              {isPractice
+                ? 'PRACTICE — NOT SCORED'
+                : isClosed
+                ? '🔓 UNSEALED (CASE CLOSED)'
+                : '██ SEALED UNTIL CASE CLOSED ██'}
             </span>
           </div>
         </div>

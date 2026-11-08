@@ -13,7 +13,6 @@ function createBrowserStartState(): ShinkansenMicroState {
     selectedRoute: 'none',
     departureTime: 'none',
     passengerName: '',
-    signatureSigned: false,
   };
 }
 
@@ -58,7 +57,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     expect(game.microState.selectedRoute).toBe('tokyo_osaka');
     expect(game.microState.passengerName).toBe('TANAKA');
     expect(game.microState.greenCarSelected).toBe(true);
-    expect(game.microState.signatureSigned).toBe(true);
+    expect(Boolean(game.microState.signatureStroke)).toBe(true);
     expect(game.microState.finalConfirmed).toBe(true);
 
     game = gameReducer(game, { type: 'CLOSE_CASE', payload: { exhibits: CASE_001_EXHIBITS } });
@@ -289,7 +288,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
       });
     }
 
-    expect(game.microState.signatureSigned).toBe(true);
+    expect(Boolean(game.microState.signatureStroke)).toBe(true);
     expect(game.microState.signatureStroke).toBe('SHAPE:smile');
     expect(game.microState.finalConfirmed).toBe(true);
     expect(game.macroViewId).toBe('MV-05');

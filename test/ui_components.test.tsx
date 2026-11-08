@@ -390,9 +390,9 @@ describe('9. ExhibitsPanel Component', () => {
     unusedLines: 3,
     exhibitEvaluations: [
       { id: 'exhibit_a', code: 'A', title: 'Route: 東京 ⇒ 新大阪', weight: 25, status: 'VERIFIED', stampText: '[VERIFIED ✓ +25%]', rotationDeg: -4 },
-      { id: 'exhibit_b', code: 'B', title: '14:30 Departure Slot', weight: 20, status: 'VERIFIED', stampText: '[VERIFIED ✓ +20%]', rotationDeg: 3 },
+      { id: 'exhibit_b', code: 'B', title: 'Passenger Name: TANAKA', weight: 20, status: 'VERIFIED', stampText: '[VERIFIED ✓ +20%]', rotationDeg: 3 },
       { id: 'exhibit_c', code: 'C', title: 'Row 2: 🍀 ¥13,870 Seat', weight: 20, status: 'VERIFIED', stampText: '[VERIFIED ✓ +20%]', rotationDeg: -4 },
-      { id: 'exhibit_d', code: 'D', title: 'Avoid ¥2,400 Ins. Ad', weight: 15, status: 'CLEAN', stampText: '[CLEAN ✓ +15%]', rotationDeg: 3 },
+      { id: 'exhibit_d', code: 'D', title: 'Sign Digital Authorization Pad', weight: 15, status: 'VERIFIED', stampText: '[VERIFIED ✓ +15%]', rotationDeg: 3 },
       { id: 'exhibit_e', code: 'E', title: 'Final Blue Confirm', weight: 20, status: 'MISSED', stampText: '[MISSED ✗ +0%]', rotationDeg: -4 },
     ],
     emojiRow: '🟩🟩🟩🟩⬜',
@@ -424,7 +424,7 @@ describe('9. ExhibitsPanel Component', () => {
     expect(screen.getAllByText(/80% × 1\.6x = 128 PTS/i).length).toBeGreaterThan(0);
     expect(screen.getByText('Route: 東京 ⇒ 新大阪')).toBeInTheDocument();
     expect(screen.getByText('[VERIFIED ✓ +25%]')).toBeInTheDocument();
-    expect(screen.getByText('[CLEAN ✓ +15%]')).toBeInTheDocument();
+    expect(screen.getByText('[VERIFIED ✓ +15%]')).toBeInTheDocument();
     expect(screen.getByText('[MISSED ✗ +0%]')).toBeInTheDocument();
     expect(screen.getByText(/🟩🟩🟩🟩⬜/i)).toBeInTheDocument();
   });
@@ -483,14 +483,14 @@ describe('10. App Top-Level Integration Gameplay Loop', () => {
     expect(screen.getByText(/FORENSIC AUDIT REPORT • CASE #001/i)).toBeInTheDocument();
     expect(screen.getByText(/\[VERIFIED ✓ \+25%\]/i)).toBeInTheDocument();
 
-    // Return to active play (practice mode)
-    const reopenBtn = screen.getByRole('button', { name: /Return to Active Play/i });
+    // Start practice mode
+    const reopenBtn = screen.getByRole('button', { name: /Practice this case \(unscored\)/i });
     await act(async () => {
       fireEvent.click(reopenBtn);
     });
 
     expect(screen.queryByText(/FORENSIC AUDIT REPORT/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/LINE 02 \/ 06/i)).toBeInTheDocument();
+    expect(screen.getByText(/LINE 01 \/ 06/i)).toBeInTheDocument();
   });
 
   it('starts on the Krillion-style Newspaper Front Cover, unfolds into a two-page spread, and supports top-left menu & mobile flip tabs', async () => {
@@ -504,7 +504,7 @@ describe('10. App Top-Level Integration Gameplay Loop', () => {
     const menuBtn = screen.getByRole('button', { name: /Open Game Menu/i });
     fireEvent.click(menuBtn);
     expect(screen.getByTestId('top-left-menu-drawer')).toBeInTheDocument();
-    expect(screen.getByText(/Daily Puzzle #001/i)).toBeInTheDocument();
+    expect(screen.getByText(/Return to Front Page Cover/i)).toBeInTheDocument();
 
     // Close menu drawer
     fireEvent.click(menuBtn);

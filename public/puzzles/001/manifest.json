@@ -30,7 +30,6 @@
     "selectedRoute": "none",
     "departureTime": "none",
     "passengerName": "",
-    "signatureSigned": false,
     "trainName": "none",
     "seatClass": "none",
     "fare": 0,
@@ -543,9 +542,9 @@
     {
       "id": "exhibit_b",
       "code": "B",
-      "title": "14:30 Departure Slot",
+      "title": "Passenger Name: TANAKA",
       "weight": 20,
-      "criteria": "Entered passenger name (TANAKA) and configured 14:30 departure slot on Page 2.",
+      "criteria": "Typed the passenger name TANAKA on page 02.",
       "ruleKey": "departure_match",
       "targetValue": true
     },

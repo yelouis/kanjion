@@ -490,7 +490,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       expect(calculateFinalScore(-50, 1.5)).toBe(0);
     });
 
-    it('3.3 verifies trap contamination of Exhibit D is permanent and cannot be laundered', () => {
+    it('3.3 verifies trap flag is permanent and unsigned Exhibit D is MISSED (85% closeness)', () => {
       let state = createInitialGameState({
         initialMicroState: {
           ...CASE_001_INITIAL_MICRO_STATE,
@@ -498,7 +498,6 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
           selectedRoute: 'tokyo_osaka',
           departureTime: '14:30',
           passengerName: 'TANAKA',
-          signatureSigned: true,
         },
       });
 
@@ -513,7 +512,11 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
 
       expect(state.microState.insuranceTrapHit).toBe(true);
 
-      // Step 2: Untoggle Checkbox #28
+      // Step 2: Select Green Car (#25) to reach MV-04, then untoggle Checkbox #28
+      state = gameReducer(state, {
+        type: 'APPLY_AGENT_ACTION',
+        payload: { action: { action: 'CLICK', targetId: '#25', thought: 'Green car' }, instruction: 'green car' },
+      });
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
         payload: {
@@ -526,21 +529,17 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       expect(state.microState.insuranceCheckboxChecked).toBe(false);
       expect(state.microState.insuranceTrapHit).toBe(true);
 
-      // Step 3: Perform target actions (#25 Green Car, #30 Confirm) and close case
-      state = gameReducer(state, {
-        type: 'APPLY_AGENT_ACTION',
-        payload: { action: { action: 'CLICK', targetId: '#25', thought: 'Green car' }, instruction: 'green car' },
-      });
+      // Step 3: Perform Confirm (#30) without signing #27 and close case
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
         payload: { action: { action: 'CLICK', targetId: '#30', thought: 'Confirm' }, instruction: 'confirm' },
       });
       state = gameReducer(state, { type: 'CLOSE_CASE' });
 
-      // Exhibit D must be CONTAMINATED, capped at 85% closeness
+      // Exhibit D must be MISSED (unsigned), capped at 85% closeness
       expect(state.scoreReport?.closenessScore).toBe(85);
       const exD = state.scoreReport?.exhibitEvaluations.find((e) => e.id === 'exhibit_d');
-      expect(exD?.status).toBe('CONTAMINATED');
+      expect(exD?.status).toBe('MISSED');
       expect(exD?.awardedPoints).toBe(0);
     });
 
@@ -738,10 +737,12 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
       expect(state.scoreReport?.closenessScore).toBe(100);
       expect(state.scoreReport?.finalScore).toBe(120); // 100 * 1.2 = 120 PTS
 
-      // Practice mode: Reopen case
-      state = gameReducer(state, { type: 'REOPEN_CASE' });
+      // Practice mode: Start practice
+      state = gameReducer(state, { type: 'START_PRACTICE' });
+      expect(state.mode).toBe('practice');
       expect(state.caseStatus).toBe('active');
       expect(state.scoreReport).toBeNull();
+      expect(state.officialResult?.finalScore).toBe(120);
     });
 
     it('5.2 maintains strict behavioral parity between offline engine and cloud connector fallback', async () => {

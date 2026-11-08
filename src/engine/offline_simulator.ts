@@ -143,20 +143,6 @@ export class OfflineSimulationEngine implements AgentExecutionConnector {
       };
     }
 
-    // Multi-modal Action 1b: Departure Time 14:30 selection (#16) on Page 02 (MV-02)
-    if (
-      macroViewId === 'MV-02' &&
-      (/\b(?:departure|14:30|dropdown|time\s*slot)\b/i.test(lower) || lower.includes('14:30発'))
-    ) {
-      return {
-        action: 'CLICK',
-        targetId: '#16',
-        gridRef: 'A2',
-        targetCoordinate: { x: 128, y: 205 },
-        thought: '📌 FIELD NOTE: Selected [14:30発] departure slot at A2',
-      };
-    }
-
     // Multi-modal Action 2: DRAW signature in Digital Authorization Pad (#27)
     if (
       !lower.includes('sign out') &&

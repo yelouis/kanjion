@@ -63,11 +63,17 @@ export interface ExhibitsPanelProps {
   caseClosed: boolean;
   /** Evaluated score report containing closeness, multiplier, and stamps. */
   scoreReport: ScoreReport | null;
+  /** Official first-close result used for the shareable clipping. */
+  officialResult?: ScoreReport | null;
+  /** Run mode ('official' or 'practice'). */
+  mode?: 'official' | 'practice';
   /** Case number string (e.g. '#001'). */
   caseNumber?: string;
   /** Callback to copy shareable plaintext scorecard to clipboard. */
   onCopyClipping?: () => void;
-  /** Callback to return to active play in practice/exploration mode. */
+  /** Callback to start unscored practice mode. */
+  onStartPractice?: () => void;
+  /** Legacy callback alias to start practice mode. */
   onReopenCase?: () => void;
 }
 
@@ -85,6 +91,8 @@ export interface MastheadProps {
   caseStatus: 'active' | 'closed';
   /** Total count of sealed/unsealed exhibits (e.g. 5). */
   exhibitCount: number;
+  /** Run mode ('official' or 'practice'). */
+  mode?: 'official' | 'practice';
 }
 
 /**

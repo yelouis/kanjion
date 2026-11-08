@@ -5,11 +5,15 @@ import type { StampStatus } from '../types/game';
 export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
   caseClosed,
   scoreReport,
+  officialResult,
+  mode = 'official',
   caseNumber = '#001',
   onCopyClipping,
+  onStartPractice,
   onReopenCase,
 }) => {
   const [copyFeedback, setCopyFeedback] = useState<boolean>(false);
+  const handlePractice = onStartPractice ?? onReopenCase;
 
   // Return null or sealed teaser if case is not closed
   if (!caseClosed || !scoreReport) {
@@ -39,21 +43,22 @@ export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
     shareableClipping,
   } = scoreReport;
 
-  const [shareLine1 = '', shareLine2 = ''] = (shareableClipping || '').split('\n');
+  const effectiveClipping = (officialResult?.shareableClipping ?? shareableClipping) || '';
+  const [shareLine1 = '', shareLine2 = ''] = effectiveClipping.split('\n');
 
   const handleCopy = () => {
     if (onCopyClipping) {
       onCopyClipping();
-    } else if (shareableClipping && typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(shareableClipping).catch(() => {});
+    } else if (effectiveClipping && typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(effectiveClipping).catch(() => {});
     }
     setCopyFeedback(true);
     setTimeout(() => setCopyFeedback(false), 2500);
   };
 
   const getStampClasses = (status: StampStatus, rotationDeg: number) => {
-    const isCleanOrVerified = status === 'VERIFIED' || status === 'CLEAN';
-    const colorClass = isCleanOrVerified
+    const isVerified = status === 'VERIFIED';
+    const colorClass = isVerified
       ? 'border-dossier-stampGreen text-dossier-stampGreen'
       : 'border-dossier-stampRed text-dossier-stampRed';
     const rotationClass = rotationDeg < 0 ? 'stamp-rotate' : 'stamp-rotate-alt';
@@ -79,7 +84,7 @@ export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
         </div>
         <div className="text-right">
           <div className="text-xs text-dossier-muted font-bold tracking-wider">
-            FINAL VERIFIED SCORE
+            {mode === 'practice' ? 'PRACTICE RESULT — NOT SCORED' : 'FINAL VERIFIED SCORE'}
           </div>
           <div
             id="final-score-banner"
@@ -220,14 +225,14 @@ export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {onReopenCase && (
+          {handlePractice && (
             <button
               type="button"
               id="btn-reopen-case"
-              onClick={onReopenCase}
-              className="btn-press px-3 py-2 bg-dossier-card border-2 border-dossier-ink font-bold uppercase shadow-ink-sm text-xs text-dossier-ink hover:bg-neutral-100"
+              onClick={handlePractice}
+              className="btn-press px-3 py-2 bg-dossier-card border-2 border-dossier-ink font-bold shadow-ink-sm text-xs text-dossier-ink hover:bg-neutral-100"
             >
-              ← Return to Active Play
+              ↺ Practice this case (unscored)
             </button>
           )}
 

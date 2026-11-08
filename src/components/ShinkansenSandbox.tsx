@@ -42,7 +42,7 @@ export const ShinkansenSandbox: React.FC<ShinkansenSandboxProps> = ({
   const isPromoTrapHit = microState.insuranceTrapHit;
 
   const passengerName = microState.passengerName ?? '';
-  const isSignatureSigned = Boolean(microState.signatureSigned);
+  const isSignatureSigned = Boolean(microState.signatureStroke);
   const effectiveSigProgress =
     typeof signatureProgress === 'number' ? signatureProgress : isSignatureSigned ? 1 : 0;
   const sigSpec = resolveSignatureDrawingSpec(signatureStroke ?? microState.signatureStroke);

@@ -40,28 +40,25 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
       expect(evalC.awardedPoints).toBe(20);
     });
 
-    it('evaluates clean decoy trap avoidance with [CLEAN ✓] badge', () => {
-      const cleanState: ShinkansenMicroState = {
+    it('evaluates signed digital authorization pad with [VERIFIED ✓ +15%] badge', () => {
+      const signedState: ShinkansenMicroState = {
         ...CASE_001_INITIAL_MICRO_STATE,
-        signatureSigned: true,
-        insuranceTrapHit: false,
-        insuranceCheckboxChecked: false,
+        signatureStroke: 'SHAPE:signature',
       };
-      const evalD = evaluateExhibit(CASE_001_EXHIBITS[3], cleanState, 3);
-      expect(evalD.status).toBe('CLEAN');
-      expect(evalD.stampText).toBe('[CLEAN ✓ +15%]');
+      const evalD = evaluateExhibit(CASE_001_EXHIBITS[3], signedState, 3);
+      expect(evalD.status).toBe('VERIFIED');
+      expect(evalD.stampText).toBe('[VERIFIED ✓ +15%]');
       expect(evalD.awardedPoints).toBe(15);
     });
 
-    it('evaluates decoy trap contamination with [CONTAMINATED ✗] badge and 0 points', () => {
-      const contaminatedState: ShinkansenMicroState = {
+    it('evaluates unsigned digital authorization pad with [MISSED ✗ +0%] badge and 0 points', () => {
+      const unsignedState: ShinkansenMicroState = {
         ...CASE_001_INITIAL_MICRO_STATE,
-        signatureSigned: true,
-        insuranceTrapHit: true,
+        signatureStroke: undefined,
       };
-      const evalD = evaluateExhibit(CASE_001_EXHIBITS[3], contaminatedState, 3);
-      expect(evalD.status).toBe('CONTAMINATED');
-      expect(evalD.stampText).toBe('[CONTAMINATED ✗ +0%]');
+      const evalD = evaluateExhibit(CASE_001_EXHIBITS[3], unsignedState, 3);
+      expect(evalD.status).toBe('MISSED');
+      expect(evalD.stampText).toBe('[MISSED ✗ +0%]');
       expect(evalD.awardedPoints).toBe(0);
     });
 
@@ -94,7 +91,6 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
         greenCarSelected: true,
         trainName: 'Nozomi 24',
         fare: 13870,
-        signatureSigned: true,
         signatureStroke: 'SHAPE:signature',
         insuranceTrapHit: false,
         insuranceCheckboxChecked: false,
@@ -105,8 +101,8 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
       expect(closeness).toBe(100);
     });
 
-    it('calculates 85% closeness when insurance trap is contaminated', () => {
-      const trapState: ShinkansenMicroState = {
+    it('calculates 85% closeness when signature pad is unsigned (Exhibit D missed)', () => {
+      const unsignedState: ShinkansenMicroState = {
         ...CASE_001_INITIAL_MICRO_STATE,
         selectedRoute: 'tokyo_osaka',
         departureTime: '14:30',
@@ -114,11 +110,10 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
         greenCarSelected: true,
         trainName: 'Nozomi 24',
         fare: 13870,
-        signatureSigned: true,
-        insuranceTrapHit: true, // Contaminates Exhibit D (15%)
+        signatureStroke: undefined,
         finalConfirmed: true,
       };
-      const evals = evaluateAllExhibits(CASE_001_EXHIBITS, trapState);
+      const evals = evaluateAllExhibits(CASE_001_EXHIBITS, unsignedState);
       const closeness = calculateClosenessScore(evals);
       expect(closeness).toBe(85);
     });
@@ -220,7 +215,7 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
         { id: 'a', title: 'A', weight: 25, status: 'VERIFIED', stampText: '', rotationDeg: 0 },
         { id: 'b', title: 'B', weight: 20, status: 'VERIFIED', stampText: '', rotationDeg: 0 },
         { id: 'c', title: 'C', weight: 20, status: 'VERIFIED', stampText: '', rotationDeg: 0 },
-        { id: 'd', title: 'D', weight: 15, status: 'CLEAN', stampText: '', rotationDeg: 0 },
+        { id: 'd', title: 'D', weight: 15, status: 'VERIFIED', stampText: '', rotationDeg: 0 },
         { id: 'e', title: 'E', weight: 20, status: 'VERIFIED', stampText: '', rotationDeg: 0 },
       ];
 
@@ -249,7 +244,6 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
         greenCarSelected: true,
         trainName: 'Nozomi 24',
         fare: 13870,
-        signatureSigned: true,
         signatureStroke: 'SHAPE:signature',
         insuranceTrapHit: false,
         insuranceCheckboxChecked: false,

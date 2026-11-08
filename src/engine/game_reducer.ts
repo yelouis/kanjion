@@ -34,7 +34,7 @@ export type GameAction =
       };
     }
   | { type: 'CLOSE_CASE'; payload?: { exhibits?: ExhibitDefinition[] } }
-  | { type: 'REOPEN_CASE' }
+  | { type: 'START_PRACTICE' }
   | { type: 'CLEAR_STAGE_SHAKE' }
   | {
       type: 'RESET_GAME';
@@ -79,33 +79,36 @@ export function reduceShinkansenMicroState(
 
   // Page-Gated Guard for Multi-Page Portal Progression:
   // Prevent out-of-order teleportation when the target element is not on the active portal page.
-  const isMultiPageBrowserSession = state.signatureSigned === false;
-  if (isMultiPageBrowserSession) {
-    if (state.macroViewId === 'MV-01' && ![1, 2, 3, 4, 11, 12].includes(numId)) {
-      summary = '📌 FIELD NOTE: Element is not on Page 01. Select a Shinkansen route card first.';
-      return { nextState, summary, isTrap: false, stageShake: false, nextMacroViewId };
-    }
-    if (state.macroViewId === 'MV-02' && ![16, 17, 14, 11, 12].includes(numId)) {
-      summary = '📌 FIELD NOTE: Element is not on Page 02. Type passenger name (TANAKA) first.';
-      return { nextState, summary, isTrap: false, stageShake: false, nextMacroViewId };
-    }
-    if (
-      (state.macroViewId === 'MV-10' ||
-        state.macroViewId === 'MV-11' ||
-        state.macroViewId === 'MV-12') &&
-      ![14, 11, 12].includes(numId)
-    ) {
-      summary = '📌 FIELD NOTE: Wrong portal branch. Click the Back button to return to Page 01.';
-      return { nextState, summary, isTrap: false, stageShake: false, nextMacroViewId };
-    }
-    if (
-      state.macroViewId === 'MV-03' &&
-      state.signatureSigned === false &&
-      ![21, 22, 23, 24, 25, 28, 29, 30, 14, 11, 12].includes(numId)
-    ) {
-      summary = '📌 FIELD NOTE: Element is on Page 04. Select a train seat on Page 03 first.';
-      return { nextState, summary, isTrap: false, stageShake: false, nextMacroViewId };
-    }
+  if (state.macroViewId === 'MV-01' && ![1, 2, 3, 4, 11, 12].includes(numId)) {
+    summary = '📌 FIELD NOTE: Element is not on Page 01. Select a Shinkansen route card first.';
+    return { nextState, summary, isTrap: false, stageShake: false, nextMacroViewId };
+  }
+  if (state.macroViewId === 'MV-02' && ![17, 14, 11, 12].includes(numId)) {
+    summary = '📌 FIELD NOTE: Element is not on Page 02. Type passenger name (TANAKA) first.';
+    return { nextState, summary, isTrap: false, stageShake: false, nextMacroViewId };
+  }
+  if (
+    (state.macroViewId === 'MV-10' ||
+      state.macroViewId === 'MV-11' ||
+      state.macroViewId === 'MV-12') &&
+    ![14, 11, 12].includes(numId)
+  ) {
+    summary = '📌 FIELD NOTE: Wrong portal branch. Click the Back button to return to Page 01.';
+    return { nextState, summary, isTrap: false, stageShake: false, nextMacroViewId };
+  }
+  if (
+    state.macroViewId === 'MV-03' &&
+    ![21, 22, 23, 24, 25, 28, 29, 30, 14, 11, 12].includes(numId)
+  ) {
+    summary = '📌 FIELD NOTE: Element is on Page 04. Select a train seat on Page 03 first.';
+    return { nextState, summary, isTrap: false, stageShake: false, nextMacroViewId };
+  }
+  if (
+    state.macroViewId === 'MV-04' &&
+    ![27, 28, 29, 30, 14, 11, 12].includes(numId)
+  ) {
+    summary = '📌 FIELD NOTE: Element is not on Page 04.';
+    return { nextState, summary, isTrap: false, stageShake: false, nextMacroViewId };
   }
 
   // Clear any previous modal if the player performs another action
@@ -138,14 +141,6 @@ export function reduceShinkansenMicroState(
       summary = 'Agent clicked [JRE POINT・Suica連携]';
       break;
 
-    case 16: // Departure Time 14:30 Slot (Page 2 -> Page 3)
-      nextState.departureTime = '14:30';
-      nextState.passengerName = nextState.passengerName || 'TANAKA';
-      nextState.signatureSigned = true;
-      nextMacroViewId = 'MV-03';
-      summary = 'Agent selected [14:30発]';
-      break;
-
     case 17: // Passenger Name Input Field (Page 2 -> Page 3, Exhibit B TYPE Task)
       nextState.passengerName = (action.textValue || 'TANAKA').toUpperCase();
       nextState.departureTime = '14:30';
@@ -159,14 +154,11 @@ export function reduceShinkansenMicroState(
       nextState.fare = 13870;
       nextState.greenCarSelected = true;
       nextState.timedWindowHit = true;
-      if (state.signatureSigned === false || state.passengerName !== undefined) {
-        nextMacroViewId = 'MV-04';
-      }
+      nextMacroViewId = 'MV-04';
       summary = 'Agent clicked [🍀 ◯ ¥13,870]';
       break;
 
     case 27: { // Digital Signature Authorization Pad (Page 4, Exhibit D DRAW Task)
-      nextState.signatureSigned = true;
       nextState.signatureStroke = action.textValue || 'T. Tanaka';
       const sigSpec = resolveSignatureDrawingSpec(nextState.signatureStroke);
       summary =
@@ -246,16 +238,14 @@ export function reduceShinkansenMicroState(
         nextMacroViewId = 'MV-01';
       } else if (state.macroViewId === 'MV-04') {
         nextState.greenCarSelected = false;
-        nextState.signatureSigned = false;
+        nextState.signatureStroke = undefined;
         nextState.trainName = 'none';
         nextState.seatClass = 'none';
         nextState.fare = 0;
         nextMacroViewId = 'MV-03';
       } else {
-        if (state.signatureSigned === false) {
-          nextState.passengerName = '';
-          nextState.departureTime = 'none';
-        }
+        nextState.passengerName = '';
+        nextState.departureTime = 'none';
         nextMacroViewId = 'MV-02';
       }
       summary = 'Agent clicked [◀ 条件変更へ戻る]';
@@ -339,8 +329,12 @@ function resolveCursorPosition(
 export function createInitialGameState(options?: {
   caseNumber?: string;
   initialMicroState?: ShinkansenMicroState;
+  mode?: 'official' | 'practice';
+  officialResult?: ScoreReport | null;
 }): GameState {
   const caseNumber = options?.caseNumber ?? '#001';
+  const mode = options?.mode ?? 'official';
+  const officialResult = options?.officialResult ?? null;
   const microState = options?.initialMicroState
     ? { ...options.initialMicroState }
     : { ...CASE_001_INITIAL_MICRO_STATE };
@@ -354,6 +348,8 @@ export function createInitialGameState(options?: {
 
   return {
     caseNumber,
+    mode,
+    officialResult,
     caseStatus: 'active',
     activeLineIndex: 0,
     telegrams,
@@ -470,10 +466,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
       let nextCaseStatus: 'active' | 'closed' = state.caseStatus;
       let scoreReport: ScoreReport | null = state.scoreReport;
+      let officialResult: ScoreReport | null = state.officialResult;
 
       if (isFinalLine) {
         nextCaseStatus = 'closed';
         scoreReport = calculateScoreReport(exhibits, nextState, 6, state.caseNumber);
+        if (state.mode === 'official' && state.officialResult === null) {
+          officialResult = scoreReport;
+        }
       }
 
       return {
@@ -488,6 +488,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         stageShake: isTrap || stageShake,
         isExecuting: false,
         scoreReport,
+        officialResult,
       };
     }
 
@@ -499,24 +500,26 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const exhibits = action.payload?.exhibits ?? CASE_001_EXHIBITS;
       const linesUsed = state.telegrams.filter((t) => t.submitted).length;
       const scoreReport = calculateScoreReport(exhibits, state.microState, linesUsed, state.caseNumber);
+      const officialResult =
+        state.mode === 'official' && state.officialResult === null
+          ? scoreReport
+          : state.officialResult;
 
       return {
         ...state,
         caseStatus: 'closed',
         isExecuting: false,
         scoreReport,
+        officialResult,
       };
     }
 
-    case 'REOPEN_CASE': {
-      if (state.caseStatus === 'active') {
-        return state;
-      }
-      return {
-        ...state,
-        caseStatus: 'active',
-        scoreReport: null,
-      };
+    case 'START_PRACTICE': {
+      return createInitialGameState({
+        caseNumber: state.caseNumber,
+        mode: 'practice',
+        officialResult: state.officialResult,
+      });
     }
 
     case 'CLEAR_STAGE_SHAKE': {

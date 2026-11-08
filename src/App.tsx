@@ -1,5 +1,6 @@
 import React, { useReducer, useMemo, useState, useRef, useEffect } from 'react';
-import { gameReducer, createInitialGameState } from './engine/game_reducer';
+import { gameReducer, createInitialGameState, GameAction } from './engine/game_reducer';
+import { GameState } from './types/game';
 import { OfflineSimulationEngine } from './engine/offline_simulator';
 import {
   CloudVisionConnector,
@@ -29,17 +30,76 @@ export interface AppProps {
   config?: Partial<GameConfig>;
 }
 
+const STORAGE_KEY_CASE_001 = 'kanjion:v1:case:001';
+
+function loadPersistedState(storage: Storage | null | undefined): GameState | null {
+  if (!storage) return null;
+  try {
+    const raw = storage.getItem(STORAGE_KEY_CASE_001);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.v !== 1 || !parsed.game || typeof parsed.game !== 'object') {
+      return null;
+    }
+    const base = createInitialGameState({ caseNumber: '#001' });
+    const officialResult = parsed.officialResult ?? parsed.game.officialResult ?? null;
+    const mode = parsed.mode === 'practice' ? 'practice' : 'official';
+    const restored: GameState = {
+      ...base,
+      ...parsed.game,
+      mode,
+      officialResult,
+      isExecuting: false,
+      stageShake: false,
+    };
+    if (officialResult) {
+      restored.caseStatus = 'closed';
+      restored.scoreReport = restored.scoreReport ?? officialResult;
+    }
+    return restored;
+  } catch {
+    return null;
+  }
+}
+
+function savePersistedState(storage: Storage | null | undefined, state: GameState): void {
+  if (!storage) return;
+  try {
+    const { isExecuting: _exec, stageShake: _shake, ...gameWithoutEphemeral } = state;
+    const payload = {
+      v: 1,
+      mode: state.mode,
+      game: gameWithoutEphemeral,
+      officialResult: state.officialResult,
+    };
+    storage.setItem(STORAGE_KEY_CASE_001, JSON.stringify(payload));
+  } catch {
+    // Ignore storage errors
+  }
+}
+
 export const App: React.FC<AppProps> = ({ config }) => {
   const resolvedConfig = useMemo(
     () => ({ ...productionConfig(), ...config }),
     [config]
   );
 
-  // 1. Every game starts on Line 01 with all 6 instruction slots available!
+  // 1. Every game starts on Line 01 with all 6 instruction slots available (or restores persisted state on boot)
   const [state, dispatch] = useReducer(
-    gameReducer,
+    (prevState: GameState, action: GameAction) => {
+      const next = gameReducer(prevState, action);
+      if (
+        action.type === 'APPLY_AGENT_ACTION' ||
+        action.type === 'CLOSE_CASE' ||
+        action.type === 'START_PRACTICE'
+      ) {
+        savePersistedState(resolvedConfig.storage, next);
+      }
+      return next;
+    },
     undefined,
     () =>
+      loadPersistedState(resolvedConfig.storage) ??
       createInitialGameState({
         caseNumber: '#001',
       })
@@ -111,7 +171,6 @@ export const App: React.FC<AppProps> = ({ config }) => {
       11: { xPercent: 93, yPercent: 8 },
       12: { xPercent: 88, yPercent: 15 },
       14: { xPercent: 13, yPercent: 32 },
-      16: { xPercent: 45, yPercent: 28 },
       17: { xPercent: 47, yPercent: 51 },
       21: { xPercent: 55, yPercent: 41 },
       22: { xPercent: 68, yPercent: 41 },
@@ -270,17 +329,8 @@ export const App: React.FC<AppProps> = ({ config }) => {
     dispatch({ type: 'CLOSE_CASE', payload: { exhibits: CASE_001_EXHIBITS } });
   };
 
-  const handleReopenCase = () => {
-    dispatch({ type: 'REOPEN_CASE' });
-  };
-
-  const handleResetDailyPuzzle = () => {
-    dispatch({
-      type: 'RESET_GAME',
-      payload: {
-        caseNumber: '#001',
-      },
-    });
+  const handleStartPractice = () => {
+    dispatch({ type: 'START_PRACTICE' });
     setMenuOpen(false);
   };
 
@@ -367,17 +417,18 @@ export const App: React.FC<AppProps> = ({ config }) => {
             </div>
 
             <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsNewspaperOpen(true);
-                  handleResetDailyPuzzle();
-                }}
-                className="w-full p-2.5 text-left border-2 border-dossier-ink bg-dossier-accent text-dossier-ink font-black shadow-ink-sm flex items-center justify-between"
-              >
-                <span>📅 Daily Puzzle #001 (Restart)</span>
-                <span>↺</span>
-              </button>
+              {state.officialResult && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsNewspaperOpen(true);
+                    handleStartPractice();
+                  }}
+                  className="w-full p-2.5 text-left border-2 border-dossier-ink bg-dossier-accent text-dossier-ink font-black shadow-ink-sm flex items-center justify-between"
+                >
+                  <span>↺ Practice this case (unscored)</span>
+                </button>
+              )}
 
               <button
                 type="button"
@@ -413,6 +464,7 @@ export const App: React.FC<AppProps> = ({ config }) => {
           <NewspaperFrontCover
             caseNumber={state.caseNumber}
             onOpenNewspaper={() => setIsNewspaperOpen(true)}
+            solvedScore={state.officialResult?.finalScore ?? null}
           />
         ) : (
           /* --- UNFOLDED STATE: TWO-PAGE OPEN NEWSPAPER SPREAD (SCREENS ONLY) --- */
@@ -424,6 +476,7 @@ export const App: React.FC<AppProps> = ({ config }) => {
               difficultyBadge="🇯🇵 HARD MODE: TOKYO–OSAKA SHINKANSEN"
               caseStatus={state.caseStatus}
               exhibitCount={5}
+              mode={state.mode}
               minimalCleanHeader={true}
             />
 
@@ -574,8 +627,10 @@ export const App: React.FC<AppProps> = ({ config }) => {
             <ExhibitsPanel
               caseClosed={state.caseStatus === 'closed'}
               scoreReport={state.scoreReport}
+              officialResult={state.officialResult}
+              mode={state.mode}
               caseNumber={state.caseNumber}
-              onReopenCase={handleReopenCase}
+              onStartPractice={handleStartPractice}
             />
           </section>
         </div>

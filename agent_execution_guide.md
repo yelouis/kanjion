@@ -72,12 +72,12 @@ You are an implementor agent with no memory of this project. This file is your s
 
 | Gate | Command | Result on 2026-11-07 |
 |---|---|---|
-| Unit/component | `npm test` | **426 passed / 20 files** (≈ 9.6 s). Runs the shipped multi-page game via `GameConfig` (items 1–2). |
-| Typecheck + build | `npm run build` | Clean (`tsc -b && vite build`). `dist/assets/index-*.js` 276.14 kB, **83.67 kB gzip**. CSS 37.00 kB. |
+| Unit/component | `npm test` | **431 passed / 22 files** (≈ 9.7 s). Runs the shipped multi-page game via `GameConfig` (items 1–3). |
+| Typecheck + build | `npm run build` | Clean (`tsc -b && vite build`). `dist/assets/index-*.js` 276.55 kB, **83.99 kB gzip**. CSS 37.00 kB. |
 | Compiler | `npx tsx tools/compile_puzzle.ts --case 001 --offline --validate --dry-run` | Exit 0, but it only validates hand-written TypeScript data and captures nothing (F-7). |
 | E2E | `npm run test:e2e` | **1 passed** (`e2e/smoke.e2e.ts` in `desktop-chromium`). |
 | Lint | — | No lint script exists. |
-| Exploit probe | `npx tsx scripts/exploit_probe.mts` | Reproduces F-1 to F-5. Answer key 120 PTS; **shortcut 140 PTS**; vague name instruction types `TANAKA`; gibberish and meta-prompts click #30 on page 04; `#1`/`#17`/`#30` get through; peek-and-re-score 50 → 140. |
+| Exploit probe | `npx tsx scripts/exploit_probe.mts` | F-1 and F-5 closed by item 3 (shortcut now 65% / 91 PTS, peek-and-replay preserves official 50 PTS). Reproduces F-2, F-3, F-4. |
 
 ---
 

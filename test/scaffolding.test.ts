@@ -72,7 +72,7 @@ describe('1. Broadsheet App Shell & Scaffolding', () => {
     expect(screen.getByText(/🔓 UNSEALED \(CASE CLOSED\)/i)).toBeInTheDocument();
     expect(screen.getByText(/FORENSIC AUDIT REPORT • CASE #001/i)).toBeInTheDocument();
     expect(screen.getByText(/Route: 東京 ⇒ 新大阪/i)).toBeInTheDocument();
-    expect(screen.getByText(/14:30 Departure Slot/i)).toBeInTheDocument();
+    expect(screen.getByText(/Passenger Name: TANAKA/i)).toBeInTheDocument();
     expect(screen.getByText(/Row 2: 🍀 ¥13,870 Seat/i)).toBeInTheDocument();
     expect(screen.getByText(/Sign Digital Authorization Pad/i)).toBeInTheDocument();
     expect(screen.getByText(/Final Blue Confirm/i)).toBeInTheDocument();
@@ -287,7 +287,6 @@ describe('4. Case File #001 Data Integrity & Checkpoint Evaluation', () => {
       seatClass: 'green_car',
       fare: 13870,
       greenCarSelected: true,
-      signatureSigned: true,
       signatureStroke: 'SHAPE:signature',
       insuranceTrapHit: false,
       insuranceCheckboxChecked: false,
@@ -302,18 +301,17 @@ describe('4. Case File #001 Data Integrity & Checkpoint Evaluation', () => {
     expect(awardedTotal).toBe(100);
   });
 
-  it('evaluates contaminated decoy trap state properly', () => {
-    const trapState: ShinkansenMicroState = {
+  it('evaluates unsigned signature pad state as MISSED', () => {
+    const unsignedState: ShinkansenMicroState = {
       ...CASE_001_INITIAL_MICRO_STATE,
-      signatureSigned: true,
-      insuranceTrapHit: true,
+      signatureStroke: undefined,
     };
 
     const exhibitD = CASE_001_EXHIBITS.find((e) => e.id === 'exhibit_d');
-    const result = exhibitD?.evaluate(trapState);
-    expect(result?.status).toBe('CONTAMINATED');
+    const result = exhibitD?.evaluate(unsignedState);
+    expect(result?.status).toBe('MISSED');
     expect(result?.awardedPoints).toBe(0);
-    expect(result?.stampText).toContain('[CONTAMINATED ✗');
+    expect(result?.stampText).toContain('[MISSED ✗');
   });
 
   it('verifies target ghost replay waypoints and trajectory definition', () => {

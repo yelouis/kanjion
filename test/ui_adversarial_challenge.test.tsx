@@ -366,7 +366,7 @@ describe('Adversarial Challenge 5: Exhibit Stamp Rotation Mathematics & Scoring 
       unusedLines: 3,
       exhibitEvaluations: [
         { id: 'exhibit_a', code: 'A', title: 'Route', weight: 25, status: 'VERIFIED', stampText: '[VERIFIED ✓]', rotationDeg: -4 },
-        { id: 'exhibit_b', code: 'B', title: 'Time', weight: 20, status: 'CLEAN', stampText: '[CLEAN ✓]', rotationDeg: 3 },
+        { id: 'exhibit_b', code: 'B', title: 'Time', weight: 20, status: 'VERIFIED', stampText: '[VERIFIED ✓]', rotationDeg: 3 },
         { id: 'exhibit_c', code: 'C', title: 'Seat', weight: 20, status: 'MISSED', stampText: '[MISSED ✗]', rotationDeg: -4 },
         { id: 'exhibit_d', code: 'D', title: 'Ad Trap', weight: 15, status: 'CONTAMINATED', stampText: '[CONTAMINATED ✗]', rotationDeg: 3 },
         { id: 'exhibit_e', code: 'E', title: 'Confirm', weight: 20, status: 'MISSED', stampText: '[MISSED ✗]', rotationDeg: -4 },
