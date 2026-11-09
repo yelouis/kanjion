@@ -55,7 +55,7 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
 
     it('enforces strict 60-character boundary parity', async () => {
       // 59 characters: should be evaluated normally
-      const input59 = 'click green car button at D3 please right now for shinkanse';
+      const input59 = 'click clover button at D3 please right now for shinkansen!!';
       expect(input59.length).toBe(59);
       const action59 = await resolveLine({
         puzzle: CASE_001_PUZZLE,
@@ -64,10 +64,10 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
         instruction: input59,
       });
       expect(action59.action).toBe('CLICK');
-      expect(action59.mark).toBe(25);
+      expect(action59.mark).toBe(52);
 
       // Exactly 60 characters: should be evaluated normally
-      const input60 = 'click green car button at D3 please right now for shinkansen';
+      const input60 = 'click clover button at D3 please right now for shinkansen!!!';
       expect(input60.length).toBe(60);
       const action60 = await resolveLine({
         puzzle: CASE_001_PUZZLE,
@@ -76,7 +76,7 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
         instruction: input60,
       });
       expect(action60.action).toBe('CLICK');
-      expect(action60.mark).toBe(25);
+      expect(action60.mark).toBe(52);
 
       // Exactly 61 characters: must return NOOP
       const input61 = 'click green car button at D3 please right now for shinkansen!';
@@ -148,7 +148,7 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
         instruction: '緑の座席 13870 特割',
       });
       expect(actionKanji.action).toBe('CLICK');
-      expect(actionKanji.mark).toBe(25);
+      expect(actionKanji.mark).toBe(52);
 
       const actionEmoji = await resolveLine({
         puzzle: CASE_001_PUZZLE,
@@ -157,7 +157,7 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
         instruction: '🍀 D3',
       });
       expect(actionEmoji.action).toBe('CLICK');
-      expect(actionEmoji.mark).toBe(25);
+      expect(actionEmoji.mark).toBe(52);
     });
   });
 
@@ -217,16 +217,16 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
         instruction: 'ticket 13870 in row 1',
       });
       expect(actionHikari.action).toBe('CLICK');
-      expect(actionHikari.mark).toBe(21);
+      expect(actionHikari.mark).toBe(41);
 
       const actionNozomi = await resolveLine({
         puzzle: CASE_001_PUZZLE,
         manifest: CASE_001_GENERATED_MANIFEST,
         state: makeState('MV-03', microState),
-        instruction: 'nozomi free seat 13870',
+        instruction: 'nozomi 24 free seat 13870',
       });
       expect(actionNozomi.action).toBe('CLICK');
-      expect(actionNozomi.mark).toBe(23);
+      expect(actionNozomi.mark).toBe(50);
 
       const actionGreen = await resolveLine({
         puzzle: CASE_001_PUZZLE,
@@ -235,7 +235,7 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
         instruction: 'ticket 13870 with clover',
       });
       expect(actionGreen.action).toBe('CLICK');
-      expect(actionGreen.mark).toBe(25);
+      expect(actionGreen.mark).toBe(52);
     });
   });
 
@@ -334,18 +334,18 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
   describe('Vector 4: Guardrail Evasion & Sanitization Stress Harness', () => {
     it('blocks various synthetic ID delimiter formats', () => {
       const evasionAttempts = [
-        'click #25',
-        'click # 25',
-        'click #025',
-        'click mark 25',
-        'click mark_25',
-        'click mark-25',
-        'click som_25',
-        'click som-25',
-        'click badge 25',
-        'click badge#25',
-        'click id 25',
-        'click tag 25',
+        'click #52',
+        'click # 52',
+        'click #052',
+        'click mark 52',
+        'click mark_52',
+        'click mark-52',
+        'click som_52',
+        'click som-52',
+        'click badge 52',
+        'click badge#52',
+        'click id 52',
+        'click tag 52',
       ];
 
       for (const prompt of evasionAttempts) {
@@ -356,9 +356,9 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
 
     it('blocks fullwidth unicode variations of synthetic IDs', () => {
       const fullwidthAttempts = [
-        'click ＃２５',
-        'click ｍａｒｋ２５',
-        'click ＃ ２５',
+        'click ＃５２',
+        'click ｍａｒｋ５２',
+        'click ＃ ５２',
       ];
 
       for (const prompt of fullwidthAttempts) {
@@ -440,11 +440,11 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
           puzzle: CASE_001_PUZZLE,
           manifest: CASE_001_GENERATED_MANIFEST,
           state: makeState('MV-03', microState),
-          instruction: 'click green car',
+          instruction: 'click clover button',
           cloudResolver,
         });
         expect(action.action).toBe('CLICK');
-        expect(action.mark).toBe(25);
+        expect(action.mark).toBe(52);
         expect(action.tier).toBe('fallback');
         expect(action.cloudFailed).toBe(true);
       }

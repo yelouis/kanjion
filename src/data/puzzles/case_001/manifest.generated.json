@@ -287,73 +287,163 @@
             "h": 22,
             "w": 83,
             "x": 927,
-            "y": 181
+            "y": 175
           },
           "key": "back",
           "mark": 14
         },
         {
           "box": {
-            "h": 30,
+            "h": 26,
             "w": 88,
-            "x": 410,
-            "y": 334
+            "x": 426,
+            "y": 338
           },
-          "key": "seat_hikari_free",
-          "mark": 21
+          "key": "seat_r1_free",
+          "mark": 41
         },
         {
           "box": {
-            "h": 30,
-            "w": 86,
-            "x": 590,
-            "y": 334
+            "h": 26,
+            "w": 89,
+            "x": 602,
+            "y": 338
           },
-          "key": "seat_hikari_reserved",
-          "mark": 22
-        },
-        {
-          "box": {
-            "h": 30,
-            "w": 88,
-            "x": 410,
-            "y": 395
-          },
-          "key": "seat_nozomi_free",
-          "mark": 23
-        },
-        {
-          "box": {
-            "h": 30,
-            "w": 88,
-            "x": 589,
-            "y": 395
-          },
-          "key": "seat_nozomi_reserved",
-          "mark": 24
-        },
-        {
-          "box": {
-            "h": 33,
-            "w": 159,
-            "x": 786,
-            "y": 393
-          },
-          "key": "seat_nozomi_green",
-          "mark": 25
+          "key": "seat_r1_reserved",
+          "mark": 42
         },
         {
           "box": {
             "h": 24,
-            "w": 570,
+            "w": 86,
+            "x": 829,
+            "y": 339
+          },
+          "key": "seat_r1_green",
+          "mark": 43
+        },
+        {
+          "box": {
+            "h": 26,
+            "w": 88,
+            "x": 426,
+            "y": 383
+          },
+          "key": "seat_r2_free",
+          "mark": 44
+        },
+        {
+          "box": {
+            "h": 26,
+            "w": 86,
+            "x": 603,
+            "y": 383
+          },
+          "key": "seat_r2_reserved",
+          "mark": 45
+        },
+        {
+          "box": {
+            "h": 26,
+            "w": 88,
+            "x": 426,
+            "y": 428
+          },
+          "key": "seat_r3_free",
+          "mark": 47
+        },
+        {
+          "box": {
+            "h": 26,
+            "w": 88,
+            "x": 602,
+            "y": 428
+          },
+          "key": "seat_r3_reserved",
+          "mark": 48
+        },
+        {
+          "box": {
+            "h": 24,
+            "w": 89,
+            "x": 827,
+            "y": 429
+          },
+          "key": "seat_r3_green",
+          "mark": 49
+        },
+        {
+          "box": {
+            "h": 26,
+            "w": 88,
+            "x": 426,
+            "y": 473
+          },
+          "key": "seat_r4_free",
+          "mark": 50
+        },
+        {
+          "box": {
+            "h": 26,
+            "w": 88,
+            "x": 602,
+            "y": 473
+          },
+          "key": "seat_r4_reserved",
+          "mark": 51
+        },
+        {
+          "box": {
+            "h": 25,
+            "w": 151,
+            "x": 796,
+            "y": 474
+          },
+          "key": "seat_r4_green",
+          "mark": 52
+        },
+        {
+          "box": {
+            "h": 26,
+            "w": 88,
+            "x": 426,
+            "y": 518
+          },
+          "key": "seat_r5_free",
+          "mark": 53
+        },
+        {
+          "box": {
+            "h": 24,
+            "w": 89,
+            "x": 827,
+            "y": 519
+          },
+          "key": "seat_r5_green",
+          "mark": 55
+        },
+        {
+          "box": {
+            "h": 36,
+            "w": 996,
             "x": 14,
-            "y": 172
+            "y": 218
+          },
+          "key": "upgrade_banner",
+          "mark": 56
+        },
+        {
+          "box": {
+            "h": 24,
+            "w": 523,
+            "x": 14,
+            "y": 166
           },
           "key": "page_title",
           "mark": 90
         }
       ],
-      "som": "/puzzles/001/som/MV-03.9c956c4c.png"
+      "som": "/puzzles/001/som/MV-03.13febc04.png"
     },
     "MV-04": {
       "elements": [

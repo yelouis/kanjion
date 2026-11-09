@@ -60,30 +60,30 @@ describe('Data-Driven Fallback Agent & Multi-Signal Scorer', () => {
   });
 
   describe('Target Disambiguation Vectors (Exhibits C & E)', () => {
-    it('resolves "click green car" on MV-03 to mark 25 (Nozomi 24 Green Car)', async () => {
+    it('resolves "click green car" on MV-03 to mark 43 (first Green Car in reading order)', async () => {
       const decision = await resolveOnPage('MV-03', 'click green car');
       expect(decision.action).toBe('CLICK');
-      expect(decision.mark).toBe(25);
-      expect(decision.thought.length).toBeLessThanOrEqual(80);
+      expect(decision.mark).toBe(43);
+      expect(decision.thought).toContain('I found 4 that fit');
     });
 
-    it('resolves "select clover" on MV-03 to mark 25 with multi-signal confidence', async () => {
+    it('resolves "select clover" on MV-03 to mark 52 with multi-signal confidence', async () => {
       const decision = await resolveOnPage('MV-03', 'select clover');
       expect(decision.action).toBe('CLICK');
-      expect(decision.mark).toBe(25);
+      expect(decision.mark).toBe(52);
       expect(decision.thought.length).toBeLessThanOrEqual(80);
     });
 
-    it('resolves "choose 🍀 Nozomi seat in row 2" with emoji glyph to mark 25', async () => {
-      const decision = await resolveOnPage('MV-03', 'choose 🍀 Nozomi seat in row 2');
+    it('resolves "choose 🍀 Nozomi seat in row 4" with emoji glyph to mark 52', async () => {
+      const decision = await resolveOnPage('MV-03', 'choose 🍀 Nozomi seat in row 4');
       expect(decision.action).toBe('CLICK');
-      expect(decision.mark).toBe(25);
+      expect(decision.mark).toBe(52);
     });
 
-    it('resolves uppercase "CLICK CLOVER" to mark 25 (case-insensitive keyword matching)', async () => {
+    it('resolves uppercase "CLICK CLOVER" to mark 52 (case-insensitive keyword matching)', async () => {
       const decision = await resolveOnPage('MV-03', 'CLICK CLOVER');
       expect(decision.action).toBe('CLICK');
-      expect(decision.mark).toBe(25);
+      expect(decision.mark).toBe(52);
     });
 
     it('resolves "blue confirm" on MV-04 to mark 30 (Confirmation CTA)', async () => {
@@ -136,28 +136,28 @@ describe('Data-Driven Fallback Agent & Multi-Signal Scorer', () => {
   });
 
   describe('Non-Target Seat & Navigation Elements', () => {
-    it('resolves "hikari 515 non-reserved seat" on MV-03 to mark 21', async () => {
+    it('resolves "hikari 515 non-reserved seat" on MV-03 to mark 44', async () => {
       const decision = await resolveOnPage('MV-03', 'hikari 515 non-reserved seat');
       expect(decision.action).toBe('CLICK');
-      expect(decision.mark).toBe(21);
+      expect(decision.mark).toBe(44);
     });
 
-    it('resolves "triangle seat" on MV-03 to mark 22 (Hikari Reserved)', async () => {
-      const decision = await resolveOnPage('MV-03', 'triangle seat');
+    it('resolves "triangle seat in row 2" on MV-03 to mark 45 (Hikari Reserved)', async () => {
+      const decision = await resolveOnPage('MV-03', 'triangle seat in row 2');
       expect(decision.action).toBe('CLICK');
-      expect(decision.mark).toBe(22);
+      expect(decision.mark).toBe(45);
     });
 
-    it('resolves "nozomi 24 unreserved" on MV-03 to mark 23', async () => {
+    it('resolves "nozomi 24 unreserved" on MV-03 to mark 50', async () => {
       const decision = await resolveOnPage('MV-03', 'nozomi 24 unreserved');
       expect(decision.action).toBe('CLICK');
-      expect(decision.mark).toBe(23);
+      expect(decision.mark).toBe(50);
     });
 
-    it('resolves "nozomi 24 reserved" on MV-03 to mark 24', async () => {
+    it('resolves "nozomi 24 reserved" on MV-03 to mark 51', async () => {
       const decision = await resolveOnPage('MV-03', 'nozomi 24 reserved');
       expect(decision.action).toBe('CLICK');
-      expect(decision.mark).toBe(24);
+      expect(decision.mark).toBe(51);
     });
 
     it('resolves "back" on MV-03 to mark 14', async () => {
@@ -208,26 +208,26 @@ describe('Data-Driven Fallback Agent & Multi-Signal Scorer', () => {
         instruction: 'click white button',
       });
       expect(res.action).toBe('CLICK');
-      expect(res.mark).toBe(21);
+      expect(res.mark).toBe(41);
       expect(res.thought).toContain('I found');
       expect(res.thought).toContain('so I took the first one — reading left to right, top to bottom, like a professional.');
     });
 
     it('handles maximum 60-character instruction at boundary without crashing', async () => {
-      const longInstruction = 'click green clover 13870 button in 2nd row for nozomi 24 now!';
+      const longInstruction = 'click green clover 13870 button in 4th row for nozomi 24 now!';
       const clamped = longInstruction.slice(0, 60);
       const decision = await resolveOnPage('MV-03', clamped);
       expect(decision.action).toBe('CLICK');
-      expect(decision.mark).toBe(25);
+      expect(decision.mark).toBe(52);
       expect(decision.thought.length).toBeLessThanOrEqual(80);
     });
   });
 
   describe('Heuristic Scoring Breakdown Diagnostics', () => {
-    it('calculates element score on "select clover" for mark 25', () => {
+    it('calculates element score on "select clover" for mark 52', () => {
       const mv03 = CASE_001_PUZZLE.pages.find((p) => p.id === 'MV-03')!;
-      const el25 = mv03.elements.find((e) => e.mark === 25)!;
-      const s = scoreElementOnPage(el25, { cx: 865, cy: 410 }, 'select clover');
+      const el52 = mv03.elements.find((e) => e.mark === 52)!;
+      const s = scoreElementOnPage(el52, { cx: 865, cy: 486 }, 'select clover');
       expect(s).toBeGreaterThanOrEqual(75);
     });
   });

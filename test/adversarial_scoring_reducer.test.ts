@@ -228,11 +228,11 @@ describe('Adversarial Challenge Vector 3: Trap Flag Permanence & Signature Requi
     expect(evalDuring.status).toBe('MISSED');
     expect(evalDuring.awardedPoints).toBe(0);
 
-    // Step 2: Advance to MV-04 via #25, then untoggle checkbox #28
+    // Step 2: Advance to MV-04 via #52, then untoggle checkbox #28
     state = gameReducer(state, {
       type: 'APPLY_AGENT_ACTION',
       payload: {
-        action: { action: 'CLICK', targetId: '#25', gridRef: 'D3', thought: 'Green car' },
+        action: { action: 'CLICK', targetId: '#52', gridRef: 'D3', thought: 'Green car' },
         instruction: 'click green car',
       },
     });
@@ -285,7 +285,7 @@ describe('Adversarial Challenge Vector 3: Trap Flag Permanence & Signature Requi
     state = gameReducer(state, {
       type: 'APPLY_AGENT_ACTION',
       payload: {
-        action: { action: 'TIMED_CLICK', targetId: '#25', thought: 'green car' },
+        action: { action: 'TIMED_CLICK', targetId: '#52', thought: 'green car' },
         instruction: 'wait for sale glow then click green car',
       },
     });

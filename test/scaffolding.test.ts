@@ -228,10 +228,10 @@ describe('4. Case File #001 Data Integrity & Checkpoint Evaluation', () => {
     ]);
   });
 
-  it('defines exactly 11 interactive elements in Macro-View 3 (seat_matrix)', () => {
-    expect(CASE_001_MV03_ELEMENTS).toHaveLength(11);
+  it('defines all 20 interactive elements in CASE_001_MV03_ELEMENTS', () => {
+    expect(CASE_001_MV03_ELEMENTS).toHaveLength(20);
     const somIds = CASE_001_MV03_ELEMENTS.map((e) => e.id);
-    expect(somIds).toEqual([11, 12, 14, 21, 22, 23, 24, 25, 28, 29, 30]);
+    expect(somIds).toEqual([11, 12, 14, 56, 41, 42, 43, 44, 45, 47, 48, 49, 50, 51, 52, 53, 55, 28, 29, 30]);
   });
 
   it('verifies that each MV-03 element gridRef projects to its cell bounding box', () => {
@@ -241,8 +241,8 @@ describe('4. Case File #001 Data Integrity & Checkpoint Evaluation', () => {
     }
   });
 
-  it('identifies key targets (#25, #30) and traps (#11, #12, #28)', () => {
-    const clover = CASE_001_MV03_ELEMENTS.find((e) => e.id === 25);
+  it('identifies key targets (#52, #30) and traps (#11, #12, #28)', () => {
+    const clover = CASE_001_MV03_ELEMENTS.find((e) => e.id === 52);
     expect(clover?.isTarget).toBe(true);
     expect(clover?.gridRef).toBe('D3');
     expect(clover?.text).toContain('🍀');

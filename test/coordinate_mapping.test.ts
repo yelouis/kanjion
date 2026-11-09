@@ -267,9 +267,9 @@ describe('Adversarial Coordinate Mapping & Projection Stress Suite', () => {
     });
   });
 
-  describe('4. Verification of All 11 Elements in CASE_001_MV03_ELEMENTS', () => {
-    it('verifies that exactly 11 elements exist in MV-03', () => {
-      expect(CASE_001_MV03_ELEMENTS).toHaveLength(11);
+  describe('4. Verification of All Elements in CASE_001_MV03_ELEMENTS', () => {
+    it('verifies that all 20 elements exist in CASE_001_MV03_ELEMENTS', () => {
+      expect(CASE_001_MV03_ELEMENTS).toHaveLength(20);
     });
 
     it('verifies bounding box, center, and gridRef projection for every element', () => {
@@ -303,13 +303,13 @@ describe('Adversarial Coordinate Mapping & Projection Stress Suite', () => {
     });
 
     it('verifies specific coordinates for key target elements', () => {
-      // Target #25: Green car discount button
-      const el25 = CASE_001_MV03_ELEMENTS.find((el) => el.id === 25);
-      expect(el25).toBeDefined();
-      expect(el25!.gridRef).toBe('D3');
-      const center25 = gridToCenter(el25!.gridRef);
-      expect(center25).toEqual({ x: 896, y: 480 });
-      expect(pixelToGrid(center25.x, center25.y)).toBe('D3');
+      // Target #52: Green car discount button
+      const el52 = CASE_001_MV03_ELEMENTS.find((el) => el.id === 52);
+      expect(el52).toBeDefined();
+      expect(el52!.gridRef).toBe('D3');
+      const center52 = gridToCenter(el52!.gridRef);
+      expect(center52).toEqual({ x: 896, y: 480 });
+      expect(pixelToGrid(center52.x, center52.y)).toBe('D3');
 
       // Target #30: Final confirmation button
       const el30 = CASE_001_MV03_ELEMENTS.find((el) => el.id === 30);

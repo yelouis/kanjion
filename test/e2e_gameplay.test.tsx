@@ -98,11 +98,11 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 03 / 06');
 
       // -----------------------------------------------------------------------
-      // 4. Line 03 (MV-03): "select nozomi green car" -> MV-04
+      // 4. Line 03 (MV-03): "Wait for the glow, then click the clover" -> MV-04
       // -----------------------------------------------------------------------
       const input3 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input3, { target: { value: 'Wait for sale glow, click green 13870' } });
-      expect(container.querySelector('#char-counter')).toHaveTextContent('37/60');
+      fireEvent.change(input3, { target: { value: 'Wait for the glow, then click the clover' } });
+      expect(container.querySelector('#char-counter')).toHaveTextContent('40/60');
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 03/i }));
       });
@@ -110,11 +110,11 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 04 / 06');
       expect(container.querySelector('#live-mult-label')).toHaveTextContent('1.6x');
 
-      // Verification: Agent Cursor glided to #25 measured box center
+      // Verification: Agent Cursor glided to #52 measured box center
       const agentCursor = container.querySelector('#agent-cursor') as HTMLElement;
       expect(agentCursor).toBeInTheDocument();
-      expect(agentCursor.style.left).toBe('84.57%');
-      expect(agentCursor.style.top).toBe('53.39%');
+      expect(agentCursor.style.left).toBe('85.16%');
+      expect(agentCursor.style.top).toBe('63.41%');
 
       // Verification: Pinned Yellow Thought Note
       const agentNote = container.querySelector('#agent-note') as HTMLElement;
@@ -297,7 +297,7 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       const prompts = [
         'Click the blue card on the right',
         'Type TANAKA in the romaji box on the left',
-        'Wait for the sale glow, then click the green ¥13,870',
+        'Wait for the glow, then click the clover',
         'Draw a cat in the dashed box',
         'confirm booking',
         'final review',

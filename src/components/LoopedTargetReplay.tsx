@@ -31,6 +31,7 @@ const DEFAULT_KEY_CENTERS: Record<string, Point> = {
   route_tokaido: { x: 265, y: 290 },
   passenger_name: { x: 480, y: 395 },
   seat_nozomi_green: { x: 875, y: 390 },
+  seat_r4_green: { x: 875, y: 520 },
   signature_pad: { x: 510, y: 405 },
   confirm_booking: { x: 890, y: 695 },
 };

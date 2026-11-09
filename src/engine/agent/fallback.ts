@@ -7,7 +7,6 @@ import {
   isMetaPrompt,
   NOOP_NO_SIGNAL_THOUGHT,
   normalizeInstruction,
-  validateInstruction,
 } from '../../utils/text_normalizer';
 import { hasTimingIntent } from '../flash_clock';
 import {
@@ -195,9 +194,32 @@ export function scoreElementOnPage(
       }
     }
 
-    const distinctNonContained = matchedAliases.filter(
+    // If a compound alias contains 2+ shorter matched aliases that do not contain each other,
+    // keep the separate component aliases instead of collapsing 2+ matches into 1.
+    const withoutRedundantCompounds = matchedAliases.filter((b) => {
+      const containedInB = matchedAliases.filter(
+        (a) =>
+          a !== b &&
+          b.length > a.length &&
+          (b.includes(a) || normalizeInstruction(b).includes(normalizeInstruction(a)))
+      );
+      if (containedInB.length < 2) return true;
+      // Check if there are at least 2 aliases in containedInB where neither contains the other
+      for (let i = 0; i < containedInB.length; i++) {
+        for (let j = i + 1; j < containedInB.length; j++) {
+          const x = containedInB[i];
+          const y = containedInB[j];
+          if (!x.includes(y) && !y.includes(x)) {
+            return false;
+          }
+        }
+      }
+      return true;
+    });
+
+    const distinctNonContained = withoutRedundantCompounds.filter(
       (a) =>
-        !matchedAliases.some(
+        !withoutRedundantCompounds.some(
           (b) =>
             b !== a &&
             b.length > a.length &&
@@ -469,7 +491,7 @@ export function resolveBareWordsRule(
 export function fallbackResolve(ctx: FallbackResolveContext): AgentDecision {
   const { pages, manifest, state, instruction } = ctx;
   const page = pages.find((p) => p.id === state.pageId);
-  if (!page || !validateInstruction(instruction).valid) {
+  if (!page || !instruction || instruction.trim().length === 0) {
     return {
       action: 'NOOP',
       pageId: state.pageId,

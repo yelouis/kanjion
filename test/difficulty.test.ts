@@ -137,4 +137,67 @@ describe('Item 3–6: Difficulty & Realistic Clutter (F-21, F-24; D-8)', () => {
       expect(container.textContent).toContain('全角で入力してください');
     });
   });
+
+  describe('Page 03 (MV-03): timetable overload', () => {
+    const mv03State: PuzzleState = {
+      pageId: 'MV-03',
+      fields: {
+        ...CASE_001_PUZZLE.initialFields,
+        selectedRoute: 'tokyo_osaka',
+        passengerName: 'TANAKA',
+      },
+    };
+
+    it('★ lazy prompts on MV-03 do not reproduce replay step 3 (TIMED_CLICK seat_r4_green) and land where stated', () => {
+      // green -> upgrade_banner -> MV-08
+      const dGreen = resolveOn(mv03State, 'green');
+      expect(dGreen.decision.action).toBe('CLICK');
+      expect(dGreen.key).toBe('upgrade_banner');
+      expect(applyDecision(CASE_001_PUZZLE, mv03State, dGreen.decision).next.pageId).toBe('MV-08');
+
+      // the green button -> upgrade_banner
+      const dGreenBtn = resolveOn(mv03State, 'the green button');
+      expect(dGreenBtn.decision.action).toBe('CLICK');
+      expect(dGreenBtn.key).toBe('upgrade_banner');
+
+      // 13870 -> upgrade_banner (distraction: a number alone scores 25, under 30)
+      const dNum = resolveOn(mv03State, '13870');
+      expect(dNum.decision.action).toBe('CLICK');
+      expect(dNum.key).toBe('upgrade_banner');
+
+      // clover -> CLICK seat_r4_green -> fare 19590
+      const dClover = resolveOn(mv03State, 'clover');
+      expect(dClover.decision.action).toBe('CLICK');
+      expect(dClover.key).toBe('seat_r4_green');
+      expect(applyDecision(CASE_001_PUZZLE, mv03State, dClover.decision).next.fields.fare).toBe(19590);
+
+      // nozomi green -> seat_r3_green
+      const dNozomiGreen = resolveOn(mv03State, 'nozomi green');
+      expect(dNozomiGreen.decision.action).toBe('CLICK');
+      expect(dNozomiGreen.key).toBe('seat_r3_green');
+
+      // sale -> distraction (upgrade_banner)
+      const dSale = resolveOn(mv03State, 'sale');
+      expect(dSale.decision.action).toBe('CLICK');
+      expect(dSale.key).toBe('upgrade_banner');
+    });
+
+    it('★ "Wait for the glow, then click the clover" and "wait for the glow, then click the green seat in the fourth row" reproduce step 3', () => {
+      const d1 = resolveOn(mv03State, 'Wait for the glow, then click the clover');
+      expect(d1.decision.action).toBe('TIMED_CLICK');
+      expect(d1.key).toBe('seat_r4_green');
+      const next1 = applyDecision(CASE_001_PUZZLE, mv03State, d1.decision).next;
+      expect(next1.pageId).toBe('MV-04');
+      expect(next1.fields.fare).toBe(13870);
+      expect(next1.fields.timedWindowHit).toBe(true);
+
+      const d2 = resolveOn(mv03State, 'wait for the glow, then click the green seat in the fourth row');
+      expect(d2.decision.action).toBe('TIMED_CLICK');
+      expect(d2.key).toBe('seat_r4_green');
+      const next2 = applyDecision(CASE_001_PUZZLE, mv03State, d2.decision).next;
+      expect(next2.pageId).toBe('MV-04');
+      expect(next2.fields.fare).toBe(13870);
+      expect(next2.fields.timedWindowHit).toBe(true);
+    });
+  });
 });

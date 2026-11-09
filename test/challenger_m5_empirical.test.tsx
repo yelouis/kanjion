@@ -151,7 +151,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
 
       // --- Turn 3 (MV-03): Dispatch Line 03 ---
       const input3 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input3, { target: { value: 'wait for sale glow then select nozomi green car' } });
+      fireEvent.change(input3, { target: { value: 'wait for the glow, then click the clover' } });
       const dispatchBtn3 = screen.getByRole('button', { name: /DISPATCH LINE 03/i });
       await act(async () => {
         fireEvent.click(dispatchBtn3);
@@ -201,7 +201,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       const steps = [
         'Click the blue card on the right',
         'Type TANAKA in the romaji box on the left',
-        'Wait for the sale glow, then click the green ¥13,870',
+        'Wait for the glow, then click the clover',
         'Draw a cat in the dashed box',
         'confirm booking',
       ];
@@ -400,7 +400,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       const prompts = [
         'Click the blue card on the right',
         'Type TANAKA in the romaji box on the left',
-        'Wait for the sale glow, then click the green ¥13,870',
+        'Wait for the glow, then click the clover',
         'Draw a cat in the dashed box',
         'confirm booking',
         'final dispatch confirmation',

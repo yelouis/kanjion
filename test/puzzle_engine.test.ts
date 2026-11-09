@@ -143,7 +143,7 @@ describe('Item 6 — Puzzle as Data (★ Falsifying Tests)', () => {
       action: 'TYPE',
       text: 'TANAKA',
     }).next;
-    state = applyDecision(CASE_001_PUZZLE, state, { pageId: 'MV-03', mark: 25, action: 'CLICK' }).next;
+    state = applyDecision(CASE_001_PUZZLE, state, { pageId: 'MV-03', mark: 52, action: 'CLICK' }).next;
     expect(state.pageId).toBe('MV-04');
     const mv04FieldsBefore = { ...state.fields };
 
@@ -164,7 +164,7 @@ describe('Item 6 — Puzzle as Data (★ Falsifying Tests)', () => {
 });
 
 describe('Item 7 — Real Flash-Sale Timing & Add-On Trap (★ Falsifying Tests)', () => {
-  it('★ F-11 (D-4=A): CLICK 25 -> fare 19590 and C MISSED; TIMED_CLICK 25 -> fare 13870 and C VERIFIED', () => {
+  it('★ F-11 (D-4=A): CLICK 52 -> fare 19590 and C MISSED; TIMED_CLICK 52 -> fare 13870 and C VERIFIED', () => {
     let mv03State = createInitialPuzzleState(CASE_001_PUZZLE);
     mv03State = applyDecision(CASE_001_PUZZLE, mv03State, { pageId: 'MV-01', mark: 1, action: 'CLICK' }).next;
     mv03State = applyDecision(CASE_001_PUZZLE, mv03State, {
@@ -174,10 +174,10 @@ describe('Item 7 — Real Flash-Sale Timing & Add-On Trap (★ Falsifying Tests)
       text: 'TANAKA',
     }).next;
 
-    // Plain CLICK 25 -> fare 19590, timedWindowHit false, Exhibit C MISSED
+    // Plain CLICK 52 -> fare 19590, timedWindowHit false, Exhibit C MISSED
     const plainNext = applyDecision(CASE_001_PUZZLE, mv03State, {
       pageId: 'MV-03',
-      mark: 25,
+      mark: 52,
       action: 'CLICK',
     }).next;
     expect(plainNext.fields.fare).toBe(19590);
@@ -185,10 +185,10 @@ describe('Item 7 — Real Flash-Sale Timing & Add-On Trap (★ Falsifying Tests)
     const plainEvals = evaluateExhibits(CASE_001_PUZZLE, plainNext);
     expect(plainEvals.find((e) => e.id === 'C')?.status).toBe('MISSED');
 
-    // TIMED_CLICK 25 -> fare 13870, timedWindowHit true, Exhibit C VERIFIED
+    // TIMED_CLICK 52 -> fare 13870, timedWindowHit true, Exhibit C VERIFIED
     const timedNext = applyDecision(CASE_001_PUZZLE, mv03State, {
       pageId: 'MV-03',
-      mark: 25,
+      mark: 52,
       action: 'TIMED_CLICK',
     }).next;
     expect(timedNext.fields.fare).toBe(13870);
@@ -201,7 +201,7 @@ describe('Item 7 — Real Flash-Sale Timing & Add-On Trap (★ Falsifying Tests)
     let state = createInitialPuzzleState(CASE_001_PUZZLE);
     state = applyDecision(CASE_001_PUZZLE, state, { pageId: 'MV-01', mark: 1, action: 'CLICK' }).next;
     state = applyDecision(CASE_001_PUZZLE, state, { pageId: 'MV-02', mark: 17, action: 'TYPE', text: 'TANAKA' }).next;
-    state = applyDecision(CASE_001_PUZZLE, state, { pageId: 'MV-03', mark: 25, action: 'TIMED_CLICK' }).next;
+    state = applyDecision(CASE_001_PUZZLE, state, { pageId: 'MV-03', mark: 52, action: 'TIMED_CLICK' }).next;
 
     // Attach insurance via CLICK 28, then confirm via CLICK 30
     const withIns = applyDecision(CASE_001_PUZZLE, state, { pageId: 'MV-04', mark: 28, action: 'CLICK' }).next;

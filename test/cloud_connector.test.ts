@@ -51,7 +51,7 @@ describe('Item 11 (§13): Free cloud tier via Firebase AI Logic', () => {
           text: () =>
             JSON.stringify({
               action: 'CLICK',
-              mark: 25,
+              mark: 52,
               text: null,
               thought: 'Ooh, a clover seat! Clicking that green car option right away.',
             }),
@@ -76,7 +76,7 @@ describe('Item 11 (§13): Free cloud tier via Firebase AI Logic', () => {
 
     expect(decision.tier).toBe('cloud');
     expect(decision.action).toBe('CLICK');
-    expect(decision.mark).toBe(25);
+    expect(decision.mark).toBe(52);
     expect(decision.pageId).toBe('MV-03');
     expect(decision.thought).toBe('💭 Ooh, a clover seat! Clicking that green car option right away.');
     expect(decision.cloudFailed).toBeUndefined();
@@ -175,7 +175,7 @@ describe('Item 11 (§13): Free cloud tier via Firebase AI Logic', () => {
 
     expect(decision.tier).toBe('fallback');
     expect(decision.action).toBe('CLICK');
-    expect(decision.mark).toBe(25);
+    expect(decision.mark).toBe(52);
     expect(decision.cloudFailed).toBe(true);
 
     // Verify ledger shows (backup agent)

@@ -65,7 +65,7 @@ describe('Game State Reducer & Micro-State Transitions', () => {
       const mv03State = advanceToMv03(initialState);
       const res = applyDecision(CASE_001_PUZZLE, mv03State.puzzleState, {
         action: 'CLICK',
-        mark: 25,
+        mark: 52,
         thought: 'direct test',
       });
       expect(res.next.fields.greenCarSelected).toBe(true);
@@ -124,12 +124,12 @@ describe('Game State Reducer & Micro-State Transitions', () => {
     });
   });
 
-  describe('APPLY_AGENT_ACTION: Target #25 (Green Car Discount Fare)', () => {
+  describe('APPLY_AGENT_ACTION: Target #52 (Green Car Discount Fare)', () => {
     it('mutates micro-state satisfying Exhibit C, updates cursor, and keeps ledger SEALED', () => {
       const mv03State = advanceToMv03(initialState);
       const greenCarAction: AgentAction = {
         action: 'TIMED_CLICK',
-        targetId: '#25',
+        targetId: '#52',
         gridRef: 'D3',
         targetCoordinate: { x: 885, y: 468 },
         thought: '📌 FIELD NOTE: Clicked [🍀 ◯ ¥13,870] at D3',
@@ -199,7 +199,7 @@ describe('Game State Reducer & Micro-State Transitions', () => {
       const mv04State = gameReducer(mv03State, {
         type: 'APPLY_AGENT_ACTION',
         payload: {
-          action: { action: 'CLICK', targetId: '#25', thought: 'green car' },
+          action: { action: 'CLICK', targetId: '#52', thought: 'green car' },
           instruction: 'click green car',
         },
       });
@@ -237,7 +237,7 @@ describe('Game State Reducer & Micro-State Transitions', () => {
       const mv04State = gameReducer(mv03State, {
         type: 'APPLY_AGENT_ACTION',
         payload: {
-          action: { action: 'CLICK', targetId: '#25', thought: 'green car' },
+          action: { action: 'CLICK', targetId: '#52', thought: 'green car' },
           instruction: 'click green car',
         },
       });
@@ -319,7 +319,7 @@ describe('Game State Reducer & Micro-State Transitions', () => {
       s = gameReducer(s, {
         type: 'APPLY_AGENT_ACTION',
         payload: {
-          action: { action: 'TIMED_CLICK', targetId: '#25', thought: 'green car' },
+          action: { action: 'TIMED_CLICK', targetId: '#52', thought: 'green car' },
           instruction: 'wait for sale glow then click green car',
         },
       });

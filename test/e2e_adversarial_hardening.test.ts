@@ -303,25 +303,25 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
 
     it('2.3 verifies Guardrail 3 prompt filtering catches evasions while permitting visible currency literals', () => {
       const evasionAttempts = [
-        'click #25',
-        'click mark 25',
-        'click badge 25',
-        'click tag 25',
-        'click som_25',
-        'click ＃２５',
-        'click #㉕',
-        'click %2325',
-        'click mark%2025',
-        'click badge%20%2325',
-        'click %23%32%35',
-        'click%20%2325',
-        'click #2\u200B5',
-        'click #\u200B25',
-        'click mark\u200B25',
-        'click #2\u200C5',
-        'click #2\u200D5',
-        'click #2\uFEFF5',
-        'click #2\u200B\u200C\u200D5',
+        'click #52',
+        'click mark 52',
+        'click badge 52',
+        'click tag 52',
+        'click som_52',
+        'click ＃５２',
+        'click #㉚',
+        'click %2352',
+        'click mark%2052',
+        'click badge%20%2352',
+        'click %23%35%32',
+        'click%20%2352',
+        'click #5\u200B2',
+        'click #\u200B52',
+        'click mark\u200B52',
+        'click #5\u200C2',
+        'click #5\u200D2',
+        'click #5\uFEFF2',
+        'click #5\u200B\u200C\u200D2',
       ];
 
       for (const attempt of evasionAttempts) {
@@ -358,7 +358,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
         },
       });
       expect(action.action).toBe('CLICK');
-      expect(action.mark).toBe(25);
+      expect(action.mark).toBe(52);
       expect(action.tier).toBe('fallback');
       expect(action.cloudFailed).toBe(true);
       expect(action.thought.length).toBeLessThanOrEqual(80);
@@ -366,7 +366,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
 
     it('2.5 handles malformed URL percent escapes and validates rejection of encoded evasions', async () => {
       const malformedInputs = [
-        'select 50% discount',
+        'select 35% discount',
         'get +20% bonus',
         'click %ZZ25',
         'click %E0%A4%A',
@@ -380,11 +380,11 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
         expect(res.isBlocked).toBe(false);
       }
 
-      const resMalformedWithTarget = filterPromptSyntheticIds('click %E0%A4%A #25', CASE_001_MV03_ELEMENTS);
+      const resMalformedWithTarget = filterPromptSyntheticIds('click %E0%A4%A #52', CASE_001_MV03_ELEMENTS);
       expect(resMalformedWithTarget.isBlocked).toBe(true);
-      expect(resMalformedWithTarget.flaggedId).toBe(25);
+      expect(resMalformedWithTarget.flaggedId).toBe(52);
 
-      const evasionPrompts = ['click %2325', 'click #2\u200B5', 'click mark%2025'];
+      const evasionPrompts = ['click %2352', 'click #5\u200B2', 'click mark%2052'];
       for (const prompt of evasionPrompts) {
         let cloudCalled = false;
         const action = await resolveLine({
@@ -470,7 +470,7 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
 
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
-        payload: { action: { action: 'TIMED_CLICK', targetId: '#25', thought: 'Green car' }, instruction: 'wait for sale glow green car' },
+        payload: { action: { action: 'TIMED_CLICK', targetId: '#52', thought: 'Green car' }, instruction: 'wait for sale glow green car' },
       });
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
@@ -623,13 +623,13 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
     it('5.1 executes full gameplay workflow with injection attempts, practice mode toggle, and declassification', async () => {
       let state = createInitialGameState();
 
-      const injectionResult = filterPromptSyntheticIds('click #25 directly', CASE_001_MV03_ELEMENTS);
+      const injectionResult = filterPromptSyntheticIds('click #52 directly', CASE_001_MV03_ELEMENTS);
       expect(injectionResult.isBlocked).toBe(true);
 
-      const urlEncodedResult = filterPromptSyntheticIds('click %2325 directly', CASE_001_MV03_ELEMENTS);
+      const urlEncodedResult = filterPromptSyntheticIds('click %2352 directly', CASE_001_MV03_ELEMENTS);
       expect(urlEncodedResult.isBlocked).toBe(true);
 
-      const zeroWidthResult = filterPromptSyntheticIds('click #2\u200B5 directly', CASE_001_MV03_ELEMENTS);
+      const zeroWidthResult = filterPromptSyntheticIds('click #5\u200B2 directly', CASE_001_MV03_ELEMENTS);
       expect(zeroWidthResult.isBlocked).toBe(true);
 
       const dec1 = await resolveLine({
@@ -667,13 +667,13 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
         puzzle: CASE_001_PUZZLE,
         manifest: CASE_001_GENERATED_MANIFEST,
         state: { pageId: state.macroViewId, fields: state.microState },
-        instruction: 'Wait for the sale glow, then click the green ¥13,870',
+        instruction: 'Wait for the glow, then click the clover',
       });
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
         payload: {
           action: decisionToAgentAction(dec3, CASE_001_PUZZLE, CASE_001_GENERATED_MANIFEST),
-          instruction: 'Wait for the sale glow, then click the green ¥13,870',
+          instruction: 'Wait for the glow, then click the clover',
         },
       });
       expect(state.microState.greenCarSelected).toBe(true);

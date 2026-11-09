@@ -452,7 +452,7 @@ describe('Milestone 4: Puzzle Compilation Tooling Verification Suite', () => {
       expect(svg).toContain('#C026D3'); // Magenta badge & reticle
       expect(svg).toContain('#FFFFFF'); // White text
       expect(svg).toContain('som-badge');
-      expect(svg).toContain('#25');
+      expect(svg).toContain('#52');
       expect(svg).toContain('#30');
     });
 
@@ -485,9 +485,9 @@ describe('Milestone 4: Puzzle Compilation Tooling Verification Suite', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it('verifies target elements (#25, #30) and trap elements (#11, #12, #28) in MV-03', () => {
+    it('verifies target elements (#52, #30) and trap elements (#11, #12, #28) in MV-03', () => {
       const mv03 = CASE_001_MACRO_VIEWS.find((v) => v.id === 'MV-03')!;
-      const clover = mv03.elements.find((e) => e.id === 25)!;
+      const clover = mv03.elements.find((e) => e.id === 52)!;
       const confirm = mv03.elements.find((e) => e.id === 30)!;
       const promoTrap = mv03.elements.find((e) => e.id === 12)!;
       const insCheckbox = mv03.elements.find((e) => e.id === 28)!;
@@ -502,8 +502,8 @@ describe('Milestone 4: Puzzle Compilation Tooling Verification Suite', () => {
 
     it('verifies offline element extraction from HTML template with fallback', () => {
       const extracted = extractElementsOffline('<div>fallback</div>', 'MV-03');
-      expect(extracted).toHaveLength(11);
-      expect(extracted.find((e) => e.id === 25)?.gridRef).toBe('D3');
+      expect(extracted).toHaveLength(20);
+      expect(extracted.find((e) => e.id === 52)?.gridRef).toBe('D3');
     });
 
     it('verifies deterministic exit code mappings', () => {

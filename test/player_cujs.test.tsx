@@ -78,7 +78,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     const prompts = [
       'click the blue card on the right',
       'type TANAKA in the romaji box on the left',
-      'wait for sale glow then click green button in second row',
+      'wait for the glow, then click the clover',
       'draw a cat in the signature box',
       'click blue button at bottom right',
     ];
@@ -159,7 +159,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
       textValue: 'TANAKA',
       thought: 'Type TANAKA',
     }).nextState;
-    state = stepPuzzle(state, { action: 'TIMED_CLICK', targetId: '#25', thought: 'Green' }).nextState;
+    state = stepPuzzle(state, { action: 'TIMED_CLICK', targetId: '#52', thought: 'Green' }).nextState;
     expect(state.pageId).toBe('MV-04');
 
     // Confirm without signing #27
@@ -213,14 +213,18 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     state = stepPuzzle(state, { action: 'CLICK', targetId: '#81', thought: 'Back' }).nextState;
     expect(state.pageId).toBe('MV-03');
 
-    // Selecting #24 (Nozomi Reserved ¥14,720) stays on MV-03 and does not set greenCarSelected
-    state = stepPuzzle(state, { action: 'CLICK', targetId: '#24', thought: 'Reserved' }).nextState;
-    expect(state.pageId).toBe('MV-03');
+    // Selecting #51 (Nozomi Reserved ¥14,720) navigates to MV-04 without setting greenCarSelected
+    state = stepPuzzle(state, { action: 'CLICK', targetId: '#51', thought: 'Reserved' }).nextState;
+    expect(state.pageId).toBe('MV-04');
     expect(state.fields.greenCarSelected).toBe(false);
     expect(state.fields.seatClass).toBe('ordinary_reserved');
 
-    // Selecting #25 (Green Car ¥13,870) advances to MV-04 and sets greenCarSelected=true
-    const greenAction = await resolveTestAction(state.pageId, state.fields, 'click green 13,870');
+    // Return to MV-03 via Back button (#14)
+    state = stepPuzzle(state, { action: 'CLICK', targetId: '#14', thought: 'Back' }).nextState;
+    expect(state.pageId).toBe('MV-03');
+
+    // Selecting #52 (Green Car ¥13,870) advances to MV-04 and sets greenCarSelected=true
+    const greenAction = await resolveTestAction(state.pageId, state.fields, 'click green 13,870 in fourth row');
     state = stepPuzzle(state, greenAction).nextState;
     expect(state.pageId).toBe('MV-04');
     expect(state.fields.greenCarSelected).toBe(true);
@@ -237,7 +241,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
       'click back button',
       'click the dark blue card',
       'type TANAKA in the romaji box on the left',
-      'wait for flash sale and click green 13,870',
+      'wait for the glow, then click the clover',
       'draw a cat in box',
     ];
 
@@ -264,7 +268,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     const userPrompts = [
       'Click on the dark blue card with 02 in it',
       'Type TANAKA in the romaji box on the left',
-      'Wait for flash sale and click on the green 13870 box',
+      'Wait for the glow, then click the clover',
       'Draw a cat in the dashed box',
       'Click the blue box on the bottom right',
     ];

@@ -55,14 +55,6 @@ export const Sandbox: React.FC<SandboxProps> = ({
   const isGreenSelected = Boolean(fields.greenCarSelected);
   const isInsAttached = Boolean(fields.insuranceAttached);
   const isFinalConfirmed = Boolean(fields.finalConfirmed);
-  const isHikariFreeSelected =
-    fields.trainName === 'Hikari 515' && fields.seatClass === 'ordinary_free';
-  const isHikariResSelected =
-    fields.trainName === 'Hikari 515' && fields.seatClass === 'ordinary_reserved';
-  const isNozomiFreeSelected =
-    fields.trainName === 'Nozomi 24' && fields.seatClass === 'ordinary_free';
-  const isNozomiResSelected =
-    fields.trainName === 'Nozomi 24' && fields.seatClass === 'ordinary_reserved';
 
   const passengerName = typeof fields.passengerName === 'string' ? fields.passengerName : '';
   const nameKanjiSei = typeof fields.nameKanjiSei === 'string' ? fields.nameKanjiSei : '';
@@ -799,14 +791,14 @@ export const Sandbox: React.FC<SandboxProps> = ({
             PAGE 03: SEAT MATRIX & MOVING FLASH-SALE WINDOW (MV-03)
            ================================================================= */}
         {pageId === 'MV-03' && (
-          <div className="p-3.5 flex-1 flex flex-col justify-between">
-            <div className="space-y-2.5">
-              <div className="border-b-2 border-emerald-800 pb-1.5 flex items-center justify-between">
+          <div className="px-3.5 py-2 flex-1 flex flex-col justify-between">
+            <div className="space-y-1.5">
+              <div className="border-b-2 border-emerald-800 pb-1 flex items-center justify-between">
                 <div>
                   <h2 data-el="page_title" className="text-base font-black text-emerald-950">
                     STEP 3: 列車・座席指定（タイムセール特割 空席照会）
                   </h2>
-                  <p className="text-xs text-neutral-600 font-medium">
+                  <p className="text-[11px] text-neutral-600 font-medium">
                     移動する「⚡ トクだ値 タイムセール枠」に合わせてご希望の座席ボタンをクリックすると次へ進みます。
                   </p>
                 </div>
@@ -826,13 +818,28 @@ export const Sandbox: React.FC<SandboxProps> = ({
                 </div>
               </div>
 
+              {/* Green Car Upgrade Campaign Banner (Mark 56) */}
+              <button
+                id="btn-upgrade-banner"
+                data-el="upgrade_banner"
+                type="button"
+                onClick={() => handleClick(56)}
+                style={{ backgroundColor: '#15803D' }}
+                className="w-full px-3.5 py-1.5 rounded border-2 border-emerald-950 text-white font-black text-xs shadow-sm flex items-center justify-between hover:brightness-105"
+              >
+                <span>グリーン車 アップグレードキャンペーン実施中 ▶</span>
+                <span className="px-2 py-0.5 bg-amber-300 text-emerald-950 rounded text-[11px] font-black">
+                  キャンペーン詳細 ▶
+                </span>
+              </button>
+
               {/* MOVING / TIMED FLASH DISCOUNT WINDOW BAR */}
-              <div className="grid grid-cols-4 gap-2 bg-neutral-900 text-white px-3 py-2 rounded-md text-xs font-bold items-center shadow">
+              <div className="grid grid-cols-4 gap-2 bg-neutral-900 text-white px-3 py-1.5 rounded-md text-xs font-bold items-center shadow">
                 <span className="text-amber-300 font-black flex items-center gap-1">
                   <span>⚡ トクだ値 タイムセール枠:</span>
                 </span>
                 <span
-                  className={`text-center py-1 rounded transition-all ${
+                  className={`text-center py-0.5 rounded transition-all ${
                     activeFlashColumn === 0
                       ? 'bg-amber-400 text-neutral-950 font-black scale-105 shadow'
                       : 'bg-neutral-800 text-neutral-400'
@@ -841,7 +848,7 @@ export const Sandbox: React.FC<SandboxProps> = ({
                   自由席枠
                 </span>
                 <span
-                  className={`text-center py-1 rounded transition-all ${
+                  className={`text-center py-0.5 rounded transition-all ${
                     activeFlashColumn === 1
                       ? 'bg-amber-400 text-neutral-950 font-black scale-105 shadow'
                       : 'bg-neutral-800 text-neutral-400'
@@ -850,7 +857,7 @@ export const Sandbox: React.FC<SandboxProps> = ({
                   普通車指定席枠
                 </span>
                 <span
-                  className={`text-center py-1 rounded transition-all ${
+                  className={`text-center py-0.5 rounded transition-all ${
                     activeFlashColumn === 2
                       ? 'bg-emerald-400 text-neutral-950 font-black ring-2 ring-amber-300 scale-105 shadow'
                       : 'bg-neutral-800 text-neutral-400'
@@ -863,129 +870,224 @@ export const Sandbox: React.FC<SandboxProps> = ({
               <table className="w-full border-collapse border-2 border-neutral-400 text-xs">
                 <thead>
                   <tr className="bg-neutral-200 text-neutral-900">
-                    <th className="border border-neutral-400 p-2.5 text-left font-bold">
+                    <th className="border border-neutral-400 py-1.5 px-2.5 text-left font-bold">
                       列車名・発着時刻（東京 ⇒ 新大阪）
                     </th>
-                    <th className="border border-neutral-400 p-2.5 text-center font-bold">
+                    <th className="border border-neutral-400 py-1.5 px-2 text-center font-bold">
                       自由席
                     </th>
-                    <th className="border border-neutral-400 p-2.5 text-center font-bold">
-                      普通車指定席
+                    <th className="border border-neutral-400 py-1.5 px-2 text-center font-bold">
+                      指定席
                     </th>
-                    <th className="border border-neutral-400 p-2.5 text-center bg-emerald-100 font-bold text-emerald-900">
-                      🍀 グリーン車（特割）
+                    <th className="border border-neutral-400 py-1.5 px-2 text-center bg-emerald-100 font-bold text-emerald-900">
+                      🍀 グリーン車
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {/* Train 1: Hikari 515 */}
+                  {/* Row 1: Kodama 723 */}
                   <tr className="hover:bg-neutral-50">
-                    <td className="border border-neutral-300 p-3">
-                      <div className="font-bold text-sm text-neutral-900">
-                        ひかり 515号 (14:12発)
-                      </div>
-                      <div className="text-neutral-600 text-xs">14:12発 ⇒ 17:10着</div>
+                    <td className="border border-neutral-300 py-1.5 px-2.5">
+                      <div className="font-bold text-xs text-neutral-900">こだま 723号</div>
+                      <div className="text-neutral-600 text-[11px]">14:03発 ⇒ 17:57着</div>
                     </td>
-                    <td className="border border-neutral-300 p-3 text-center">
+                    <td className="border border-neutral-300 py-1.5 px-2 text-center">
                       <button
-                        id="btn-hikari-free"
-                        data-el="seat_hikari_free"
+                        id="btn-r1-free"
+                        data-el="seat_r1_free"
                         type="button"
-                        onClick={() => handleClick(21)}
-                        className={`px-3 py-1.5 border rounded transition-all ${
-                          isHikariFreeSelected
-                            ? 'bg-amber-300 border-2 border-neutral-900 font-black'
-                            : 'bg-neutral-100 hover:bg-neutral-200 border-neutral-400 font-medium'
-                        }`}
+                        onClick={() => handleClick(41)}
+                        className="px-3 py-1 bg-white hover:bg-neutral-100 border border-neutral-400 rounded font-medium"
                       >
                         ◯ ¥13,870
                       </button>
                     </td>
-                    <td className="border border-neutral-300 p-3 text-center">
+                    <td className="border border-neutral-300 py-1.5 px-2 text-center">
                       <button
-                        id="btn-hikari-res"
-                        data-el="seat_hikari_reserved"
+                        id="btn-r1-res"
+                        data-el="seat_r1_reserved"
                         type="button"
-                        onClick={() => handleClick(22)}
-                        className={`px-3 py-1.5 border rounded transition-all ${
-                          isHikariResSelected
-                            ? 'bg-amber-300 border-2 border-neutral-900 font-black'
-                            : 'bg-neutral-100 hover:bg-neutral-200 border-neutral-400 font-medium'
-                        }`}
+                        onClick={() => handleClick(42)}
+                        className="px-3 py-1 bg-white hover:bg-neutral-100 border border-neutral-400 rounded font-medium"
+                      >
+                        ◯ ¥14,400
+                      </button>
+                    </td>
+                    <td className="border border-neutral-300 py-1.5 px-2 text-center bg-emerald-50/50">
+                      <button
+                        id="btn-r1-green"
+                        data-el="seat_r1_green"
+                        type="button"
+                        onClick={() => handleClick(43)}
+                        className="px-3 py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded shadow-sm"
+                      >
+                        ◯ ¥18,170
+                      </button>
+                    </td>
+                  </tr>
+
+                  {/* Row 2: Hikari 515 */}
+                  <tr className="hover:bg-neutral-50">
+                    <td className="border border-neutral-300 py-1.5 px-2.5">
+                      <div className="font-bold text-xs text-neutral-900">ひかり 515号</div>
+                      <div className="text-neutral-600 text-[11px]">14:12発 ⇒ 17:10着</div>
+                    </td>
+                    <td className="border border-neutral-300 py-1.5 px-2 text-center">
+                      <button
+                        id="btn-r2-free"
+                        data-el="seat_r2_free"
+                        type="button"
+                        onClick={() => handleClick(44)}
+                        className="px-3 py-1 bg-white hover:bg-neutral-100 border border-neutral-400 rounded font-medium"
+                      >
+                        ◯ ¥13,870
+                      </button>
+                    </td>
+                    <td className="border border-neutral-300 py-1.5 px-2 text-center">
+                      <button
+                        id="btn-r2-res"
+                        data-el="seat_r2_reserved"
+                        type="button"
+                        onClick={() => handleClick(45)}
+                        className="px-3 py-1 bg-white hover:bg-neutral-100 border border-neutral-400 rounded font-medium"
                       >
                         △ ¥14,520
                       </button>
                     </td>
-                    <td className="border border-neutral-300 p-3 text-center text-neutral-400 bg-neutral-50 font-bold">
+                    <td className="border border-neutral-300 py-1.5 px-2 text-center text-neutral-400 bg-neutral-50 font-bold">
                       × 満席
                     </td>
                   </tr>
 
-                  {/* Train 2: Nozomi 24 Target */}
-                  <tr className="bg-amber-50/70">
-                    <td className="border border-neutral-300 p-3">
-                      <div className="font-black text-sm text-blue-900">
-                        のぞみ 24号 (14:30発)
-                      </div>
-                      <div className="text-neutral-700 font-semibold text-xs">
-                        14:30発 ⇒ 16:57着（最速達）
-                      </div>
+                  {/* Row 3: Nozomi 22 */}
+                  <tr className="hover:bg-neutral-50">
+                    <td className="border border-neutral-300 py-1.5 px-2.5">
+                      <div className="font-bold text-xs text-neutral-900">のぞみ 22号</div>
+                      <div className="text-neutral-600 text-[11px]">14:21発 ⇒ 16:48着</div>
                     </td>
-                    <td className="border border-neutral-300 p-3 text-center">
+                    <td className="border border-neutral-300 py-1.5 px-2 text-center">
                       <button
-                        id="btn-nozomi-free"
-                        data-el="seat_nozomi_free"
+                        id="btn-r3-free"
+                        data-el="seat_r3_free"
                         type="button"
-                        onClick={() => handleClick(23)}
-                        className={`px-3 py-1.5 border rounded transition-all ${
-                          isNozomiFreeSelected
-                            ? 'bg-amber-300 border-2 border-neutral-900 font-black'
-                            : 'bg-neutral-100 hover:bg-neutral-200 border-neutral-400 font-medium'
-                        }`}
+                        onClick={() => handleClick(47)}
+                        className="px-3 py-1 bg-white hover:bg-neutral-100 border border-neutral-400 rounded font-medium"
                       >
                         ◯ ¥13,870
                       </button>
                     </td>
-                    <td className="border border-neutral-300 p-3 text-center">
+                    <td className="border border-neutral-300 py-1.5 px-2 text-center">
                       <button
-                        id="btn-nozomi-res"
-                        data-el="seat_nozomi_reserved"
+                        id="btn-r3-res"
+                        data-el="seat_r3_reserved"
                         type="button"
-                        onClick={() => handleClick(24)}
-                        className={`px-3 py-1.5 border rounded transition-all ${
-                          isNozomiResSelected
-                            ? 'bg-amber-300 border-2 border-neutral-900 font-black'
-                            : 'bg-neutral-100 hover:bg-neutral-200 border-neutral-400 font-medium'
-                        }`}
+                        onClick={() => handleClick(48)}
+                        className="px-3 py-1 bg-white hover:bg-neutral-100 border border-neutral-400 rounded font-medium"
+                      >
+                        ◯ ¥14,720
+                      </button>
+                    </td>
+                    <td className="border border-neutral-300 py-1.5 px-2 text-center bg-emerald-50/50">
+                      <button
+                        id="btn-r3-green"
+                        data-el="seat_r3_green"
+                        type="button"
+                        onClick={() => handleClick(49)}
+                        className="px-3 py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded shadow-sm"
+                      >
+                        ◯ ¥19,590
+                      </button>
+                    </td>
+                  </tr>
+
+                  {/* Row 4: Nozomi 24 (Target Row) */}
+                  <tr className="bg-amber-50/70">
+                    <td className="border border-neutral-300 py-1.5 px-2.5">
+                      <div className="font-black text-xs text-blue-900">のぞみ 24号</div>
+                      <div className="text-neutral-700 font-semibold text-[11px]">
+                        14:30発 ⇒ 16:57着
+                      </div>
+                    </td>
+                    <td className="border border-neutral-300 py-1.5 px-2 text-center">
+                      <button
+                        id="btn-r4-free"
+                        data-el="seat_r4_free"
+                        type="button"
+                        onClick={() => handleClick(50)}
+                        className="px-3 py-1 bg-white hover:bg-neutral-100 border border-neutral-400 rounded font-medium"
+                      >
+                        ◯ ¥13,870
+                      </button>
+                    </td>
+                    <td className="border border-neutral-300 py-1.5 px-2 text-center">
+                      <button
+                        id="btn-r4-res"
+                        data-el="seat_r4_reserved"
+                        type="button"
+                        onClick={() => handleClick(51)}
+                        className="px-3 py-1 bg-white hover:bg-neutral-100 border border-neutral-400 rounded font-medium"
                       >
                         ◯ ¥14,720
                       </button>
                     </td>
                     <td
-                      className={`border border-neutral-300 p-3 text-center transition-all ${
-                        isGreenSelected
+                      className={`border border-neutral-300 py-1.5 px-2 text-center transition-all ${
+                        isGreenSelected && fields.trainName === 'Nozomi 24'
                           ? 'bg-amber-200 ring-2 ring-inset ring-emerald-800'
                           : activeFlashColumn === 2
                           ? 'bg-emerald-100 ring-2 ring-inset ring-amber-400'
-                          : 'bg-emerald-50'
+                          : 'bg-emerald-50/50'
                       }`}
                     >
                       <button
                         id="target-green-btn"
-                        data-el="seat_nozomi_green"
+                        data-el="seat_r4_green"
                         type="button"
-                        onClick={() => handleClick(25)}
-                        className={`px-4 py-2 font-black shadow rounded transition-all ${
-                          isGreenSelected
+                        onClick={() => handleClick(52)}
+                        className={`px-3 py-1 font-black shadow rounded transition-all ${
+                          isGreenSelected && fields.trainName === 'Nozomi 24'
                             ? 'bg-emerald-700 ring-2 ring-emerald-950 border-2 border-amber-300 text-amber-200 scale-105'
                             : activeFlashColumn === 2
                             ? 'bg-emerald-600 text-white ring-2 ring-amber-300 shadow-md scale-[1.03]'
-                            : 'bg-emerald-700/80 text-white'
+                            : 'bg-emerald-700 text-white'
                         }`}
                       >
-                        {isGreenSelected
+                        {isGreenSelected && fields.trainName === 'Nozomi 24'
                           ? `✓ 選択中 • ${greenSeatLabel}`
                           : greenSeatLabel}
+                      </button>
+                    </td>
+                  </tr>
+
+                  {/* Row 5: Nozomi 26 */}
+                  <tr className="hover:bg-neutral-50">
+                    <td className="border border-neutral-300 py-1.5 px-2.5">
+                      <div className="font-bold text-xs text-neutral-900">のぞみ 26号</div>
+                      <div className="text-neutral-600 text-[11px]">14:39発 ⇒ 17:06着</div>
+                    </td>
+                    <td className="border border-neutral-300 py-1.5 px-2 text-center">
+                      <button
+                        id="btn-r5-free"
+                        data-el="seat_r5_free"
+                        type="button"
+                        onClick={() => handleClick(53)}
+                        className="px-3 py-1 bg-white hover:bg-neutral-100 border border-neutral-400 rounded font-medium"
+                      >
+                        ◯ ¥13,870
+                      </button>
+                    </td>
+                    <td className="border border-neutral-300 py-1.5 px-2 text-center text-neutral-400 bg-neutral-50 font-bold">
+                      × 満席
+                    </td>
+                    <td className="border border-neutral-300 py-1.5 px-2 text-center bg-emerald-50/50">
+                      <button
+                        id="btn-r5-green"
+                        data-el="seat_r5_green"
+                        type="button"
+                        onClick={() => handleClick(55)}
+                        className="px-3 py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded shadow-sm"
+                      >
+                        ◯ ¥19,590
                       </button>
                     </td>
                   </tr>

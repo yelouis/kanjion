@@ -34,7 +34,7 @@ describe('Adversarial Challenge 1: Multi-Target Tie-Breaking & Threshold Behavio
       instruction: 'click white button',
     });
     expect(res.action).toBe('CLICK');
-    expect(res.mark).toBe(21);
+    expect(res.mark).toBe(41);
     expect(res.thought).toContain('I found');
     expect(res.thought).toContain('so I took the first one — reading left to right, top to bottom, like a professional.');
   });
@@ -57,7 +57,7 @@ describe('Adversarial Challenge 1: Multi-Target Tie-Breaking & Threshold Behavio
     expect(res.mark).toBe(distractionEl.mark);
   });
 
-  it('disambiguates #21 vs #23 vs #25 when row or color is specified alongside 13870', async () => {
+  it('disambiguates #41 vs #43 vs #52 when row or color is specified alongside 13870', async () => {
     const row1 = await resolveLine({
       puzzle: CASE_001_PUZZLE,
       manifest: CASE_001_GENERATED_MANIFEST,
@@ -70,7 +70,7 @@ describe('Adversarial Challenge 1: Multi-Target Tie-Breaking & Threshold Behavio
       visibleText: '',
     });
     expect(row1.action).toBe('CLICK');
-    expect(row1.mark).toBe(21);
+    expect(row1.mark).toBe(41);
 
     const green = await resolveLine({
       puzzle: CASE_001_PUZZLE,
@@ -80,11 +80,11 @@ describe('Adversarial Challenge 1: Multi-Target Tie-Breaking & Threshold Behavio
         previousPageId: 'MV-01',
         fields: { ...CASE_001_INITIAL_MICRO_STATE },
       },
-      instruction: 'click green 13870',
+      instruction: 'click green 13870 in fourth row',
       visibleText: '',
     });
     expect(green.action).toBe('CLICK');
-    expect(green.mark).toBe(25);
+    expect(green.mark).toBe(52);
   });
 });
 

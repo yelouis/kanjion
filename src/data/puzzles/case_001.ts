@@ -58,7 +58,27 @@ function inferGridRef(el: ElementDef): GridCoordinate {
     case 24:
       return 'C3';
     case 25:
+    case 49:
+    case 52:
+    case 55:
       return 'D3';
+    case 41:
+    case 44:
+      return 'B2';
+    case 42:
+    case 45:
+      return 'C2';
+    case 43:
+      return 'D2';
+    case 47:
+    case 50:
+    case 53:
+      return 'B3';
+    case 48:
+    case 51:
+      return 'C3';
+    case 56:
+      return 'D1';
     case 27:
       return 'C3';
     case 28:
@@ -102,7 +122,13 @@ function toSoMElement(el: ElementDef): SoMElement {
       glyph: el.visual?.glyphs?.[0],
       description: el.label,
     },
-    isTarget: el.mark === 1 || el.mark === 17 || el.mark === 25 || el.mark === 27 || el.mark === 30,
+    isTarget:
+      el.mark === 1 ||
+      el.mark === 17 ||
+      el.mark === 25 ||
+      el.mark === 52 ||
+      el.mark === 27 ||
+      el.mark === 30,
     isTrap: el.mark === 11 || el.mark === 12 || el.mark === 28,
     actionType,
   };
