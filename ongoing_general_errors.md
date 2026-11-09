@@ -169,7 +169,6 @@ Your selection: A
 | ID | Severity | Finding | Where | Fixed by |
 |---|---|---|---|---|
 | F-21 | High | Lazy prompts reach the maximum score. `green` → `name tanaka` → `sale` → `draw a dragon` → `blue` scores 100% × 1.2 = 120, and 15 of 28 one-to-six-word prompts reproduce the replay step. Each target is the only element on its page with its obvious feature: one green card, one text box, one green seat, one blue button. | `src/data/puzzles/case_001/puzzle.ts:70-73`, `:208`, `:310-313`, `:399-402` | Items 1, 3–6 |
-| F-24 | Medium | The fallback scoring can't reward precise wording or handle real-site layouts:<br>• aliases score +40 at most once;<br>• position words score +20 at most once;<br>• rows stop at 2 and are hard-coded to Case #001 train names;<br>• banners are special-cased by key;<br>• there is no `orange` colour. | `src/engine/agent/fallback.ts:94-113`, `:170-216`, `:172-173`, `:224`; `src/engine/agent/dictionaries.ts` | Items 1, 3 |
 | F-25 | Medium | The cloud tier returns a single mark and turns CONFUSED into NOOP, so it can't follow the intern's rules. | `src/engine/agent/cloud_tier.ts:14-25`, `:271`, `:431-450` | Item 7 |
 | F-26 | Low | The share card and report show results, not the struggle. | `src/engine/scoring.ts:175-179`; `src/components/ExhibitsPanel.tsx` | Item 8 |
 | F-27 | Info | The live site still serves the pre-fix bundle `assets/index-DWnC1R4E.js` (checked 2026-11-08), so players still see the old giveaways. | — | OA-5 (owner) |
@@ -182,6 +181,7 @@ Reproduce F-21 and F-22 with `npx tsx scripts/difficulty_probe.mts`. Verify the 
 _(none yet — implementors add entries here as options with a `Your selection:` line)_
 
 ## Resolved
+- F-24 — resolved by items 1 and 3 (added multi-alias scoring up to +70, multi-position scoring up to +40, generic ordinal/numeric rows and columns, role-based banner/tab/link scoring, `orange` colour synonyms, and realistic MV-01 service tabs, campaign banner, and livery-coloured route cards)
 - F-22 — resolved by item 2 (changed Case #001 replay step 4 and Exhibit D to require `SHAPE:cat` (`Signature: 🐱 Cat`), and turned unknown drawing subjects into `ATTEMPT:<word>` "worm with ambition" strokes that leave Exhibit D MISSED)
 - F-23 — resolved by item 1 (added distraction clicks for no-clue, meta-prompt, and mark-ID instructions, bare-word typing into the first empty input, and exact `{n}` count in reading-order tie thoughts)
 - F-1 — resolved by item 3 (deleted hidden shortcut #16, gated Exhibit B on `passengerName === 'TANAKA'` and Exhibit D on non-empty `signatureStroke`, removed `CLEAN` and `signatureSigned`, and added BFS solvability proof that minimum steps to 100% = 5)

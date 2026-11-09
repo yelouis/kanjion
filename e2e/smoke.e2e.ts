@@ -4,7 +4,7 @@ test('smoke: open newspaper cover, dispatch 2 lines, reload, and verify LINE 03 
   await page.goto('/');
   await page.getByRole('button', { name: /OPEN TODAY'S NEWSPAPER/i }).click();
   const input = page.locator('#telegram-input');
-  await input.fill('click the top-left green box');
+  await input.fill('Click the blue card on the right');
   await input.press('Enter');
 
   await expect(page.locator('#telegram-ledger')).toContainText('LINE 01:');
@@ -46,7 +46,7 @@ test('phone zoom: 2x stage zoom without horizontal page scroll and cursor center
   expect(docScrollWidth).toBe(375);
 
   const input = page.locator('#telegram-input');
-  await input.fill('click the top-left green box');
+  await input.fill('Click the blue card on the right');
   await input.press('Enter');
 
   await expect(page.locator('#telegram-ledger')).toContainText('LINE 01:');

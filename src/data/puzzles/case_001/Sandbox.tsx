@@ -223,136 +223,256 @@ export const Sandbox: React.FC<SandboxProps> = ({
             PAGE 01: ROUTE SELECTION PORTAL (MV-01)
            ================================================================= */}
         {pageId === 'MV-01' && (
-          <div className="p-4 flex-1 flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="border-b-2 border-emerald-800 pb-2 flex items-center justify-between">
+          <div className="px-4 py-2.5 flex-1 flex flex-col justify-between">
+            <div className="space-y-2">
+              <div className="border-b-2 border-emerald-800 pb-1.5 flex items-center justify-between">
                 <div>
-                  <h2 data-el="page_title" className="text-lg font-black text-emerald-950">
+                  <h2 data-el="page_title" className="text-base font-black text-emerald-950">
                     STEP 1: ご利用になる新幹線路線を選択してください
                   </h2>
-                  <p className="text-xs text-neutral-600 font-medium">
+                  <p className="text-[11px] text-neutral-600 font-medium">
                     ご希望の方面カードをクリックすると、乗車日時・搭乗者名入力ページへ進みます。
                   </p>
                 </div>
-                <span className="px-2.5 py-1 bg-emerald-100 text-emerald-900 font-black text-xs rounded border border-emerald-400">
+                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-900 font-black text-xs rounded border border-emerald-400">
                   全12ページ 路線案内トップ
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-1">
-                {/* TARGET CARD #1: TOKAIDO-SANYO SHINKANSEN */}
+              {/* Service Tabs Row */}
+              <div className="grid grid-cols-4 gap-2 border-b border-neutral-300 bg-neutral-100 px-2 pt-1.5 rounded-t">
+                <button
+                  id="tab-shinkansen"
+                  data-el="tab_shinkansen"
+                  type="button"
+                  onClick={() => handleClick(5)}
+                  className="py-1.5 px-3 bg-white text-emerald-950 font-black text-xs border-b-4 border-emerald-700 rounded-t shadow-sm"
+                >
+                  新幹線・特急
+                </button>
+                <button
+                  id="tab-local"
+                  data-el="tab_local"
+                  type="button"
+                  onClick={() => handleClick(6)}
+                  className="py-1.5 px-3 bg-neutral-200/80 hover:bg-white text-neutral-700 font-bold text-xs border-b-4 border-transparent rounded-t"
+                >
+                  在来線
+                </button>
+                <button
+                  id="tab-hotel"
+                  data-el="tab_hotel"
+                  type="button"
+                  onClick={() => handleClick(7)}
+                  className="py-1.5 px-3 bg-neutral-200/80 hover:bg-white text-neutral-700 font-bold text-xs border-b-4 border-transparent rounded-t"
+                >
+                  ホテル・宿泊
+                </button>
+                <button
+                  id="tab-rental"
+                  data-el="tab_rental"
+                  type="button"
+                  onClick={() => handleClick(8)}
+                  className="py-1.5 px-3 bg-neutral-200/80 hover:bg-white text-neutral-700 font-bold text-xs border-b-4 border-transparent rounded-t"
+                >
+                  レンタカー
+                </button>
+              </div>
+
+              {/* Full-Width Campaign Banner (~70px tall) */}
+              <button
+                id="btn-campaign-banner"
+                data-el="campaign_banner"
+                type="button"
+                onClick={() => handleClick(9)}
+                style={{ backgroundColor: '#2E9E4F' }}
+                className="w-full h-[68px] px-4 py-2 rounded-md border-2 border-emerald-900 text-white shadow flex items-center justify-between text-left cursor-pointer hover:brightness-105 transition-all"
+              >
+                <div>
+                  <div className="text-sm font-black tracking-wide">
+                    【期間限定】新幹線 早割28 キャンペーン実施中！ ▶
+                  </div>
+                  <div className="text-[11px] font-bold text-emerald-100 mt-0.5">
+                    乗車28日前までのネット予約で指定席・グリーン車が特別割引 • 詳細はこちら
+                  </div>
+                </div>
+                <span className="px-3 py-1 bg-white text-emerald-900 font-black text-xs rounded shadow-sm shrink-0">
+                  特設ページ ▶
+                </span>
+              </button>
+
+              {/* 2x2 Route Card Grid */}
+              <div className="grid grid-cols-2 gap-3 pt-0.5">
+                {/* TOP-LEFT CARD (Mark 3): HOKURIKU-JOETSU SHINKANSEN (MV-11) */}
+                <div
+                  id="btn-route-hokuriku"
+                  data-el="route_hokuriku"
+                  onClick={() => handleClick(3)}
+                  style={{ borderColor: '#3FA9F5', backgroundColor: '#F0F8FF' }}
+                  className="p-3 rounded-lg border-2 cursor-pointer transition-all flex flex-col justify-between min-h-[148px] shadow-sm hover:brightness-95"
+                >
+                  <div className="space-y-1">
+                    <div
+                      style={{ backgroundColor: '#B87333' }}
+                      className="h-1.5 w-full rounded-full mb-1"
+                    />
+                    <div className="flex items-center justify-between">
+                      <span
+                        style={{ backgroundColor: '#3FA9F5' }}
+                        className="px-2 py-0.5 text-white font-black text-xs rounded"
+                      >
+                        路線 01 • 北陸・上越新幹線
+                      </span>
+                      <span className="font-mono-clean font-bold text-[11px] text-sky-950 bg-sky-100 px-2 py-0.5 rounded border border-sky-300">
+                        かがやき・はくたか・とき
+                      </span>
+                    </div>
+                    <div className="text-base font-black text-neutral-900 pt-0.5">
+                      東京 ⇒ 長野・金沢・敦賀 / 新潟
+                    </div>
+                    <p className="text-[11px] text-neutral-700 font-medium">
+                      かがやき・はくたか・とき 空席照会ページ
+                    </p>
+                  </div>
+                  <div className="mt-2 pt-1.5 border-t border-sky-200 flex items-center justify-between font-bold text-xs text-sky-950">
+                    <span>北陸・上越方面を選択</span>
+                    <span
+                      style={{ backgroundColor: '#3FA9F5' }}
+                      className="px-2 py-0.5 text-white rounded text-xs font-black"
+                    >
+                      空席照会 ▶
+                    </span>
+                  </div>
+                </div>
+
+                {/* TOP-RIGHT TARGET CARD (Mark 1): TOKAIDO-SANYO SHINKANSEN (MV-02) */}
                 <div
                   id="btn-route-tokaido"
                   data-el="route_tokaido"
                   onClick={() => handleClick(1)}
-                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all flex flex-col justify-between min-h-[170px] ${
+                  style={{ borderColor: '#1E50A2', backgroundColor: '#FFFFFF' }}
+                  className={`p-3 rounded-lg border-2 cursor-pointer transition-all flex flex-col justify-between min-h-[148px] shadow-sm hover:bg-blue-50/40 ${
                     fields.selectedRoute === 'tokyo_osaka'
-                      ? 'bg-emerald-800 text-white border-amber-400 ring-4 ring-amber-300 shadow-lg scale-[1.01]'
-                      : 'bg-emerald-50 hover:bg-emerald-100 border-emerald-700 text-neutral-900 shadow-sm'
+                      ? 'ring-4 ring-amber-300 shadow-lg scale-[1.01]'
+                      : ''
                   }`}
                 >
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
+                    <div
+                      style={{ backgroundColor: '#1E50A2' }}
+                      className="h-1.5 w-full rounded-full mb-1"
+                    />
                     <div className="flex items-center justify-between">
-                      <span className="px-2 py-0.5 bg-emerald-700 text-white font-black text-xs rounded">
-                        路線 01 • 東海道・山陽新幹線
+                      <span
+                        style={{ backgroundColor: '#1E50A2' }}
+                        className="px-2 py-0.5 text-white font-black text-xs rounded"
+                      >
+                        路線 02 • 東海道・山陽新幹線
                       </span>
-                      <span className="font-mono-clean font-bold text-xs text-emerald-800 bg-amber-200 px-2 py-0.5 rounded">
+                      <span className="font-mono-clean font-bold text-[11px] text-blue-950 bg-blue-100 px-2 py-0.5 rounded border border-blue-300">
                         のぞみ・ひかり・こだま
                       </span>
                     </div>
-                    <div className="text-xl font-black tracking-tight pt-1">
+                    <div className="text-base font-black text-neutral-900 tracking-tight pt-0.5">
                       東京・品川 ⇒ 名古屋・京都・新大阪
                     </div>
-                    <p className="text-xs opacity-85 font-medium">
+                    <p className="text-[11px] text-neutral-700 font-medium">
                       東京駅から新大阪駅方面の指定席・グリーン車特割（トクだ値）空席照会はこちら
                     </p>
                   </div>
-                  <div className="mt-3 pt-2 border-t border-emerald-300/70 flex items-center justify-between font-black text-sm">
+                  <div className="mt-2 pt-1.5 border-t border-blue-200 flex items-center justify-between font-black text-xs text-blue-950">
                     <span>
                       {fields.selectedRoute === 'tokyo_osaka'
                         ? '✓ 選択済 • 次ページへ移動中...'
                         : 'この路線を選択して次へ進む'}
                     </span>
-                    <span className="px-2.5 py-1 bg-emerald-700 text-white rounded text-xs">
+                    <span
+                      style={{ backgroundColor: '#1E50A2' }}
+                      className="px-2 py-0.5 text-white rounded text-xs"
+                    >
                       空席照会 ▶
                     </span>
                   </div>
                 </div>
 
-                {/* DECOY CARD #2: TOHOKU-HOKKAIDO SHINKANSEN (MV-10) */}
+                {/* BOTTOM-LEFT CARD (Mark 2): TOHOKU-HOKKAIDO SHINKANSEN (MV-10) */}
                 <div
                   id="btn-route-tohoku"
                   data-el="route_tohoku"
                   onClick={() => handleClick(2)}
-                  className="p-4 rounded-lg border-2 border-neutral-300 bg-neutral-50 hover:bg-neutral-100 cursor-pointer transition-all flex flex-col justify-between min-h-[170px]"
+                  style={{ borderColor: '#00A040', backgroundColor: '#F0FDF4' }}
+                  className="p-3 rounded-lg border-2 cursor-pointer transition-all flex flex-col justify-between min-h-[148px] shadow-sm hover:brightness-95"
                 >
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
+                    <div
+                      style={{ backgroundColor: '#00A040' }}
+                      className="h-1.5 w-full rounded-full mb-1"
+                    />
                     <div className="flex items-center justify-between">
-                      <span className="px-2 py-0.5 bg-neutral-700 text-white font-black text-xs rounded">
-                        路線 02 • 東北・北海道新幹線
+                      <span
+                        style={{ backgroundColor: '#00A040' }}
+                        className="px-2 py-0.5 text-white font-black text-xs rounded"
+                      >
+                        路線 03 • 東北・北海道新幹線
                       </span>
-                      <span className="font-mono-clean font-bold text-xs text-neutral-600 bg-neutral-200 px-2 py-0.5 rounded">
+                      <span className="font-mono-clean font-bold text-[11px] text-emerald-950 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300">
                         はやぶさ・やまびこ
                       </span>
                     </div>
-                    <div className="text-xl font-black text-neutral-800 tracking-tight pt-1">
+                    <div className="text-base font-black text-neutral-900 tracking-tight pt-0.5">
                       東京・上野 ⇒ 仙台・盛岡・新青森・新函館北斗
                     </div>
-                    <p className="text-xs text-neutral-600 font-medium">
+                    <p className="text-[11px] text-neutral-700 font-medium">
                       東北・北海道方面の指定席・グランクラス予約ページへ移動します
                     </p>
                   </div>
-                  <div className="mt-3 pt-2 border-t border-neutral-300 flex items-center justify-between font-bold text-sm text-neutral-700">
+                  <div className="mt-2 pt-1.5 border-t border-emerald-200 flex items-center justify-between font-bold text-xs text-emerald-950">
                     <span>東北・北海道方面を選択</span>
-                    <span className="px-2.5 py-1 bg-neutral-300 text-neutral-800 rounded text-xs">
+                    <span
+                      style={{ backgroundColor: '#00A040' }}
+                      className="px-2 py-0.5 text-white rounded text-xs font-black"
+                    >
                       空席照会 ▶
                     </span>
                   </div>
                 </div>
 
-                {/* DECOY CARD #3: HOKURIKU-JOETSU SHINKANSEN (MV-11) */}
-                <div
-                  id="btn-route-hokuriku"
-                  data-el="route_hokuriku"
-                  onClick={() => handleClick(3)}
-                  className="p-4 rounded-lg border-2 border-neutral-300 bg-neutral-50 hover:bg-neutral-100 cursor-pointer transition-all flex flex-col justify-between min-h-[150px]"
-                >
-                  <div className="space-y-1">
-                    <span className="px-2 py-0.5 bg-blue-900 text-white font-black text-xs rounded">
-                      路線 03 • 北陸・上越新幹線
-                    </span>
-                    <div className="text-lg font-black text-neutral-800 pt-1">
-                      東京 ⇒ 長野・金沢・敦賀 / 新潟
-                    </div>
-                    <p className="text-xs text-neutral-600">
-                      かがやき・はくたか・とき 空席照会ページ
-                    </p>
-                  </div>
-                  <div className="text-right text-xs font-bold text-neutral-600">
-                    空席照会 ▶
-                  </div>
-                </div>
-
-                {/* DECOY CARD #4: KANJION POINT & IC CARD PORTAL (MV-12) */}
+                {/* BOTTOM-RIGHT CARD (Mark 4): KANJION POINT & IC CARD PORTAL (MV-12) */}
                 <div
                   id="btn-route-points"
                   data-el="route_points"
                   onClick={() => handleClick(4)}
-                  className="p-4 rounded-lg border-2 border-neutral-300 bg-neutral-50 hover:bg-neutral-100 cursor-pointer transition-all flex flex-col justify-between min-h-[150px]"
+                  style={{ borderColor: '#F08300', backgroundColor: '#FFF7ED' }}
+                  className="p-3 rounded-lg border-2 cursor-pointer transition-all flex flex-col justify-between min-h-[148px] shadow-sm hover:brightness-95"
                 >
                   <div className="space-y-1">
-                    <span className="px-2 py-0.5 bg-amber-700 text-white font-black text-xs rounded">
-                      メニュー 04 • かんじおんポイント・ICカード連携
-                    </span>
-                    <div className="text-lg font-black text-neutral-800 pt-1">
+                    <div
+                      style={{ backgroundColor: '#F08300' }}
+                      className="h-1.5 w-full rounded-full mb-1"
+                    />
+                    <div className="flex items-center justify-between">
+                      <span
+                        style={{ backgroundColor: '#F08300' }}
+                        className="px-2 py-0.5 text-white font-black text-xs rounded"
+                      >
+                        メニュー 04 • かんじおんポイント・ICカード連携
+                      </span>
+                    </div>
+                    <div className="text-base font-black text-neutral-900 pt-0.5">
                       特典チケット交換・交通系ICカード登録
                     </div>
-                    <p className="text-xs text-neutral-600">
+                    <p className="text-[11px] text-neutral-700 font-medium">
                       ポイント交換・ICカード設定ページ
                     </p>
                   </div>
-                  <div className="text-right text-xs font-bold text-neutral-600">
-                    ポイント ▶
+                  <div className="mt-2 pt-1.5 border-t border-orange-200 flex items-center justify-between font-bold text-xs text-orange-950">
+                    <span>ポイント・ICメニュー</span>
+                    <span
+                      style={{ backgroundColor: '#F08300' }}
+                      className="px-2 py-0.5 text-white rounded text-xs font-black"
+                    >
+                      ポイント ▶
+                    </span>
                   </div>
                 </div>
               </div>

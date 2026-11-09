@@ -81,7 +81,7 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       // 2. Line 01 (MV-01): "Click the top-left green box" -> MV-02
       // -----------------------------------------------------------------------
       const input1 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input1, { target: { value: 'Click the top-left green box' } });
+      fireEvent.change(input1, { target: { value: 'Click the blue card on the right' } });
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 01/i }));
       });
@@ -295,7 +295,7 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       );
 
       const prompts = [
-        'Click the top-left green box',
+        'Click the blue card on the right',
         'Type TANAKA in the passenger name box',
         'Wait for the sale glow, then click the green ¥13,870',
         'Draw a cat in the dashed box',
@@ -356,7 +356,7 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       );
       const input = container.querySelector('#telegram-input') as HTMLInputElement;
 
-      fireEvent.change(input, { target: { value: 'Click the top-left green box' } });
+      fireEvent.change(input, { target: { value: 'Click the blue card on the right' } });
       await act(async () => {
         fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
       });

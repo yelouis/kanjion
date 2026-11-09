@@ -463,7 +463,7 @@ describe('10. App Top-Level Integration Gameplay Loop', () => {
     expect(input).toHaveValue('');
 
     // Type and Dispatch Line 01 on MV-01 (selects Tokyo -> Shin-Osaka route + 14:30 departure)
-    fireEvent.change(input, { target: { value: 'Click the top-left green box' } });
+    fireEvent.change(input, { target: { value: 'Click the blue card on the right' } });
     const dispatchBtn = screen.getByRole('button', { name: /DISPATCH LINE 01/i });
     await act(async () => {
       fireEvent.click(dispatchBtn);

@@ -76,7 +76,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     });
 
     const prompts = [
-      'click the top left green box',
+      'click the blue card on the right',
       'type TANAKA in the passenger name box',
       'wait for sale glow then click green button in second row',
       'draw a cat in the signature box',
@@ -108,7 +108,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     let state = createBrowserStartState();
 
     // Detour to Tohoku (#2 -> MV-10)
-    const a1 = await resolveTestAction(state.pageId, state.fields, 'click second card on top right');
+    const a1 = await resolveTestAction(state.pageId, state.fields, 'click third card at bottom left');
     state = stepPuzzle(state, a1).nextState;
     expect(state.pageId).toBe('MV-10');
 
@@ -118,7 +118,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     expect(state.pageId).toBe('MV-01');
 
     // Detour to Hokuriku (#3 -> MV-11)
-    const a3 = await resolveTestAction(state.pageId, state.fields, 'click third card at bottom left');
+    const a3 = await resolveTestAction(state.pageId, state.fields, 'click first card at top left');
     state = stepPuzzle(state, a3).nextState;
     expect(state.pageId).toBe('MV-11');
 
@@ -235,7 +235,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     const sixPrompts = [
       'click second card on top right',
       'click back button',
-      'click top left green card',
+      'click the dark blue card',
       'type TANAKA',
       'wait for flash sale and click green 13,870',
       'draw a cat in box',
@@ -262,7 +262,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     });
 
     const userPrompts = [
-      'Click on the green box with the 01 in it',
+      'Click on the dark blue card with 02 in it',
       'Type TANAKA in the passenger name box',
       'Wait for flash sale and click on the green 13870 box',
       'Draw a cat in the dashed box',

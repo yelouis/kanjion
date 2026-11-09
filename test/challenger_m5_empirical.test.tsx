@@ -199,7 +199,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 01 / 06');
 
       const steps = [
-        'Click the top-left green box',
+        'Click the blue card on the right',
         'Type TANAKA in the passenger name box',
         'Wait for the sale glow, then click the green ¥13,870',
         'Draw a cat in the dashed box',
@@ -373,7 +373,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 01 / 06');
 
       // 5. Player can continue typing and dispatching in practice mode
-      fireEvent.change(restoredInput, { target: { value: 'Click the top-left green box' } });
+      fireEvent.change(restoredInput, { target: { value: 'Click the blue card on the right' } });
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 01/i }));
       });
@@ -398,7 +398,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       );
 
       const prompts = [
-        'Click the top-left green box',
+        'Click the blue card on the right',
         'Type TANAKA in the passenger name box',
         'Wait for the sale glow, then click the green ¥13,870',
         'Draw a cat in the dashed box',
