@@ -25,7 +25,6 @@ import {
 } from '../src/data/puzzles/case_001';
 import { initialPuzzleState } from '../src/engine/puzzle_engine';
 import { createInitialGameState, gameReducer } from '../src/engine/game_reducer';
-import { NOOP_NO_SIGNAL_THOUGHT } from '../src/utils/text_normalizer';
 
 const MOCK_CLOUD_ENV = {
   VITE_FIREBASE_API_KEY: 'test-api-key',
@@ -51,7 +50,7 @@ describe('Item 11 (§13): Free cloud tier via Firebase AI Logic', () => {
           text: () =>
             JSON.stringify({
               action: 'CLICK',
-              mark: 52,
+              candidates: [52],
               text: null,
               thought: 'Ooh, a clover seat! Clicking that green car option right away.',
             }),
@@ -82,14 +81,14 @@ describe('Item 11 (§13): Free cloud tier via Firebase AI Logic', () => {
     expect(decision.cloudFailed).toBeUndefined();
   });
 
-  it('★ 2. A mark that is not on the page -> NOOP', async () => {
+  it('★ 2. Candidates not on the page are dropped; if that leaves none -> distraction', async () => {
     const fakeModel: CloudModel = {
       generateContent: vi.fn().mockResolvedValue({
         response: {
           text: () =>
             JSON.stringify({
               action: 'CLICK',
-              mark: 99,
+              candidates: [99],
               text: null,
               thought: 'Clicking mark 99!',
             }),
@@ -112,9 +111,134 @@ describe('Item 11 (§13): Free cloud tier via Firebase AI Logic', () => {
       imageFetcher: async () => 'base64png',
     });
 
-    expect(decision.action).toBe('NOOP');
-    expect(decision.mark).toBeNull();
-    expect(decision.thought).toBe(NOOP_NO_SIGNAL_THOUGHT);
+    expect(decision.action).toBe('CLICK');
+    expect(decision.mark).toBe(56); // upgrade_banner distraction on MV-03
+    expect(decision.thought).toBe(
+      '💭 No idea what "click the button with th" means, but this flashy thing looked important, so I clicked it.'
+    );
+  });
+
+  it('★ 2b. candidates: [52, 43] on MV-03 -> picks 43 (seat_r1_green, first in reading order), and the thought contains "I found 2"', async () => {
+    const fakeModel: CloudModel = {
+      generateContent: vi.fn().mockResolvedValue({
+        response: {
+          text: () =>
+            JSON.stringify({
+              action: 'CLICK',
+              candidates: [52, 43],
+              text: null,
+              thought: 'Two green car seats!',
+            }),
+        },
+      }),
+    };
+
+    const state = {
+      ...initialPuzzleState(CASE_001_PUZZLE),
+      pageId: 'MV-03',
+    };
+
+    const decision = await resolveLine({
+      puzzle: CASE_001_PUZZLE,
+      manifest: CASE_001_GENERATED_MANIFEST,
+      state,
+      instruction: 'click the green button',
+      cloudModel: fakeModel,
+      cloudEnv: MOCK_CLOUD_ENV,
+      imageFetcher: async () => 'base64png',
+    });
+
+    expect(decision.tier).toBe('cloud');
+    expect(decision.action).toBe('CLICK');
+    expect(decision.mark).toBe(43);
+    expect(decision.thought).toContain('I found 2');
+  });
+
+  it('★ 2c. candidates: [] -> distraction, and CONFUSED -> distraction', async () => {
+    const emptyModel: CloudModel = {
+      generateContent: vi.fn().mockResolvedValue({
+        response: {
+          text: () =>
+            JSON.stringify({
+              action: 'CLICK',
+              candidates: [],
+              text: null,
+              thought: 'Nothing matches.',
+            }),
+        },
+      }),
+    };
+    const confusedModel: CloudModel = {
+      generateContent: vi.fn().mockResolvedValue({
+        response: {
+          text: () =>
+            JSON.stringify({
+              action: 'CONFUSED',
+              candidates: [],
+              text: null,
+              thought: 'I am confused.',
+            }),
+        },
+      }),
+    };
+
+    const state = {
+      ...initialPuzzleState(CASE_001_PUZZLE),
+      pageId: 'MV-01',
+    };
+
+    const decEmpty = await resolveLine({
+      puzzle: CASE_001_PUZZLE,
+      manifest: CASE_001_GENERATED_MANIFEST,
+      state,
+      instruction: 'do the thing',
+      cloudModel: emptyModel,
+      cloudEnv: MOCK_CLOUD_ENV,
+      imageFetcher: async () => 'base64png',
+    });
+    expect(decEmpty.action).toBe('CLICK');
+    expect(decEmpty.mark).toBe(9); // campaign_banner on MV-01
+    expect(decEmpty.thought).toContain('No idea what "do the thing" means');
+
+    const decConfused = await resolveLine({
+      puzzle: CASE_001_PUZZLE,
+      manifest: CASE_001_GENERATED_MANIFEST,
+      state,
+      instruction: 'do the thing',
+      cloudModel: confusedModel,
+      cloudEnv: MOCK_CLOUD_ENV,
+      imageFetcher: async () => 'base64png',
+    });
+    expect(decConfused.action).toBe('CLICK');
+    expect(decConfused.mark).toBe(9);
+    expect(decConfused.thought).toContain('No idea what "do the thing" means');
+  });
+
+  it('★ 2d. A verbless "tanaka" on MV-02 never calls the model (the bare-word rule answers first)', async () => {
+    const generateSpy = vi.fn();
+    const fakeModel: CloudModel = {
+      generateContent: generateSpy,
+    };
+
+    const state = {
+      ...initialPuzzleState(CASE_001_PUZZLE),
+      pageId: 'MV-02',
+    };
+
+    const decision = await resolveLine({
+      puzzle: CASE_001_PUZZLE,
+      manifest: CASE_001_GENERATED_MANIFEST,
+      state,
+      instruction: 'tanaka',
+      cloudModel: fakeModel,
+      cloudEnv: MOCK_CLOUD_ENV,
+      imageFetcher: async () => 'base64png',
+    });
+
+    expect(generateSpy).not.toHaveBeenCalled();
+    expect(decision.action).toBe('TYPE');
+    expect(decision.mark).toBe(31); // name_kanji_sei (first empty box)
+    expect(decision.text).toBe('TANAKA');
   });
 
   it('★ 3. TYPE text "YAMADA" for the instruction "type the name" -> "NAME" (hallucination blocked)', async () => {
@@ -124,7 +248,7 @@ describe('Item 11 (§13): Free cloud tier via Firebase AI Logic', () => {
           text: () =>
             JSON.stringify({
               action: 'TYPE',
-              mark: 17,
+              candidates: [17],
               text: 'YAMADA',
               thought: 'Typing the passenger name into the box!',
             }),
@@ -278,7 +402,7 @@ describe('Item 11 (§13): Free cloud tier via Firebase AI Logic', () => {
     expect(decision.cloudFailed).toBeUndefined();
   });
 
-  it('★ 7. Goal blindness: serialized request for every Case #001 page, with an empty name, contains none of TANAKA, exhibit, answer, replay, decoy, trap, target, weight, pinned', () => {
+  it('★ 7. Goal blindness: serialized request for every Case #001 page, with an empty name, contains none of TANAKA, exhibit, answer, replay, decoy, trap, target, weight, pinned, distraction', () => {
     const forbiddenWords = [
       'tanaka',
       'exhibit',
@@ -289,6 +413,7 @@ describe('Item 11 (§13): Free cloud tier via Firebase AI Logic', () => {
       'target',
       'weight',
       'pinned',
+      'distraction',
     ];
 
     for (const page of CASE_001_PUZZLE.pages) {
@@ -321,12 +446,13 @@ describe('Item 11 (§13): Free cloud tier via Firebase AI Logic', () => {
     const decision = validateCloudResponse(
       {
         action: 'DRAW',
-        mark: 27,
+        candidates: [27],
         text: 'smile',
         thought: 'Drawing a smile in mark #27 on MV-04 right now!',
       },
       page,
-      'draw a smile in the signature box'
+      'draw a smile in the signature box',
+      CASE_001_GENERATED_MANIFEST
     );
 
     expect(decision.action).toBe('DRAW');

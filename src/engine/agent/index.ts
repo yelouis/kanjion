@@ -138,6 +138,18 @@ export async function resolveLine(ctx: ResolveLineContext): Promise<AgentDecisio
     }
   }
 
+  // 3b. Bare-word rule (deterministic before cloud)
+  const bareDecision = fallbackModule.resolveBareWordsRule(
+    page,
+    manifest,
+    state,
+    instruction,
+    'fallback'
+  );
+  if (bareDecision) {
+    return bareDecision;
+  }
+
   // 4. Cloud — Firebase AI Logic free tier (or injected cloudResolver)
   let cloudFailed = false;
   if (ctx.cloudResolver) {

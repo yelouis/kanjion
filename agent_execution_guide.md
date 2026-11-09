@@ -76,8 +76,8 @@ You are an implementor agent with no memory of this project. This file is your s
 
 | Gate | Command | Result on 2026-11-08 |
 |---|---|---|
-| Unit/component | `npm test` | **421 passed / 27 files** (≈ 22 s) |
-| Typecheck + build | `npm run build` | Clean. `dist/assets/index-*.js` 306.39 kB, **91.86 kB gzip**. |
+| Unit/component | `npm test` | **424 passed / 27 files** (≈ 22 s) |
+| Typecheck + build | `npm run build` | Clean. `dist/assets/index-*.js` 307.07 kB, **92.17 kB gzip**. |
 | Compiler | `npx tsx tools/compile_puzzle.ts --case 001 --validate` | Exit 0. |
 | E2E | `npm run test:e2e` | **2 passed** (`desktop-chromium`, `mobile-chromium`). |
 | Lint | — | No lint script exists. |
