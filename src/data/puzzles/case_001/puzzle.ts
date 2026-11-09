@@ -3,7 +3,7 @@ import type { ElementDef, PuzzleData } from '../../../types/puzzle_data';
 const NAV_NEWS_ELEMENT: ElementDef = {
   mark: 11,
   key: 'nav_news',
-  role: 'button',
+  role: 'link',
   label: 'お知らせ',
   aliases: ['news', 'notice', 'notices', 'announcements', 'お知らせ'],
   thought: '💭 Checking the announcements button in the top header!',
@@ -15,7 +15,7 @@ const NAV_NEWS_ELEMENT: ElementDef = {
 const PROMO_INSURANCE_ELEMENT: ElementDef = {
   mark: 12,
   key: 'promo_insurance',
-  role: 'button',
+  role: 'banner',
   label: '今すぐ申し込む',
   visual: { color: 'red' },
   aliases: ['insurance', 'banner', 'ad', 'advert', 'promo', 'red button', '2400', '2,400', '今すぐ申し込む'],
@@ -61,6 +61,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
       id: 'MV-01',
       slug: 'route-select',
       title: 'STEP 1: ご利用になる新幹線路線を選択してください',
+      distractionKey: 'nav_news',
       elements: [
         NAV_NEWS_ELEMENT,
         PROMO_INSURANCE_ELEMENT,
@@ -184,6 +185,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
       id: 'MV-02',
       slug: 'passenger',
       title: 'STEP 2: 乗車条件・搭乗者名（ローマ字）の入力',
+      distractionKey: 'nav_news',
       elements: [
         NAV_NEWS_ELEMENT,
         PROMO_INSURANCE_ELEMENT,
@@ -222,6 +224,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
       id: 'MV-03',
       slug: 'seats',
       title: 'STEP 3: 列車・座席指定（タイムセール特割 空席照会）',
+      distractionKey: 'nav_news',
       elements: [
         NAV_NEWS_ELEMENT,
         PROMO_INSURANCE_ELEMENT,
@@ -243,7 +246,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
           role: 'button',
           label: '◯ ¥13,870',
           visual: { color: 'white', glyphs: ['◯'], row: 1, column: 1 },
-          aliases: ['hikari', '515', 'unreserved', 'free seat', 'non-reserved', 'ひかり', '自由席'],
+          aliases: ['hikari', '515', '14:12', 'unreserved', 'free seat', 'non-reserved', 'ひかり', '自由席'],
           thought: '💭 Picking the Hikari 515 unreserved seat in the first row!',
           effects: {
             CLICK: [
@@ -260,7 +263,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
           role: 'button',
           label: '△ ¥14,520',
           visual: { glyphs: ['△'], row: 1, column: 2 },
-          aliases: ['triangle', 'reserved', '14520', '14,520'],
+          aliases: ['hikari', '515', '14:12', 'triangle', 'reserved', '14520', '14,520'],
           thought: '💭 Clicking the △ ¥14,520 Hikari 515 reserved seat in row 1!',
           effects: {
             CLICK: [
@@ -277,7 +280,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
           role: 'button',
           label: '◯ ¥13,870',
           visual: { color: 'white', glyphs: ['◯'], row: 2, column: 1 },
-          aliases: ['nozomi', 'unreserved', 'free seat', 'のぞみ'],
+          aliases: ['nozomi', '24', '14:30', 'unreserved', 'free seat', 'のぞみ'],
           thought: '💭 Clicking the Nozomi 24 unreserved seat in the second row!',
           effects: {
             CLICK: [
@@ -294,7 +297,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
           role: 'button',
           label: '◯ ¥14,720',
           visual: { glyphs: ['◯'], row: 2, column: 2 },
-          aliases: ['reserved', '14720', '14,720'],
+          aliases: ['nozomi', '24', '14:30', 'reserved', '14720', '14,720'],
           thought: '💭 Clicking the ◯ ¥14,720 Nozomi 24 reserved seat in row 2!',
           effects: {
             CLICK: [
@@ -311,7 +314,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
           role: 'button',
           label: '🍀 ◯ ¥13,870 (特割)',
           visual: { color: 'green', glyphs: ['🍀'], row: 2, column: 3, timedColumn: 2 },
-          aliases: ['green car', 'first class', 'clover', 'discount', 'sale', 'special', '🍀', 'グリーン車', '特割'],
+          aliases: ['nozomi', '24', '14:30', 'green car', 'first class', 'clover', 'discount', 'sale', 'special', '🍀', 'グリーン車', '特割'],
           thought: '💭 Snagging that sweet green 🍀 ¥13,870 First-Class seat in the 2nd row!',
           effects: {
             CLICK: [
@@ -338,6 +341,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
       id: 'MV-04',
       slug: 'confirm',
       title: 'STEP 4: ご予約内容の確認・本人自署サイン',
+      distractionKey: 'nav_news',
       elements: [
         NAV_NEWS_ELEMENT,
         PROMO_INSURANCE_ELEMENT,
@@ -416,6 +420,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
       id: 'MV-05',
       slug: 'ticket',
       title: '🎉 新幹線 eチケットのご予約・発券が完了しました',
+      distractionKey: 'nav_news',
       elements: [
         NAV_NEWS_ELEMENT,
         PROMO_INSURANCE_ELEMENT,
@@ -459,6 +464,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
       id: 'MV-08',
       slug: 'news',
       title: 'お知らせ',
+      distractionKey: 'nav_news',
       elements: [
         NAV_NEWS_ELEMENT,
         PROMO_INSURANCE_ELEMENT,
@@ -480,6 +486,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
       id: 'MV-10',
       slug: 'tohoku',
       title: '東北・北海道新幹線（東京 ⇒ 仙台・新青森・新函館北斗）',
+      distractionKey: 'nav_news',
       elements: [
         NAV_NEWS_ELEMENT,
         PROMO_INSURANCE_ELEMENT,
@@ -504,6 +511,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
       id: 'MV-11',
       slug: 'hokuriku',
       title: '北陸・上越新幹線（東京 ⇒ 長野・金沢・敦賀 / 新潟）',
+      distractionKey: 'nav_news',
       elements: [
         NAV_NEWS_ELEMENT,
         PROMO_INSURANCE_ELEMENT,
@@ -528,6 +536,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
       id: 'MV-12',
       slug: 'points',
       title: 'かんじおんポイント 特典チケット交換・交通系ICカード登録',
+      distractionKey: 'nav_news',
       elements: [
         NAV_NEWS_ELEMENT,
         PROMO_INSURANCE_ELEMENT,

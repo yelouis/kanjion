@@ -165,26 +165,36 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
   // VECTOR 2: Fallback Multi-Token Scoring & Tie Boundaries
   // =========================================================================
   describe('Vector 2: Multi-Token Scoring & Tie Boundaries', () => {
-    it('returns NOOP when instruction scores below confidence threshold (30)', async () => {
+    it('clicks distraction when instruction scores below confidence threshold (30)', async () => {
+      const mv03 = CASE_001_PUZZLE.pages.find((p) => p.id === 'MV-03')!;
+      const distractionEl = mv03.elements.find((e) => e.key === mv03.distractionKey)!;
       const action = await resolveLine({
         puzzle: CASE_001_PUZZLE,
         manifest: CASE_001_GENERATED_MANIFEST,
         state: makeState('MV-03', microState),
         instruction: 'completely unrelated query',
       });
-      expect(action.action).toBe('NOOP');
-      expect(action.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
+      expect(action.action).toBe('CLICK');
+      expect(action.mark).toBe(distractionEl.mark);
+      expect(action.thought).toBe(
+        '💭 No idea what "completely unrelated que" means, but this flashy thing looked important, so I clicked it.'
+      );
     });
 
-    it('returns NOOP for ambiguous fare matches (¥13,870)', async () => {
+    it('clicks distraction for ambiguous fare matches (¥13,870)', async () => {
+      const mv03 = CASE_001_PUZZLE.pages.find((p) => p.id === 'MV-03')!;
+      const distractionEl = mv03.elements.find((e) => e.key === mv03.distractionKey)!;
       const actionFare = await resolveLine({
         puzzle: CASE_001_PUZZLE,
         manifest: CASE_001_GENERATED_MANIFEST,
         state: makeState('MV-03', microState),
         instruction: 'select ticket 13870',
       });
-      expect(actionFare.action).toBe('NOOP');
-      expect(actionFare.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
+      expect(actionFare.action).toBe('CLICK');
+      expect(actionFare.mark).toBe(distractionEl.mark);
+      expect(actionFare.thought).toBe(
+        '💭 No idea what "select ticket 13870" means, but this flashy thing looked important, so I clicked it.'
+      );
 
       const actionFareComma = await resolveLine({
         puzzle: CASE_001_PUZZLE,
@@ -192,8 +202,11 @@ describe('Milestone 2 Iteration 2: Empirical Boundary Stress Testing', () => {
         state: makeState('MV-03', microState),
         instruction: 'select ticket 13,870',
       });
-      expect(actionFareComma.action).toBe('NOOP');
-      expect(actionFareComma.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
+      expect(actionFareComma.action).toBe('CLICK');
+      expect(actionFareComma.mark).toBe(distractionEl.mark);
+      expect(actionFareComma.thought).toBe(
+        '💭 No idea what "select ticket 13,870" means, but this flashy thing looked important, so I clicked it.'
+      );
     });
 
     it('breaks ties cleanly when additional row or train disambiguation is provided', async () => {

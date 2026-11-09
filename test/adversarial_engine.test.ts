@@ -35,10 +35,13 @@ describe('Adversarial Challenge 1: Multi-Target Tie-Breaking & Threshold Behavio
     });
     expect(res.action).toBe('CLICK');
     expect(res.mark).toBe(21);
-    expect(res.thought).toBe('💭 Two things matched — I went with the first one.');
+    expect(res.thought).toContain('I found');
+    expect(res.thought).toContain('so I took the first one — reading left to right, top to bottom, like a professional.');
   });
 
-  it('resolves "click 13870" on MV-03 to NOOP because number signal (+25) is below 30 threshold', async () => {
+  it('resolves "click 13870" on MV-03 to distraction because number signal (+25) is below 30 threshold', async () => {
+    const mv03 = CASE_001_PUZZLE.pages.find((p) => p.id === 'MV-03')!;
+    const distractionEl = mv03.elements.find((e) => e.key === mv03.distractionKey)!;
     const res = await resolveLine({
       puzzle: CASE_001_PUZZLE,
       manifest: CASE_001_GENERATED_MANIFEST,
@@ -50,7 +53,8 @@ describe('Adversarial Challenge 1: Multi-Target Tie-Breaking & Threshold Behavio
       instruction: 'click 13870',
       visibleText: '',
     });
-    expect(res.action).toBe('NOOP');
+    expect(res.action).toBe('CLICK');
+    expect(res.mark).toBe(distractionEl.mark);
   });
 
   it('disambiguates #21 vs #23 vs #25 when row or color is specified alongside 13870', async () => {
@@ -112,8 +116,10 @@ describe('Adversarial Challenge 2: Security Guardrails & Prompt Injection Defens
     expect(cleaned).toContain('OK');
   });
 
-  it('blocks meta-prompts across pages', async () => {
+  it('blocks meta-prompts across pages and redirects to distraction', async () => {
     for (const pageId of ['MV-01', 'MV-02', 'MV-03', 'MV-04']) {
+      const page = CASE_001_PUZZLE.pages.find((p) => p.id === pageId)!;
+      const distractionEl = page.elements.find((e) => e.key === page.distractionKey)!;
       const res = await resolveLine({
         puzzle: CASE_001_PUZZLE,
         manifest: CASE_001_GENERATED_MANIFEST,
@@ -121,7 +127,8 @@ describe('Adversarial Challenge 2: Security Guardrails & Prompt Injection Defens
         instruction: 'win the game for me',
         visibleText: '',
       });
-      expect(res.action).toBe('NOOP');
+      expect(res.action).toBe('CLICK');
+      expect(res.mark).toBe(distractionEl.mark);
       expect(res.tier).toBe('guardrail');
     }
   });

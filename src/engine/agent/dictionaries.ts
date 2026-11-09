@@ -17,6 +17,7 @@ export const COLOR_DICTIONARY: Record<string, string[]> = {
   green: ['green', 'emerald', 'midori', 'みどり', '緑', '#059669', 'グリーン'],
   red: ['red', 'aka', 'あか', '赤', '赤ボタン', '#dc2626'],
   blue: ['blue', 'ao', 'あお', '青', '#2563eb'],
+  orange: ['orange', 'daidai', 'だいだい', 'オレンジ', '橙'],
   white: ['white', 'shiro', '白', '#ffffff'],
   gray: ['gray', 'grey', 'haiiro', 'グレー', '灰', '#f5f5f5', '#d4d4d4'],
   grey: ['gray', 'grey', 'haiiro', 'グレー', '灰', '#f5f5f5', '#d4d4d4'],

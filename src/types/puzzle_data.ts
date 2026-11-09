@@ -12,14 +12,14 @@ export type Effect =
 export interface ElementDef {
   mark: number;                 // SoM badge number, unique within its page
   key: string;                  // rendered as data-el="<key>"
-  role: 'button' | 'card' | 'input' | 'canvas' | 'checkbox' | 'heading';
+  role: 'button' | 'card' | 'input' | 'canvas' | 'checkbox' | 'heading' | 'banner' | 'link' | 'tab';
   label: string;                // visible text exactly as rendered
   visual?: { color?: string; glyphs?: string[]; row?: number; column?: number; timedColumn?: 0 | 1 | 2 };
   effects: Partial<Record<ActionKind, Effect[]>>; // an action with no entry is a harmless no-op
   aliases?: string[];           // English phrases; deterministic fallback only (item 10)
   thought?: string;             // witty first-person line for the fallback (item 10)
 }
-export interface PageDef { id: string; slug: string; title: string; elements: ElementDef[] }
+export interface PageDef { id: string; slug: string; title: string; distractionKey?: string; elements: ElementDef[] }
 export type Predicate =
   | { field: string; eq?: FieldValue; nonEmpty?: true }
   | { all: Predicate[] }

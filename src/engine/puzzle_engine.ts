@@ -243,6 +243,13 @@ export function evaluateExhibits(
   return puzzle.exhibits.map((ex, index) => evaluateExhibitDef(ex, state, index));
 }
 
+export function satisfiedCount(
+  puzzle: PuzzleData,
+  state: PuzzleState | Record<string, FieldValue>
+): number {
+  return evaluateExhibits(puzzle, state).filter((ex) => ex.status === 'VERIFIED').length;
+}
+
 export const initialPuzzleState = createInitialPuzzleState;
 
 export function evaluatePuzzle(

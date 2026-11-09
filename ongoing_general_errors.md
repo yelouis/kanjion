@@ -2,7 +2,7 @@
 
 Companion to [`agent_execution_guide.md`](agent_execution_guide.md). The product brief is [`concepts_brief.md`](concepts_brief.md).
 
-- **Findings (F-n)** are problems verified in the code on 2026-11-07, with `file:line`.
+- **Findings (F-n)** are problems verified in the code, with `file:line`. Each findings section is dated.
 - **Decisions (D-n)** are choices the owner makes. Each has a `Your selection:` line. The review pre-filled its recommendation; the owner may change any line before handing the guide to an implementor. The implementor follows whatever is written there. Where a selection differs from `concepts_brief.md`, the selection wins and the implementor updates the brief's Decision Log in the same commit.
 - **Owner actions (OA-n)** are things only the owner can do (console access, keys, deploys).
 - When a guide item lands, move its F-entries to **Resolved** with a one-line note and the commit hash.
@@ -17,7 +17,7 @@ Companion to [`agent_execution_guide.md`](agent_execution_guide.md). The product
 | OA-2 | Item 11 | Register a **Web app** in the Firebase project, or reuse an existing one. On 2026-11-07 the Firebase CLI detected no web-app config in this folder. Copy its config into `.env.local`: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`. |
 | OA-3 | Item 11 | **App Check**: create a reCAPTCHA v3 site key for `kanjion-game.web.app` (do **not** add `localhost`), register it for the web app under App Check, and put it in `.env.local` as `VITE_APPCHECK_SITE_KEY`. For local development, register a debug token. Turn on App Check **enforcement** for AI Logic once its metrics show verified requests. |
 | OA-4 | Item 11 | In AI Studio, open the project's rate-limit view and pick the newest Flash-Lite (or Flash) model that shows a **Free-tier** quota. Put its ID in `.env.local` as `VITE_AGENT_MODEL_ID` and record the limits here → RPM: ____ · RPD: ____ |
-| OA-5 | After item 11 | Deploy: `npm run build && firebase deploy --only hosting`. The implementor never deploys. |
+| OA-5 | After item 11 | Deploy: `npm run build && firebase deploy --only hosting`. The implementor never deploys. **Still pending on 2026-11-08:** the live site serves the pre-fix bundle `assets/index-DWnC1R4E.js` (F-27). |
 
 ---
 
@@ -101,13 +101,81 @@ Context. At 375 px wide, the 1024×768 stage renders at 0.32×, so Japanese text
 
 Your selection: A
 
+### D-8 · Red herrings
+Context. Each step's target is the only thing on its page with its most obvious feature, so one word ("green", "blue") solves the step (F-21).
+
+- **A. Realistic clutter, modelled on how real Japanese booking sites actually look.** The joke is how hard real sites are to navigate. *(Owner's choice, 2026-11-08.)* Examples:
+  - route cards in each line's real livery colour;
+  - campaign banners and service tabs;
+  - a kanji / katakana / romaji name grid;
+  - a dense timetable;
+  - 確認 ("review") and 確定 ("finalize") buttons side by side.
+- B. Artificial duplicates, such as two identical green buttons.
+
+Your selection: A
+
+### D-9 · Feints in the replay
+- **A. No feints.** The replay shows only the steps to copy, so it's never unclear what should be replicated. *(Owner's choice, 2026-11-08.)*
+- B. Feints: the replay hovers over or types something, then corrects it.
+
+Your selection: A
+
+### D-10 · How the agent behaves when an instruction is vague
+- **A. A literal-minded intern with consistent rules a player can learn.** *(Owner's choice, 2026-11-08.)*
+  - If several things match equally well, it takes the first in reading order.
+  - With no clue, it clicks the page's most eye-catching banner.
+  - Words with no verb get typed into the first empty box.
+  - It types and draws exactly what it's told.
+- B. Today's cautious agent: with no clue, nothing happens.
+
+Your selection: A
+
+### D-11 · What mistakes cost
+- **A. Nothing artificial.** Instructing the agent is the hard part. A wrong click has only its natural effect, such as opening another page. There are no add-ons that re-attach themselves and no detours that take several steps to escape. *(Owner's choice, 2026-11-08.)*
+- B. Sticky penalties.
+
+Your selection: A
+
+### D-12 · A difficulty week
+- **A. Defer until a pipeline for building sandbox sites exists (DEF-3).** Then run an easy Monday through a brutal Saturday. *(Owner's choice, 2026-11-08.)*
+- B. Build it now.
+
+Your selection: A
+
+### D-13 · Must the drawing match the replay?
+Context. "draw a dragon" passes today (F-22). The owner didn't comment on this proposal, so the review's recommendation is pre-filled.
+
+- **A. Yes.** *(Recommended.)*
+  - The replay draws a specific shape (for Case #001, a cat), and Exhibit D requires that shape.
+  - A shape the agent can't draw comes out as a funny failed attempt that never matches.
+- B. Any drawing counts, as today.
+
+Your selection: A
+
+### D-14 · Show the struggle in the share card and report
+Context. The owner didn't comment on this proposal, so the review's recommendation is pre-filled.
+
+- **A. Show how the game went, not just the result.** *(Recommended.)*
+  - The share card gets one emoji per line: 🎯 progress · 🤡 wrong thing done · 🔙 wandered to another page · 💥 undid progress · 💤 nothing happened.
+  - The report adds a "You vs Replay" note under each missed exhibit, plus a "best blunder" quote.
+- B. Keep today's share card and report.
+
+Your selection: A
+
 ---
 
-## Open findings (verified 2026-11-07)
+## Open findings (verified 2026-11-08)
 
-_(none — all findings F-1 through F-20 are resolved)_
+| ID | Severity | Finding | Where | Fixed by |
+|---|---|---|---|---|
+| F-21 | High | Lazy prompts reach the maximum score. `green` → `name tanaka` → `sale` → `draw a dragon` → `blue` scores 100% × 1.2 = 120, and 15 of 28 one-to-six-word prompts reproduce the replay step. Each target is the only element on its page with its obvious feature: one green card, one text box, one green seat, one blue button. | `src/data/puzzles/case_001/puzzle.ts:70-73`, `:208`, `:310-313`, `:399-402` | Items 1, 3–6 |
+| F-22 | High | Any drawing passes Exhibit D. Shapes the agent doesn't know turn into the same squiggle the replay draws, so "draw a dragon" and "draw a potato" are both VERIFIED. | `src/data/puzzles/case_001/puzzle.ts:585`, `:611`; `src/utils/text_normalizer.ts:497-500`, `:607` | Item 2 |
+| F-24 | Medium | The fallback scoring can't reward precise wording or handle real-site layouts:<br>• aliases score +40 at most once;<br>• position words score +20 at most once;<br>• rows stop at 2 and are hard-coded to Case #001 train names;<br>• banners are special-cased by key;<br>• there is no `orange` colour. | `src/engine/agent/fallback.ts:94-113`, `:170-216`, `:172-173`, `:224`; `src/engine/agent/dictionaries.ts` | Items 1, 3 |
+| F-25 | Medium | The cloud tier returns a single mark and turns CONFUSED into NOOP, so it can't follow the intern's rules. | `src/engine/agent/cloud_tier.ts:14-25`, `:271`, `:431-450` | Item 7 |
+| F-26 | Low | The share card and report show results, not the struggle. | `src/engine/scoring.ts:175-179`; `src/components/ExhibitsPanel.tsx` | Item 8 |
+| F-27 | Info | The live site still serves the pre-fix bundle `assets/index-DWnC1R4E.js` (checked 2026-11-08), so players still see the old giveaways. | — | OA-5 (owner) |
 
-Verify F-1 to F-5 with `npx vitest run test/exploits.test.ts`.
+Reproduce F-21 and F-22 with `npx tsx scripts/difficulty_probe.mts`. Verify the old F-1 to F-5 with `npx vitest run test/exploits.test.ts`.
 
 ---
 
@@ -115,6 +183,7 @@ Verify F-1 to F-5 with `npx vitest run test/exploits.test.ts`.
 _(none yet — implementors add entries here as options with a `Your selection:` line)_
 
 ## Resolved
+- F-23 — resolved by item 1 (added distraction clicks for no-clue, meta-prompt, and mark-ID instructions, bare-word typing into the first empty input, and exact `{n}` count in reading-order tie thoughts)
 - F-1 — resolved by item 3 (deleted hidden shortcut #16, gated Exhibit B on `passengerName === 'TANAKA'` and Exhibit D on non-empty `signatureStroke`, removed `CLEAN` and `signatureSigned`, and added BFS solvability proof that minimum steps to 100% = 5)
 - F-2 — resolved by item 5 (removed all `'TANAKA'` defaults in `2ee1ef3` item 4 and removed `'TANAKA'` page hints and unentered passenger-name fallback labels from `ShinkansenSandbox.tsx`)
 - F-3 — resolved by item 10 (replaced hardcoded `cloud_connector.ts` / `offline_simulator.ts` fallback with unified `resolveLine` and data-driven `fallbackResolve` in `src/engine/agent/`, returning `NOOP` below score 30 and on meta-prompts; item 4 `2ee1ef3` added `NOOP` action and `isMetaPrompt`)
@@ -143,3 +212,9 @@ _(none yet — implementors add entries here as options with a `Your selection:`
   - Reproduced F-1, F-2, F-3, F-4 and F-5 with `scripts/exploit_probe.mts`, and F-1 in the browser: the 4-line shortcut scored 140 in the live UI.
   - Saved the updated brief to `concepts_brief.md` (the previous version is in git history).
   - Wrote `agent_execution_guide.md` (Active Build).
+- **2026-11-08** — Items 1–13 landed (commits `5efae7f`…`12e912e`), and the security review of those commits found no vulnerabilities.
+  - The owner played the live site and found the game too easy: "draw a dragon" passed. The live site still runs the pre-fix build (F-27).
+  - Measured the current code with `scripts/difficulty_probe.mts`: 15 of 28 lazy prompts reproduce the replay, and the laziest run scores 120.
+  - The owner decided D-8 to D-12; D-13 and D-14 are pre-filled with the review's recommendation.
+  - Baseline: `npm test` 402/402 (25 files); `npm run build` clean (85.76 kB gzip); compiler `--case 001 --validate` exit 0; `npm run test:e2e` 2/2.
+  - Rewrote `agent_execution_guide.md` (Active Build: Frustratingly Funny).

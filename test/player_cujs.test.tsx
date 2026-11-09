@@ -205,10 +205,12 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     }).nextState;
     expect(state.pageId).toBe('MV-03');
 
-    // Ambiguous "click 13,870" triggers NOOP and stays on MV-03
+    // Ambiguous "click 13,870" scores 25 (< 30), clicks distraction -> MV-08, then back (#81) -> MV-03
     const ambigAction = await resolveTestAction(state.pageId, state.fields, 'click 13,870');
-    expect(ambigAction.action).toBe('NOOP');
+    expect(ambigAction.action).toBe('CLICK');
     state = stepPuzzle(state, ambigAction).nextState;
+    expect(state.pageId).toBe('MV-08');
+    state = stepPuzzle(state, { action: 'CLICK', targetId: '#81', thought: 'Back' }).nextState;
     expect(state.pageId).toBe('MV-03');
 
     // Selecting #24 (Nozomi Reserved ¥14,720) stays on MV-03 and does not set greenCarSelected

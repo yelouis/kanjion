@@ -400,8 +400,11 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
             return { action: 'CLICK', pageId: 'MV-03', mark: 25, thought: 'ok', tier: 'cloud' };
           },
         });
-        expect(action.action).toBe('NOOP');
-        expect(action.thought).toBe("💭 I don't see numbers like that on the page — describe the thing instead.");
+        const mv03 = CASE_001_PUZZLE.pages.find((p) => p.id === 'MV-03')!;
+        const distractionEl = mv03.elements.find((e) => e.key === mv03.distractionKey)!;
+        expect(action.action).toBe('CLICK');
+        expect(action.mark).toBe(distractionEl.mark);
+        expect(action.thought).toBe("💭 I don't see numbers like that on the page, so I clicked the shiniest thing instead.");
         expect(cloudCalled).toBe(false);
       }
     });

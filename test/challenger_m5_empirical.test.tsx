@@ -301,10 +301,10 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
 
       const prompts = [
         'click the red button',
-        'click return button',
-        'Click the top-left green box',
-        'Type TANAKA in the passenger name box',
-        'Wait for the sale glow, then click the green ¥13,870',
+        CASE_001_PUZZLE.answerKey[0],
+        CASE_001_PUZZLE.answerKey[1],
+        CASE_001_PUZZLE.answerKey[2],
+        'click the red button',
       ];
 
       for (let i = 0; i < prompts.length; i++) {

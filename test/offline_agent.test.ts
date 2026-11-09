@@ -173,18 +173,27 @@ describe('Data-Driven Fallback Agent & Multi-Signal Scorer', () => {
     });
   });
 
-  describe('Fallback NOOP, Tie-Breaking & Boundary Rules', () => {
-    it('returns NOOP on ungrounded/nonsense instruction', async () => {
+  describe('Fallback Distraction, Tie-Breaking & Boundary Rules', () => {
+    it('clicks distraction on ungrounded/nonsense instruction', async () => {
+      const mv03 = CASE_001_PUZZLE.pages.find((p) => p.id === 'MV-03')!;
+      const distractionEl = mv03.elements.find((e) => e.key === mv03.distractionKey)!;
       const decision = await resolveOnPage('MV-03', 'do a backflip into hyperspace');
-      expect(decision.action).toBe('NOOP');
-      expect(decision.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
-      expect(decision.mark).toBeNull();
+      expect(decision.action).toBe('CLICK');
+      expect(decision.mark).toBe(distractionEl.mark);
+      expect(decision.thought).toBe(
+        '💭 No idea what "do a backflip into hyper" means, but this flashy thing looked important, so I clicked it.'
+      );
     });
 
-    it('returns NOOP on "click 13870" (score 25 < 30 threshold)', async () => {
+    it('clicks distraction on "click 13870" (score 25 < 30 threshold)', async () => {
+      const mv03 = CASE_001_PUZZLE.pages.find((p) => p.id === 'MV-03')!;
+      const distractionEl = mv03.elements.find((e) => e.key === mv03.distractionKey)!;
       const decision = await resolveOnPage('MV-03', 'click 13870');
-      expect(decision.action).toBe('NOOP');
-      expect(decision.thought).toBe('💭 I have no idea what that means, so I poked the page title. Describe what to click?');
+      expect(decision.action).toBe('CLICK');
+      expect(decision.mark).toBe(distractionEl.mark);
+      expect(decision.thought).toBe(
+        '💭 No idea what "click 13870" means, but this flashy thing looked important, so I clicked it.'
+      );
     });
 
     it('breaks ties >= 30 in reading order (y, then x) with the tie-breaker thought', () => {
@@ -200,7 +209,8 @@ describe('Data-Driven Fallback Agent & Multi-Signal Scorer', () => {
       });
       expect(res.action).toBe('CLICK');
       expect(res.mark).toBe(21);
-      expect(res.thought).toBe('💭 Two things matched — I went with the first one.');
+      expect(res.thought).toContain('I found');
+      expect(res.thought).toContain('so I took the first one — reading left to right, top to bottom, like a professional.');
     });
 
     it('handles maximum 60-character instruction at boundary without crashing', async () => {

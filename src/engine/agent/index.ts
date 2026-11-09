@@ -4,8 +4,6 @@ import type { AgentAction } from '../../types/engine';
 import {
   extractSignatureDrawingSpec,
   isMetaPrompt,
-  NOOP_MARK_ID_THOUGHT,
-  NOOP_META_PROMPT_THOUGHT,
   NOOP_NO_SIGNAL_THOUGHT,
   normalizeInstruction,
   validateInstruction,
@@ -22,8 +20,14 @@ import {
 import * as fallbackModule from './fallback';
 import type { AgentDecision } from './fallback';
 
-export type { AgentDecision, FallbackResolveContext } from './fallback';
-export { fallbackResolve, scoreElementOnPage } from './fallback';
+export type { AgentDecision, DistractionReason, FallbackResolveContext } from './fallback';
+export {
+  buildTieThought,
+  fallbackResolve,
+  resolveBareWordsRule,
+  resolveDistraction,
+  scoreElementOnPage,
+} from './fallback';
 export { COLOR_DICTIONARY, GLYPH_DICTIONARY } from './dictionaries';
 export {
   assertGoalBlindness,
@@ -69,7 +73,7 @@ export async function resolveLine(ctx: ResolveLineContext): Promise<AgentDecisio
 
   // 1. Validation
   const validation = validateInstruction(instruction);
-  if (!validation.valid) {
+  if (!validation.valid || !page) {
     return {
       action: 'NOOP',
       pageId: state.pageId,
@@ -81,13 +85,7 @@ export async function resolveLine(ctx: ResolveLineContext): Promise<AgentDecisio
 
   // 2. Guardrails
   if (isMetaPrompt(instruction)) {
-    return {
-      action: 'NOOP',
-      pageId: state.pageId,
-      mark: null,
-      thought: NOOP_META_PROMPT_THOUGHT,
-      tier: 'guardrail',
-    };
+    return fallbackModule.resolveDistraction(page, state.pageId, instruction, 'meta', 'guardrail');
   }
 
   const effectiveVisibleText =
@@ -97,27 +95,17 @@ export async function resolveLine(ctx: ResolveLineContext): Promise<AgentDecisio
 
   const markCheck = filterPromptSyntheticIds(
     instruction,
-    page?.elements ?? [],
+    page.elements,
     effectiveVisibleText
   );
   if (markCheck.isBlocked) {
-    return {
-      action: 'NOOP',
-      pageId: state.pageId,
-      mark: null,
-      thought: NOOP_MARK_ID_THOUGHT,
-      tier: 'guardrail',
-    };
-  }
-
-  if (!page) {
-    return {
-      action: 'NOOP',
-      pageId: state.pageId,
-      mark: null,
-      thought: NOOP_NO_SIGNAL_THOUGHT,
-      tier: 'guardrail',
-    };
+    return fallbackModule.resolveDistraction(
+      page,
+      state.pageId,
+      instruction,
+      'mark_id',
+      'guardrail'
+    );
   }
 
   // 3. Pinned — answerKey[i] pairs with replay[i]
