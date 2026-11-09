@@ -74,7 +74,7 @@ describe('1. Broadsheet App Shell & Scaffolding', () => {
     expect(screen.getByText(/Route: 東京 → 新大阪/i)).toBeInTheDocument();
     expect(screen.getByText(/Passenger Name: TANAKA/i)).toBeInTheDocument();
     expect(screen.getByText(/14:30 Nozomi • 🍀 ¥13,870/i)).toBeInTheDocument();
-    expect(screen.getByText(/Sign Digital Authorization Pad/i)).toBeInTheDocument();
+    expect(screen.getByText(/Signature: 🐱 Cat/i)).toBeInTheDocument();
     expect(screen.getByText(/Final Blue Confirm/i)).toBeInTheDocument();
     expect(screen.getAllByText(/\[MISSED ✗ \+0%\]/i).length).toBe(5);
   });
@@ -285,7 +285,7 @@ describe('4. Case File #001 Data Integrity & Checkpoint Evaluation', () => {
       seatClass: 'green_car',
       fare: 13870,
       greenCarSelected: true,
-      signatureStroke: 'SHAPE:signature',
+      signatureStroke: 'SHAPE:cat',
       insuranceAttached: false,
       finalConfirmed: true,
     };

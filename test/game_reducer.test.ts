@@ -326,8 +326,8 @@ describe('Game State Reducer & Micro-State Transitions', () => {
       s = gameReducer(s, {
         type: 'APPLY_AGENT_ACTION',
         payload: {
-          action: { action: 'DRAW', targetId: '#27', textValue: 'SHAPE:signature', thought: 'sign' },
-          instruction: 'draw signature',
+          action: { action: 'DRAW', targetId: '#27', textValue: 'SHAPE:cat', thought: 'sign' },
+          instruction: 'draw a cat',
         },
       });
       s = gameReducer(s, {

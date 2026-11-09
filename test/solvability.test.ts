@@ -40,6 +40,7 @@ function candidateDecisionsForPage(pageId: string): Array<{
         candidates.push({ pageId, mark: el.mark, action: 'TYPE', text: 'TANAKA' });
         candidates.push({ pageId, mark: el.mark, action: 'TYPE', text: 'OTHER' });
       } else if (action === 'DRAW') {
+        candidates.push({ pageId, mark: el.mark, action: 'DRAW', stroke: 'SHAPE:cat' });
         candidates.push({ pageId, mark: el.mark, action: 'DRAW', stroke: 'SHAPE:signature' });
       } else {
         candidates.push({ pageId, mark: el.mark, action });

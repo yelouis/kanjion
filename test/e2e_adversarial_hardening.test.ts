@@ -683,13 +683,13 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
         puzzle: CASE_001_PUZZLE,
         manifest: CASE_001_GENERATED_MANIFEST,
         state: { pageId: state.macroViewId, fields: state.microState },
-        instruction: 'draw a signature in the dashed box',
+        instruction: 'draw a cat in the dashed box',
       });
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
         payload: {
           action: decisionToAgentAction(dec4, CASE_001_PUZZLE, CASE_001_GENERATED_MANIFEST),
-          instruction: 'draw a signature in the dashed box',
+          instruction: 'draw a cat in the dashed box',
         },
       });
 

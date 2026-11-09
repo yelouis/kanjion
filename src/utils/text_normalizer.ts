@@ -503,6 +503,60 @@ const DEFAULT_SQUIGGLE_SPEC: SignatureDrawingSpec = {
   ],
 };
 
+const ATTEMPT_SKIP_WORDS = new Set([
+  'a',
+  'an',
+  'the',
+  'some',
+  'my',
+  'me',
+  'us',
+  'one',
+  'two',
+  'three',
+  'big',
+  'small',
+  'little',
+  'tiny',
+  'huge',
+  'cute',
+  'funny',
+  'scary',
+  'nice',
+  'quick',
+  'simple',
+]);
+
+const ATTEMPT_SQUIGGLE_WORDS = new Set([
+  'signature',
+  'sign',
+  'line',
+  'something',
+  'anything',
+  'it',
+  'this',
+  'that',
+  'here',
+  'there',
+  'box',
+  'pad',
+  'in',
+  'on',
+]);
+
+function buildAttemptDrawingSpec(rawWord: string): SignatureDrawingSpec {
+  const word = rawWord.replace(/[^A-Za-z]/g, '').toLowerCase().slice(0, 16) || 'thing';
+  return {
+    strokeValue: `ATTEMPT:${word}`,
+    displayLabel: `${word} (attempt)`,
+    thought: `💭 I can't draw a ${word}. Here's a very long worm with ambition.`,
+    svgPaths: [
+      'M 30 38 C 55 18, 75 56, 100 36 S 145 18, 170 38 S 205 54, 222 34',
+      'M 216 34 a 6 6 0 1 0 12 0 a 6 6 0 1 0 -12 0',
+    ],
+  };
+}
+
 /**
  * Parses a natural-language drawing/signing instruction into a concrete SignatureDrawingSpec.
  */
@@ -604,6 +658,21 @@ export function extractSignatureDrawingSpec(instruction: string): SignatureDrawi
     };
   }
 
+  const drawVerbMatch = /\b(?:draw|sketch|doodle|paint)\b/i.exec(raw);
+  if (drawVerbMatch) {
+    const afterVerb = raw.slice(drawVerbMatch.index + drawVerbMatch[0].length);
+    const words = (afterVerb.match(/[A-Za-z]+/g) ?? []).map((w) => w.toLowerCase());
+    let idx = 0;
+    while (idx < words.length && ATTEMPT_SKIP_WORDS.has(words[idx])) {
+      idx++;
+    }
+    const nextWord = words[idx] ? words[idx].slice(0, 16) : '';
+    if (!nextWord || ATTEMPT_SQUIGGLE_WORDS.has(nextWord)) {
+      return DEFAULT_SQUIGGLE_SPEC;
+    }
+    return buildAttemptDrawingSpec(nextWord);
+  }
+
   return DEFAULT_SQUIGGLE_SPEC;
 }
 
@@ -614,6 +683,10 @@ export function extractSignatureDrawingSpec(instruction: string): SignatureDrawi
 export function resolveSignatureDrawingSpec(strokeValue?: string): SignatureDrawingSpec {
   if (!strokeValue || strokeValue === 'SHAPE:signature') {
     return DEFAULT_SQUIGGLE_SPEC;
+  }
+  if (strokeValue.startsWith('ATTEMPT:')) {
+    const word = strokeValue.slice('ATTEMPT:'.length);
+    return buildAttemptDrawingSpec(word);
   }
   if (strokeValue.startsWith('SHAPE:')) {
     const key = strokeValue.slice('SHAPE:'.length).toLowerCase();

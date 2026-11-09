@@ -44,7 +44,7 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
     it('evaluates signed digital authorization pad with [VERIFIED ✓ +15%] badge', () => {
       const signedState: Record<string, FieldValue> = {
         ...CASE_001_INITIAL_MICRO_STATE,
-        signatureStroke: 'SHAPE:signature',
+        signatureStroke: 'SHAPE:cat',
       };
       const evalD = evaluateExhibit(CASE_001_EXHIBITS[3], signedState, 3);
       expect(evalD.status).toBe('VERIFIED');
@@ -92,7 +92,7 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
         trainName: 'Nozomi 24',
         seatClass: 'green_car',
         fare: 13870,
-        signatureStroke: 'SHAPE:signature',
+        signatureStroke: 'SHAPE:cat',
         insuranceAttached: false,
         finalConfirmed: true,
       };
@@ -242,7 +242,7 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
         trainName: 'Nozomi 24',
         seatClass: 'green_car',
         fare: 13870,
-        signatureStroke: 'SHAPE:signature',
+        signatureStroke: 'SHAPE:cat',
         insuranceAttached: false,
         finalConfirmed: true,
       };

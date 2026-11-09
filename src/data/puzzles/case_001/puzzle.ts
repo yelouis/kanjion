@@ -588,10 +588,10 @@ export const CASE_001_PUZZLE: PuzzleData = {
     },
     {
       id: 'D',
-      title: 'Sign Digital Authorization Pad',
+      title: 'Signature: 🐱 Cat',
       weight: 15,
-      criteria: 'Signed the Digital Signature Verification Pad (自署・サイン欄) to authorize ticket issuance.',
-      verified: { field: 'signatureStroke', nonEmpty: true },
+      criteria: 'Signed the pad with the same drawing as the replay (a cat).',
+      verified: { field: 'signatureStroke', eq: 'SHAPE:cat' },
     },
     {
       id: 'E',
@@ -617,14 +617,14 @@ export const CASE_001_PUZZLE: PuzzleData = {
     { pageId: 'MV-01', key: 'route_tokaido', action: 'CLICK' },
     { pageId: 'MV-02', key: 'passenger_name', action: 'TYPE', text: 'TANAKA' },
     { pageId: 'MV-03', key: 'seat_nozomi_green', action: 'TIMED_CLICK' },
-    { pageId: 'MV-04', key: 'signature_pad', action: 'DRAW', stroke: 'SHAPE:signature' },
+    { pageId: 'MV-04', key: 'signature_pad', action: 'DRAW', stroke: 'SHAPE:cat' },
     { pageId: 'MV-04', key: 'confirm_booking', action: 'CLICK' },
   ],
   answerKey: [
     'Click the top-left green box',
     'Type TANAKA in the passenger name box',
     'Wait for the sale glow, then click the green ¥13,870',
-    'Draw a signature in the dashed box',
+    'Draw a cat in the dashed box',
     'Click the blue confirm button at bottom right',
   ],
   capturePresets: {
@@ -648,7 +648,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
       fare: 13870,
       greenCarSelected: true,
       timedWindowHit: true,
-      signatureStroke: 'SHAPE:signature',
+      signatureStroke: 'SHAPE:cat',
       finalConfirmed: true,
     },
     'MV-07': {

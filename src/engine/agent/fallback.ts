@@ -342,7 +342,9 @@ export function scoreElementOnPage(
   // 8. DRAW intent (+30 to canvas elements)
   if (
     el.role === 'canvas' &&
-    (/\b(?:draw|sign|signature|signiture|autograph|scribble|doodle|squiggle|squiggly|sqiggly)\b/i.test(normSpaced) ||
+    (/\b(?:draw|sign|signature|signiture|autograph|scribble|doodle|sketch|paint|squiggle|squiggly|sqiggly)\b/i.test(
+      normSpaced
+    ) ||
       hasSignatureShapeWord(instruction))
   ) {
     score += 30;

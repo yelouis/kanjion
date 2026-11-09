@@ -3,9 +3,10 @@ import React from 'react';
 import { render, act } from '@testing-library/react';
 import { execSync } from 'node:child_process';
 import { CASE_001_PUZZLE } from '../src/data/puzzles/case_001/puzzle';
-import { applyDecision, evaluateExhibits } from '../src/engine/puzzle_engine';
+import { applyDecision, createInitialPuzzleState, evaluateExhibits } from '../src/engine/puzzle_engine';
 import { calculateScoreReport } from '../src/engine/scoring';
 import { resolveLine } from '../src/engine/agent';
+import { resolveSignatureDrawingSpec } from '../src/utils/text_normalizer';
 import { CASE_001_GENERATED_MANIFEST } from '../src/data/puzzles/case_001';
 import { LoopedTargetReplay } from '../src/components/LoopedTargetReplay';
 import type { PuzzleState } from '../src/types/puzzle_data';
@@ -142,5 +143,91 @@ describe('Item 8: Replay from data (§10)', () => {
       encoding: 'utf-8',
     }).trim();
     expect(out).toBe('');
+  });
+});
+
+describe('Item 2: The drawing must match the replay (F-22; D-13)', () => {
+  const mv04State: PuzzleState = {
+    ...createInitialPuzzleState(CASE_001_PUZZLE),
+    pageId: 'MV-04',
+  };
+
+  it('★ "draw a dragon" on MV-04 → stroke ATTEMPT:dragon, and Exhibit D is MISSED', async () => {
+    const decision = await resolveLine({
+      puzzle: CASE_001_PUZZLE,
+      manifest: CASE_001_GENERATED_MANIFEST,
+      state: mv04State,
+      instruction: 'draw a dragon',
+      visibleText: '',
+      disablePinned: true,
+    });
+    expect(decision.action).toBe('DRAW');
+    expect(decision.stroke).toBe('ATTEMPT:dragon');
+    expect(decision.thought).toBe(
+      "💭 I can't draw a dragon. Here's a very long worm with ambition."
+    );
+
+    const next = applyDecision(CASE_001_PUZZLE, mv04State, decision).next;
+    const evalD = evaluateExhibits(CASE_001_PUZZLE, next).find((e) => e.id === 'D')!;
+    expect(evalD.status).toBe('MISSED');
+
+    const resolvedSpec = resolveSignatureDrawingSpec('ATTEMPT:dragon');
+    expect(resolvedSpec.strokeValue).toBe('ATTEMPT:dragon');
+    expect(resolvedSpec.displayLabel).toBe('dragon (attempt)');
+    expect(resolvedSpec.svgPaths).toEqual([
+      'M 30 38 C 55 18, 75 56, 100 36 S 145 18, 170 38 S 205 54, 222 34',
+      'M 216 34 a 6 6 0 1 0 12 0 a 6 6 0 1 0 -12 0',
+    ]);
+  });
+
+  it('★ "sign it" → SHAPE:signature → Exhibit D is MISSED, and "draw \"Bob\"" → TEXT:Bob → Exhibit D is MISSED', async () => {
+    const signIt = await resolveLine({
+      puzzle: CASE_001_PUZZLE,
+      manifest: CASE_001_GENERATED_MANIFEST,
+      state: mv04State,
+      instruction: 'sign it',
+      visibleText: '',
+      disablePinned: true,
+    });
+    expect(signIt.action).toBe('DRAW');
+    expect(signIt.stroke).toBe('SHAPE:signature');
+    const nextSignIt = applyDecision(CASE_001_PUZZLE, mv04State, signIt).next;
+    expect(evaluateExhibits(CASE_001_PUZZLE, nextSignIt).find((e) => e.id === 'D')?.status).toBe(
+      'MISSED'
+    );
+
+    const drawBob = await resolveLine({
+      puzzle: CASE_001_PUZZLE,
+      manifest: CASE_001_GENERATED_MANIFEST,
+      state: mv04State,
+      instruction: 'draw "Bob"',
+      visibleText: '',
+      disablePinned: true,
+    });
+    expect(drawBob.action).toBe('DRAW');
+    expect(drawBob.stroke).toBe('TEXT:Bob');
+    const nextBob = applyDecision(CASE_001_PUZZLE, mv04State, drawBob).next;
+    expect(evaluateExhibits(CASE_001_PUZZLE, nextBob).find((e) => e.id === 'D')?.status).toBe(
+      'MISSED'
+    );
+  });
+
+  it('"draw a cat", "draw a kitty" and "draw me a cute kitten" → SHAPE:cat → Exhibit D is VERIFIED', async () => {
+    for (const prompt of ['draw a cat', 'draw a kitty', 'draw me a cute kitten']) {
+      const decision = await resolveLine({
+        puzzle: CASE_001_PUZZLE,
+        manifest: CASE_001_GENERATED_MANIFEST,
+        state: mv04State,
+        instruction: prompt,
+        visibleText: '',
+        disablePinned: true,
+      });
+      expect(decision.action).toBe('DRAW');
+      expect(decision.stroke).toBe('SHAPE:cat');
+      const next = applyDecision(CASE_001_PUZZLE, mv04State, decision).next;
+      expect(evaluateExhibits(CASE_001_PUZZLE, next).find((e) => e.id === 'D')?.status).toBe(
+        'VERIFIED'
+      );
+    }
   });
 });

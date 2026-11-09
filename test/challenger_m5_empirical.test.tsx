@@ -202,7 +202,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
         'Click the top-left green box',
         'Type TANAKA in the passenger name box',
         'Wait for the sale glow, then click the green ¥13,870',
-        'Draw a signature in the dashed box',
+        'Draw a cat in the dashed box',
         'confirm booking',
       ];
 
@@ -401,7 +401,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
         'Click the top-left green box',
         'Type TANAKA in the passenger name box',
         'Wait for the sale glow, then click the green ¥13,870',
-        'Draw a signature in the dashed box',
+        'Draw a cat in the dashed box',
         'confirm booking',
         'final dispatch confirmation',
       ];

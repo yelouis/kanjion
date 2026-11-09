@@ -123,10 +123,10 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       expect(agentNote).toHaveClass('right-full', 'mr-3');
 
       // -----------------------------------------------------------------------
-      // 5. Line 04 (MV-04): "Draw a signature in the dashed box"
+      // 5. Line 04 (MV-04): "Draw a cat in the dashed box"
       // -----------------------------------------------------------------------
       const input4 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input4, { target: { value: 'Draw a signature in the dashed box' } });
+      fireEvent.change(input4, { target: { value: 'Draw a cat in the dashed box' } });
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 04/i }));
       });
@@ -298,7 +298,7 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
         'Click the top-left green box',
         'Type TANAKA in the passenger name box',
         'Wait for the sale glow, then click the green ¥13,870',
-        'Draw a signature in the dashed box',
+        'Draw a cat in the dashed box',
         'confirm booking',
         'final review',
       ];

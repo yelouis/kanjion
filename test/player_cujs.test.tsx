@@ -79,7 +79,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
       'click the top left green box',
       'type TANAKA in the passenger name box',
       'wait for sale glow then click green button in second row',
-      'draw a line in the signature box',
+      'draw a cat in the signature box',
       'click blue button at bottom right',
     ];
 
@@ -238,7 +238,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
       'click top left green card',
       'type TANAKA',
       'wait for flash sale and click green 13,870',
-      'draw signature in box',
+      'draw a cat in box',
     ];
 
     for (const prompt of sixPrompts) {
@@ -255,7 +255,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     expect(game.scoreReport?.finalScore).toBe(80);
   });
 
-  it('CUJ 15: Custom smile signature ("Draw a signiture in the shape of a smile") + "Click the blue box on the bottom right"', async () => {
+  it('CUJ 15: Cat signature ("Draw a cat in the dashed box") + "Click the blue box on the bottom right"', async () => {
     let game = createInitialGameState({
       caseNumber: '#001',
       initialMicroState: { ...CASE_001_INITIAL_MICRO_STATE },
@@ -265,7 +265,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
       'Click on the green box with the 01 in it',
       'Type TANAKA in the passenger name box',
       'Wait for flash sale and click on the green 13870 box',
-      'Draw a signiture in the shape of a smile',
+      'Draw a cat in the dashed box',
       'Click the blue box on the bottom right',
     ];
 
@@ -278,7 +278,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     }
 
     expect(Boolean(game.microState.signatureStroke)).toBe(true);
-    expect(game.microState.signatureStroke).toBe('SHAPE:smile');
+    expect(game.microState.signatureStroke).toBe('SHAPE:cat');
     expect(game.microState.finalConfirmed).toBe(true);
     expect(game.macroViewId).toBe('MV-05');
 

@@ -27,7 +27,7 @@ describe('Item 2: Case #001 everywhere, no hidden test text, honest share card',
       'Click the top-left green box',
       'Type TANAKA in the passenger name box',
       'Wait for the sale glow, then click the green ¥13,870',
-      'Draw a signature in the dashed box',
+      'Draw a cat in the dashed box',
       'confirm booking',
     ];
 
