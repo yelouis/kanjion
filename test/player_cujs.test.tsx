@@ -77,7 +77,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
 
     const prompts = [
       'click the blue card on the right',
-      'type TANAKA in the passenger name box',
+      'type TANAKA in the romaji box on the left',
       'wait for sale glow then click green button in second row',
       'draw a cat in the signature box',
       'click blue button at bottom right',
@@ -175,7 +175,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
   it('CUJ 7: Typing Wrong Passenger Name (YAMADA) misses Exhibit B until fixed to TANAKA', async () => {
     let state = createBrowserStartState();
     state = stepPuzzle(state, { action: 'CLICK', targetId: '#1', thought: 'Route' }).nextState;
-    const typeYamada = await resolveTestAction(state.pageId, state.fields, 'type YAMADA in passenger name');
+    const typeYamada = await resolveTestAction(state.pageId, state.fields, 'type YAMADA in the romaji box on the left');
     state = stepPuzzle(state, typeYamada).nextState;
     expect(state.fields.passengerName).toBe('YAMADA');
     expect(state.pageId).toBe('MV-03');
@@ -187,7 +187,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     // Go back (#14) to Page 02 and fix to TANAKA
     state = stepPuzzle(state, { action: 'CLICK', targetId: '#14', thought: 'Back' }).nextState;
     expect(state.pageId).toBe('MV-02');
-    const typeTanaka = await resolveTestAction(state.pageId, state.fields, 'type TANAKA in passenger name');
+    const typeTanaka = await resolveTestAction(state.pageId, state.fields, 'type TANAKA in the romaji box on the left');
     state = stepPuzzle(state, typeTanaka).nextState;
     expect(state.fields.passengerName).toBe('TANAKA');
     const reportFixed = calculateScoreReport(CASE_001_EXHIBITS, state.fields, 4, '#001');
@@ -233,10 +233,10 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
     });
 
     const sixPrompts = [
-      'click second card on top right',
+      'click third card at bottom left',
       'click back button',
       'click the dark blue card',
-      'type TANAKA',
+      'type TANAKA in the romaji box on the left',
       'wait for flash sale and click green 13,870',
       'draw a cat in box',
     ];
@@ -263,7 +263,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
 
     const userPrompts = [
       'Click on the dark blue card with 02 in it',
-      'Type TANAKA in the passenger name box',
+      'Type TANAKA in the romaji box on the left',
       'Wait for flash sale and click on the green 13870 box',
       'Draw a cat in the dashed box',
       'Click the blue box on the bottom right',

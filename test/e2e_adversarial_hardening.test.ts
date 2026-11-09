@@ -652,13 +652,13 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
         puzzle: CASE_001_PUZZLE,
         manifest: CASE_001_GENERATED_MANIFEST,
         state: { pageId: state.macroViewId, fields: state.microState },
-        instruction: 'type TANAKA in the passenger name box',
+        instruction: 'type TANAKA in the romaji box on the left',
       });
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
         payload: {
           action: decisionToAgentAction(dec2, CASE_001_PUZZLE, CASE_001_GENERATED_MANIFEST),
-          instruction: 'type TANAKA in the passenger name box',
+          instruction: 'type TANAKA in the romaji box on the left',
         },
       });
       expect(state.macroViewId).toBe('MV-03');

@@ -1,8 +1,11 @@
 import { describe, it, expect } from 'vitest';
+import React from 'react';
+import { render } from '@testing-library/react';
 import { CASE_001_PUZZLE } from '../src/data/puzzles/case_001/puzzle';
 import CASE_001_GENERATED_MANIFEST from '../src/data/puzzles/case_001/manifest.generated.json';
 import { fallbackResolve } from '../src/engine/agent/fallback';
 import { applyDecision } from '../src/engine/puzzle_engine';
+import { ShinkansenSandbox } from '../src/data/puzzles/case_001/Sandbox';
 import type { PuzzleState } from '../src/types/puzzle_data';
 
 function resolveOn(state: PuzzleState, instruction: string) {
@@ -67,6 +70,71 @@ describe('Item 3–6: Difficulty & Realistic Clutter (F-21, F-24; D-8)', () => {
       expect(d2.decision.action).toBe('CLICK');
       expect(d2.key).toBe('route_tokaido');
       expect(applyDecision(CASE_001_PUZZLE, initialState, d2.decision).next.pageId).toBe('MV-02');
+    });
+  });
+
+  describe('Page 02 (MV-02): the name-form maze', () => {
+    const mv02State: PuzzleState = {
+      pageId: 'MV-02',
+      fields: {
+        ...CASE_001_PUZZLE.initialFields,
+        selectedRoute: 'tokyo_osaka',
+      },
+    };
+
+    it('★ lazy prompts on MV-02 do not reproduce replay step 2 (TYPE TANAKA into passenger_name) and land on name_kanji_sei', () => {
+      // tanaka -> bare word -> TYPE TANAKA into name_kanji_sei
+      const dTanaka = resolveOn(mv02State, 'tanaka');
+      expect(dTanaka.decision.action).toBe('TYPE');
+      expect(dTanaka.key).toBe('name_kanji_sei');
+      expect(dTanaka.decision.text).toBe('TANAKA');
+
+      // name tanaka -> bare word -> NAME TANAKA into name_kanji_sei
+      const dNameTanaka = resolveOn(mv02State, 'name tanaka');
+      expect(dNameTanaka.decision.action).toBe('TYPE');
+      expect(dNameTanaka.key).toBe('name_kanji_sei');
+      expect(dNameTanaka.decision.text).toBe('NAME TANAKA');
+
+      // type tanaka -> seven-way tie -> name_kanji_sei
+      const dTypeTanaka = resolveOn(mv02State, 'type tanaka');
+      expect(dTypeTanaka.decision.action).toBe('TYPE');
+      expect(dTypeTanaka.key).toBe('name_kanji_sei');
+      expect(dTypeTanaka.decision.text).toBe('TANAKA');
+      expect(dTypeTanaka.decision.thought).toBe(
+        '💭 I found 7 that fit, so I took the first one — reading left to right, top to bottom, like a professional.'
+      );
+
+      // type tanaka in the name box -> name_kanji_sei
+      const dInNameBox = resolveOn(mv02State, 'type tanaka in the name box');
+      expect(dInNameBox.decision.action).toBe('TYPE');
+      expect(dInNameBox.key).toBe('name_kanji_sei');
+
+      // surname tanaka -> bare word -> name_kanji_sei
+      const dSurnameTanaka = resolveOn(mv02State, 'surname tanaka');
+      expect(dSurnameTanaka.decision.action).toBe('TYPE');
+      expect(dSurnameTanaka.key).toBe('name_kanji_sei');
+    });
+
+    it('★ "Type TANAKA in the romaji box on the left" reproduces step 2 and moves to MV-03, while typing TANAKA into name_kanji_sei shows 全角で入力してください and stays on MV-02', () => {
+      const dRomaji = resolveOn(mv02State, 'Type TANAKA in the romaji box on the left');
+      expect(dRomaji.decision.action).toBe('TYPE');
+      expect(dRomaji.key).toBe('passenger_name');
+      expect(dRomaji.decision.text).toBe('TANAKA');
+      const nextRomaji = applyDecision(CASE_001_PUZZLE, mv02State, dRomaji.decision).next;
+      expect(nextRomaji.pageId).toBe('MV-03');
+      expect(nextRomaji.fields.passengerName).toBe('TANAKA');
+
+      const dKanji = resolveOn(mv02State, 'tanaka');
+      const nextKanji = applyDecision(CASE_001_PUZZLE, mv02State, dKanji.decision).next;
+      expect(nextKanji.pageId).toBe('MV-02');
+      expect(nextKanji.fields.nameKanjiSei).toBe('TANAKA');
+
+      const { container } = render(
+        React.createElement(ShinkansenSandbox, {
+          state: nextKanji,
+        })
+      );
+      expect(container.textContent).toContain('全角で入力してください');
     });
   });
 });

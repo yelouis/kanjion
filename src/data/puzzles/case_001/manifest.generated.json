@@ -151,34 +151,114 @@
           "box": {
             "h": 26,
             "w": 123,
-            "x": 881,
-            "y": 187
+            "x": 885,
+            "y": 175
           },
           "key": "back",
           "mark": 14
         },
         {
           "box": {
-            "h": 60,
-            "w": 940,
-            "x": 42,
-            "y": 392
+            "h": 36,
+            "w": 474,
+            "x": 30,
+            "y": 472
           },
           "key": "passenger_name",
           "mark": 17
         },
         {
           "box": {
-            "h": 28,
-            "w": 478,
-            "x": 20,
-            "y": 178
+            "h": 36,
+            "w": 474,
+            "x": 30,
+            "y": 340
+          },
+          "key": "name_kanji_sei",
+          "mark": 31
+        },
+        {
+          "box": {
+            "h": 36,
+            "w": 474,
+            "x": 520,
+            "y": 340
+          },
+          "key": "name_kanji_mei",
+          "mark": 32
+        },
+        {
+          "box": {
+            "h": 36,
+            "w": 474,
+            "x": 30,
+            "y": 406
+          },
+          "key": "name_kana_sei",
+          "mark": 33
+        },
+        {
+          "box": {
+            "h": 36,
+            "w": 474,
+            "x": 520,
+            "y": 406
+          },
+          "key": "name_kana_mei",
+          "mark": 34
+        },
+        {
+          "box": {
+            "h": 36,
+            "w": 474,
+            "x": 520,
+            "y": 472
+          },
+          "key": "name_romaji_mei",
+          "mark": 35
+        },
+        {
+          "box": {
+            "h": 36,
+            "w": 474,
+            "x": 30,
+            "y": 543
+          },
+          "key": "phone",
+          "mark": 36
+        },
+        {
+          "box": {
+            "h": 32,
+            "w": 194,
+            "x": 814,
+            "y": 226
+          },
+          "key": "reuse_info",
+          "mark": 37
+        },
+        {
+          "box": {
+            "h": 36,
+            "w": 786,
+            "x": 16,
+            "y": 224
+          },
+          "key": "member_banner",
+          "mark": 38
+        },
+        {
+          "box": {
+            "h": 24,
+            "w": 460,
+            "x": 16,
+            "y": 168
           },
           "key": "page_title",
           "mark": 90
         }
       ],
-      "som": "/puzzles/001/som/MV-02.a86734f4.png"
+      "som": "/puzzles/001/som/MV-02.2816c0fd.png"
     },
     "MV-03": {
       "elements": [

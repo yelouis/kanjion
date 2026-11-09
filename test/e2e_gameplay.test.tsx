@@ -91,7 +91,7 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       // 3. Line 02 (MV-02): "Type TANAKA in the passenger name box" -> MV-03
       // -----------------------------------------------------------------------
       const input2 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input2, { target: { value: 'Type TANAKA in the passenger name box' } });
+      fireEvent.change(input2, { target: { value: 'Type TANAKA in the romaji box on the left' } });
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /DISPATCH LINE 02/i }));
       });
@@ -296,7 +296,7 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
 
       const prompts = [
         'Click the blue card on the right',
-        'Type TANAKA in the passenger name box',
+        'Type TANAKA in the romaji box on the left',
         'Wait for the sale glow, then click the green ¥13,870',
         'Draw a cat in the dashed box',
         'confirm booking',

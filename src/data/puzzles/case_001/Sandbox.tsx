@@ -65,6 +65,13 @@ export const Sandbox: React.FC<SandboxProps> = ({
     fields.trainName === 'Nozomi 24' && fields.seatClass === 'ordinary_reserved';
 
   const passengerName = typeof fields.passengerName === 'string' ? fields.passengerName : '';
+  const nameKanjiSei = typeof fields.nameKanjiSei === 'string' ? fields.nameKanjiSei : '';
+  const nameKanjiMei = typeof fields.nameKanjiMei === 'string' ? fields.nameKanjiMei : '';
+  const nameKanaSei = typeof fields.nameKanaSei === 'string' ? fields.nameKanaSei : '';
+  const nameKanaMei = typeof fields.nameKanaMei === 'string' ? fields.nameKanaMei : '';
+  const givenNameRomaji = typeof fields.givenNameRomaji === 'string' ? fields.givenNameRomaji : '';
+  const phoneVal = typeof fields.phone === 'string' ? fields.phone : '';
+  const reuseInfo = Boolean(fields.reuseInfo);
   const currentSigStroke =
     signatureStroke ?? (typeof fields.signatureStroke === 'string' ? fields.signatureStroke : '');
   const isSignatureSigned = currentSigStroke.trim().length > 0;
@@ -484,15 +491,15 @@ export const Sandbox: React.FC<SandboxProps> = ({
             PAGE 02: DEPARTURE TIME & PASSENGER NAME FORM (MV-02)
            ================================================================= */}
         {pageId === 'MV-02' && (
-          <div className="p-5 flex-1 flex flex-col justify-between">
-            <div className="space-y-4">
-              <div className="border-b-2 border-emerald-800 pb-2 flex items-center justify-between">
+          <div className="px-4 py-2.5 flex-1 flex flex-col justify-between">
+            <div className="space-y-2">
+              <div className="border-b-2 border-emerald-800 pb-1.5 flex items-center justify-between">
                 <div>
-                  <h2 data-el="page_title" className="text-lg font-black text-emerald-950">
+                  <h2 data-el="page_title" className="text-base font-black text-emerald-950">
                     STEP 2: 乗車条件・搭乗者名（ローマ字）の入力
                   </h2>
-                  <p className="text-xs text-neutral-600 font-medium">
-                    予約名義となる搭乗者名をローマ字で入力すると、空席照会・座席表ページへ進みます。
+                  <p className="text-[11px] text-neutral-600 font-medium">
+                    予約名義となるお客様情報を入力してください。ローマ字（姓）入力で空席照会へ進みます。
                   </p>
                 </div>
                 <button
@@ -506,74 +513,283 @@ export const Sandbox: React.FC<SandboxProps> = ({
                 </button>
               </div>
 
-              {/* Selected Route & Departure Summary Card */}
-              <div className="grid grid-cols-3 gap-3 bg-emerald-50 border-2 border-emerald-600 p-3.5 rounded-lg">
-                <div>
-                  <div className="text-[11px] font-bold text-emerald-800">選択路線</div>
-                  <div className="text-sm font-black text-neutral-900 mt-0.5">
-                    ✓ 東海道新幹線（東京 ⇒ 新大阪）
-                  </div>
+              {/* Member Registration Orange Banner (Mark 38) & Reuse Checkbox (Mark 37) */}
+              <div className="flex items-center justify-between gap-3">
+                <button
+                  id="btn-member-banner"
+                  data-el="member_banner"
+                  type="button"
+                  onClick={() => handleClick(38)}
+                  style={{ backgroundColor: '#F08300' }}
+                  className="flex-1 px-3.5 py-1.5 rounded border-2 border-orange-900 text-white font-black text-xs shadow-sm flex items-center justify-between hover:brightness-105"
+                >
+                  <span>会員登録で次回から入力不要！ ▶</span>
+                  <span className="px-2 py-0.5 bg-white text-orange-900 rounded text-[11px] font-black">
+                    無料登録 ▶
+                  </span>
+                </button>
+
+                <label
+                  id="chk-reuse-info"
+                  data-el="reuse_info"
+                  onClick={() => handleClick(37)}
+                  className="px-3 py-1.5 bg-stone-100 border-2 border-neutral-400 rounded flex items-center gap-2 cursor-pointer text-xs font-bold text-neutral-800 shrink-0"
+                >
+                  <input
+                    type="checkbox"
+                    checked={reuseInfo}
+                    readOnly
+                    className="w-3.5 h-3.5 accent-emerald-700 pointer-events-none"
+                  />
+                  <span>前回の入力内容を使用する</span>
+                </label>
+              </div>
+
+              {/* Selected Route & Departure Summary Compact Bar */}
+              <div className="grid grid-cols-3 gap-2 bg-emerald-50 border border-emerald-600 px-3 py-1.5 rounded text-xs">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold text-emerald-800">選択路線:</span>
+                  <span className="font-black text-neutral-900">東海道新幹線（東京 ⇒ 新大阪）</span>
                 </div>
-                <div>
-                  <div className="text-[11px] font-bold text-emerald-800">乗車日時</div>
-                  <div className="text-sm font-black text-neutral-900 mt-0.5">
-                    ✓ 11月05日 14:30発（片道）
-                  </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold text-emerald-800">乗車日時:</span>
+                  <span className="font-black text-neutral-900">11月05日 14:30発</span>
                 </div>
-                <div>
-                  <div className="text-[11px] font-bold text-emerald-800">人数</div>
-                  <div className="text-sm font-black text-neutral-900 mt-0.5">
-                    大人 1名（eチケット）
-                  </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold text-emerald-800">人数:</span>
+                  <span className="font-black text-neutral-900">大人 1名（eチケット）</span>
                 </div>
               </div>
 
-              {/* LARGE INTERACTIVE PASSENGER NAME INPUT FIELD (#17) */}
-              <div className="p-5 bg-stone-50 border-2 border-neutral-400 rounded-lg space-y-3 shadow-sm">
-                <div className="flex items-center justify-between">
+              {/* 3x2 Passenger Name Maze Grid + Row 4 Phone Input */}
+              <div className="p-3 bg-stone-50 border-2 border-neutral-400 rounded-lg space-y-2.5 shadow-sm">
+                {/* Row 1: Kanji (Marks 31, 32) */}
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="px-2 py-0.5 bg-red-600 text-white font-black text-[11px] rounded mr-2">
-                      必須
-                    </span>
-                    <span className="text-base font-black text-neutral-900">
-                      搭乗者名（ローマ字）
-                    </span>
-                  </div>
-                </div>
-
-                <div
-                  id="input-passenger-name"
-                  data-el="passenger_name"
-                  onClick={() => handleClick(17)}
-                  className={`p-3.5 border-2 rounded-md transition-all flex items-center justify-between ${
-                    passengerName
-                      ? 'bg-amber-100 border-emerald-700 ring-4 ring-amber-300'
-                      : 'bg-white border-neutral-500'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 font-mono-clean text-xl font-black tracking-widest text-neutral-950">
-                    <span>{passengerName || ''}</span>
-                    {!passengerName && (
-                      <span className="text-neutral-400 font-normal text-sm tracking-normal">
-                        ローマ字で入力してください
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-black text-neutral-900">姓（漢字）</span>
+                      <span className="px-1.5 py-0.2 bg-neutral-200 text-neutral-700 font-bold text-[10px] rounded">
+                        全角
                       </span>
+                    </div>
+                    <div
+                      id="input-name-kanji-sei"
+                      data-el="name_kanji_sei"
+                      onClick={() => handleClick(31)}
+                      className="px-3 py-1.5 bg-white border-2 border-neutral-400 rounded flex items-center justify-between min-h-[34px]"
+                    >
+                      <span className="font-mono-clean text-sm font-black text-neutral-950">
+                        {nameKanjiSei || (
+                          <span className="text-neutral-400 font-normal text-xs">例）山田</span>
+                        )}
+                      </span>
+                      <span className="text-[10px] font-bold text-neutral-500">
+                        {nameKanjiSei ? '入力済' : '未入力'}
+                      </span>
+                    </div>
+                    {nameKanjiSei && /[A-Za-z]/.test(nameKanjiSei) && (
+                      <div className="text-[11px] font-bold text-red-600 mt-0.5">
+                        全角で入力してください
+                      </div>
                     )}
-                    <span className="text-emerald-700 animate-pulse font-black">|</span>
                   </div>
-                  <span
-                    className={`px-3 py-1 rounded text-xs font-black ${
-                      passengerName
-                        ? 'bg-emerald-700 text-amber-200'
-                        : 'bg-neutral-200 text-neutral-600'
-                    }`}
-                  >
-                    {passengerName ? '✓ 入力済' : '未入力'}
-                  </span>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-black text-neutral-900">名（漢字）</span>
+                      <span className="px-1.5 py-0.2 bg-neutral-200 text-neutral-700 font-bold text-[10px] rounded">
+                        全角
+                      </span>
+                    </div>
+                    <div
+                      id="input-name-kanji-mei"
+                      data-el="name_kanji_mei"
+                      onClick={() => handleClick(32)}
+                      className="px-3 py-1.5 bg-white border-2 border-neutral-400 rounded flex items-center justify-between min-h-[34px]"
+                    >
+                      <span className="font-mono-clean text-sm font-black text-neutral-950">
+                        {nameKanjiMei || (
+                          <span className="text-neutral-400 font-normal text-xs">例）太郎</span>
+                        )}
+                      </span>
+                      <span className="text-[10px] font-bold text-neutral-500">
+                        {nameKanjiMei ? '入力済' : '未入力'}
+                      </span>
+                    </div>
+                    {nameKanjiMei && /[A-Za-z]/.test(nameKanjiMei) && (
+                      <div className="text-[11px] font-bold text-red-600 mt-0.5">
+                        全角で入力してください
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <p className="text-xs text-neutral-600">
-                  ※ 改札機でのIC・QR認証に使用するため、ローマ字（大文字）で搭乗者名を入力してください。
-                </p>
+                {/* Row 2: Katakana (Marks 33, 34) */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-black text-neutral-900">セイ（カナ）</span>
+                      <span className="px-1.5 py-0.2 bg-neutral-200 text-neutral-700 font-bold text-[10px] rounded">
+                        全角カナ
+                      </span>
+                    </div>
+                    <div
+                      id="input-name-kana-sei"
+                      data-el="name_kana_sei"
+                      onClick={() => handleClick(33)}
+                      className="px-3 py-1.5 bg-white border-2 border-neutral-400 rounded flex items-center justify-between min-h-[34px]"
+                    >
+                      <span className="font-mono-clean text-sm font-black text-neutral-950">
+                        {nameKanaSei || (
+                          <span className="text-neutral-400 font-normal text-xs">例）ヤマダ</span>
+                        )}
+                      </span>
+                      <span className="text-[10px] font-bold text-neutral-500">
+                        {nameKanaSei ? '入力済' : '未入力'}
+                      </span>
+                    </div>
+                    {nameKanaSei && !/^[ァ-ヶー　 ]+$/.test(nameKanaSei) && (
+                      <div className="text-[11px] font-bold text-red-600 mt-0.5">
+                        全角カタカナで入力してください
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-black text-neutral-900">メイ（カナ）</span>
+                      <span className="px-1.5 py-0.2 bg-neutral-200 text-neutral-700 font-bold text-[10px] rounded">
+                        全角カナ
+                      </span>
+                    </div>
+                    <div
+                      id="input-name-kana-mei"
+                      data-el="name_kana_mei"
+                      onClick={() => handleClick(34)}
+                      className="px-3 py-1.5 bg-white border-2 border-neutral-400 rounded flex items-center justify-between min-h-[34px]"
+                    >
+                      <span className="font-mono-clean text-sm font-black text-neutral-950">
+                        {nameKanaMei || (
+                          <span className="text-neutral-400 font-normal text-xs">例）タロウ</span>
+                        )}
+                      </span>
+                      <span className="text-[10px] font-bold text-neutral-500">
+                        {nameKanaMei ? '入力済' : '未入力'}
+                      </span>
+                    </div>
+                    {nameKanaMei && !/^[ァ-ヶー　 ]+$/.test(nameKanaMei) && (
+                      <div className="text-[11px] font-bold text-red-600 mt-0.5">
+                        全角カタカナで入力してください
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Row 3: Romaji (Marks 17 target, 35 decoy) */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-1.5 py-0.2 bg-red-600 text-white font-black text-[10px] rounded">
+                          必須
+                        </span>
+                        <span className="text-xs font-black text-neutral-900">姓（ローマ字）</span>
+                      </div>
+                      <span className="px-1.5 py-0.2 bg-emerald-100 text-emerald-900 font-bold text-[10px] rounded">
+                        IC・QR改札認証用
+                      </span>
+                    </div>
+                    <div
+                      id="input-passenger-name"
+                      data-el="passenger_name"
+                      onClick={() => handleClick(17)}
+                      className={`px-3 py-1.5 border-2 rounded transition-all flex items-center justify-between min-h-[36px] ${
+                        passengerName
+                          ? 'bg-amber-100 border-emerald-700 ring-2 ring-amber-300'
+                          : 'bg-white border-emerald-700'
+                      }`}
+                    >
+                      <span className="font-mono-clean text-sm font-black tracking-wider text-neutral-950">
+                        {passengerName || (
+                          <span className="text-neutral-400 font-normal text-xs tracking-normal">
+                            半角英字
+                          </span>
+                        )}
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-black ${
+                          passengerName
+                            ? 'bg-emerald-700 text-amber-200'
+                            : 'bg-neutral-200 text-neutral-600'
+                        }`}
+                      >
+                        {passengerName ? '✓ 入力済' : '未入力'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-black text-neutral-900">名（ローマ字）</span>
+                      <span className="px-1.5 py-0.2 bg-neutral-200 text-neutral-700 font-bold text-[10px] rounded">
+                        任意
+                      </span>
+                    </div>
+                    <div
+                      id="input-name-romaji-mei"
+                      data-el="name_romaji_mei"
+                      onClick={() => handleClick(35)}
+                      className="px-3 py-1.5 bg-white border-2 border-neutral-400 rounded flex items-center justify-between min-h-[36px]"
+                    >
+                      <span className="font-mono-clean text-sm font-black tracking-wider text-neutral-950">
+                        {givenNameRomaji || (
+                          <span className="text-neutral-400 font-normal text-xs tracking-normal">
+                            半角英字
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-[10px] font-bold text-neutral-500">
+                        {givenNameRomaji ? '入力済' : '未入力'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Row 4: Phone Number (Mark 36) */}
+                <div className="grid grid-cols-2 gap-4 pt-1 border-t border-neutral-300">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-black text-neutral-900">
+                        電話番号（ハイフンなし）
+                      </span>
+                      <span className="px-1.5 py-0.2 bg-neutral-200 text-neutral-700 font-bold text-[10px] rounded">
+                        緊急連絡先
+                      </span>
+                    </div>
+                    <div
+                      id="input-phone"
+                      data-el="phone"
+                      onClick={() => handleClick(36)}
+                      className="px-3 py-1.5 bg-white border-2 border-neutral-400 rounded flex items-center justify-between min-h-[34px]"
+                    >
+                      <span className="font-mono-clean text-sm font-black text-neutral-950">
+                        {phoneVal || (
+                          <span className="text-neutral-400 font-normal text-xs">
+                            例）09012345678
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-[10px] font-bold text-neutral-500">
+                        {phoneVal ? '入力済' : '未入力'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-end pb-1">
+                    <p className="text-[11px] text-neutral-600">
+                      ※ 改札機でのIC・QR認証には3段目左の「姓（ローマ字）」が必要です。
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -10,7 +10,7 @@ test('smoke: open newspaper cover, dispatch 2 lines, reload, and verify LINE 03 
   await expect(page.locator('#telegram-ledger')).toContainText('LINE 01:');
   await expect(page.locator('[data-testid="newspaper-left-page"] #input-passenger-name')).toBeVisible();
 
-  await input.fill('type TANAKA in the passenger name box');
+  await input.fill('Type TANAKA in the romaji box on the left');
   await input.press('Enter');
 
   await expect(page.locator('#active-line-label')).toContainText('LINE 03');
