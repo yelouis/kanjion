@@ -205,7 +205,7 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       // 9. Shareable Wordle-Style Result & Clipboard Copy
       // -----------------------------------------------------------------------
       expect(container.querySelector('#share-summary-txt')).toHaveTextContent('100% × 1.2x = 120 PTS');
-      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩🟩🟩 (5/6 Telegrams Sent)');
+      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🎯🎯🎯🎯🎯🟩🟩🟩🟩🟩');
 
       const copyBtn = screen.getByRole('button', { name: /Copy Case Clipping/i });
       await act(async () => {
@@ -214,7 +214,7 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
 
       expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1);
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-        'KANJION #001 🇯🇵 — 100% × 1.2x = 120 PTS\n🟩🟩🟩🟩🟩 (5/6 Telegrams Sent)\nhttps://kanjion-game.web.app'
+        'KANJION #001 🇯🇵 — 100% × 1.2x = 120 PTS\n🎯🎯🎯🎯🎯\n🟩🟩🟩🟩🟩\nhttps://kanjion-game.web.app'
       );
       expect(screen.getByText(/✓ DISPATCH CLIPPING COPIED!/i)).toBeInTheDocument();
 
@@ -318,7 +318,7 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       // Multiplier is strictly 1.0x (0 unused lines)
       // Closeness = 100%, Multiplier = 1.0x, Final = 100 PTS
       expect(container.querySelector('#final-score-banner')).toHaveTextContent('100% × 1.0x = 100 PTS');
-      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩🟩🟩 (6/6 Telegrams Sent)');
+      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩🟩🟩');
     });
   });
 

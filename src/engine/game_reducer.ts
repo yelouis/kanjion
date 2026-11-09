@@ -12,7 +12,7 @@ import { ExhibitDefinition } from '../types/puzzle';
 import { ExhibitDef, FieldValue, PuzzleData, PuzzleState } from '../types/puzzle_data';
 import { CASE_001_PUZZLE } from '../data/puzzles/case_001/puzzle';
 import { applyDecision, createInitialPuzzleState } from './puzzle_engine';
-import { calculateScoreReport } from './scoring';
+import { calculateScoreReport, computeLineOutcome } from './scoring';
 
 /**
  * Union of all dispatchable actions accepted by gameReducer.
@@ -202,6 +202,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ? `${summary} (backup agent)`
         : summary;
 
+      const outcome = computeLineOutcome(exhibits, state.puzzleState, nextPuzzleState);
+
       const updatedTelegrams: TelegramLine[] = state.telegrams.map((tel, idx) => {
         if (idx === activeIdx) {
           return {
@@ -212,6 +214,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             actionSummary: finalSummary,
             exhibitRedactedStatus: 'SEALED',
             agentAction,
+            outcome,
           };
         }
         return tel;
@@ -226,7 +229,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
       if (isFinalLine) {
         nextCaseStatus = 'closed';
-        scoreReport = calculateScoreReport(exhibits, nextPuzzleState, 6, state.caseNumber);
+        scoreReport = calculateScoreReport(exhibits, nextPuzzleState, 6, state.caseNumber, {
+          telegrams: updatedTelegrams,
+        });
         if (state.mode === 'official' && state.officialResult === null) {
           officialResult = scoreReport;
         }
@@ -261,7 +266,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         exhibits,
         state.puzzleState,
         linesUsed,
-        state.caseNumber
+        state.caseNumber,
+        { telegrams: state.telegrams }
       );
       const officialResult =
         state.mode === 'official' && state.officialResult === null

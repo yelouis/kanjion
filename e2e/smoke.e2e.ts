@@ -73,3 +73,43 @@ test('phone zoom: 2x stage zoom without horizontal page scroll and cursor center
   await expect(rightPage.getByRole('button', { name: '↙ Fit' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(375);
 });
+
+test('struggle share card: dispatch green, click back, Click the blue card on the right, close case -> line 2 of clipboard equals 🔙🔙🎯', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    (window as unknown as { __copiedText?: string }).__copiedText = '';
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async (text: string) => {
+          (window as unknown as { __copiedText?: string }).__copiedText = text;
+        },
+      },
+    });
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: /OPEN TODAY'S NEWSPAPER/i }).click();
+
+  const input = page.locator('#telegram-input');
+  await input.fill('green');
+  await input.press('Enter');
+  await expect(page.locator('#active-line-label')).toContainText('LINE 02');
+
+  await input.fill('click back');
+  await input.press('Enter');
+  await expect(page.locator('#active-line-label')).toContainText('LINE 03');
+
+  await input.fill('Click the blue card on the right');
+  await input.press('Enter');
+  await expect(page.locator('#active-line-label')).toContainText('LINE 04');
+
+  await page.getByRole('button', { name: /CLOSE CASE FILE/i }).click();
+  await expect(page.locator('#unsealed-exhibits-panel')).toBeVisible();
+
+  await page.locator('#btn-copy-clipping').click();
+  const copied = await page.evaluate(() => (window as unknown as { __copiedText?: string }).__copiedText ?? '');
+  const lines = copied.split('\n');
+  expect(lines[1]).toBe('🔙🔙🎯');
+});

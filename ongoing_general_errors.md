@@ -168,10 +168,9 @@ Your selection: A
 
 | ID | Severity | Finding | Where | Fixed by |
 |---|---|---|---|---|
-| F-26 | Low | The share card and report show results, not the struggle. | `src/engine/scoring.ts:175-179`; `src/components/ExhibitsPanel.tsx` | Item 8 |
 | F-27 | Info | The live site still serves the pre-fix bundle `assets/index-DWnC1R4E.js` (checked 2026-11-08), so players still see the old giveaways. | — | OA-5 (owner) |
 
-Reproduce F-21 and F-22 with `npx tsx scripts/difficulty_probe.mts`. Verify the old F-1 to F-5 with `npx vitest run test/exploits.test.ts`.
+Verify F-21 and F-22 with `npx vitest run test/difficulty.test.ts` and F-1 to F-5 with `npx vitest run test/exploits.test.ts`.
 
 ---
 
@@ -179,6 +178,7 @@ Reproduce F-21 and F-22 with `npx tsx scripts/difficulty_probe.mts`. Verify the 
 _(none yet — implementors add entries here as options with a `Your selection:` line)_
 
 ## Resolved
+- F-26 — resolved by item 8 (added per-line outcome emojis `🎯`/`💥`/`🔙`/`🤡`/`💤` revealed only after case closure, 4-line share card with outcome and exhibit rows, `You vs Replay` comparison notes on unverified exhibits, `Best blunder` callout in `ExhibitsPanel.tsx`, and ported `scripts/difficulty_probe.mts` into `test/difficulty.test.ts`)
 - F-25 — resolved by item 7 (ran guardrails and bare-word rule before cloud tier in `resolveLine`, updated `responseSchema` and `CLOUD_SYSTEM_INSTRUCTION` to return `candidates: number[]`, added `row`/`column` to mark metadata, and applied app-side reading-order selection, tie thoughts, and distraction clicks on empty/`CONFUSED` responses)
 - F-21 — resolved by items 1 and 3–6 (added realistic portal clutter across Pages 01–04 — livery-coloured route cards, service tabs, campaign banners, a 3×2 Kanji/Katakana/Romaji name grid, a 5-train timetable with multiple green buttons and `¥13,870` cells, and side-by-side blue `内容を確認する` / `予約を確定する ▶` buttons — reducing `scripts/difficulty_probe.mts` lazy-prompt hits from 15/28 to 0/28 and the laziest run from 120 PTS to 0%)
 - F-24 — resolved by items 1 and 3 (added multi-alias scoring up to +70, multi-position scoring up to +40, generic ordinal/numeric rows and columns, role-based banner/tab/link scoring, `orange` colour synonyms, and realistic MV-01 service tabs, campaign banner, and livery-coloured route cards)

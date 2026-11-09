@@ -450,7 +450,7 @@ describe('Adversarial Challenge Vector 5: Automatic Case Closure on Line 06 Exec
     expect(state.scoreReport?.linesUsed).toBe(6);
     expect(state.scoreReport?.unusedLines).toBe(0);
     expect(state.scoreReport?.multiplier).toBe(1.0);
-    expect(state.scoreReport?.shareableClipping).toContain('(6/6 Telegrams Sent)');
+    expect(state.scoreReport?.shareableClipping.split('\n')).toHaveLength(4);
     expect(state.scoreReport?.shareableClipping).toContain('× 1.0x =');
   });
 

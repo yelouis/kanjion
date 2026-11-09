@@ -17,6 +17,11 @@ import { FieldValue, PuzzleState } from './puzzle_data';
 export type StampStatus = 'VERIFIED' | 'CONTAMINATED' | 'MISSED';
 
 /**
+ * Per-line outcome emoji revealed only after the case is closed.
+ */
+export type LineOutcome = '🎯' | '💥' | '🔙' | '🤡' | '💤';
+
+/**
  * Evaluated exhibit badge rendered on the declassified Polaroid exhibit card.
  */
 export interface ExhibitEvaluation {
@@ -38,6 +43,8 @@ export interface ExhibitEvaluation {
   awardedPoints?: number;
   /** Optional note explaining why this exhibit was contaminated. */
   contaminatedNote?: string;
+  /** Optional You vs Replay comparison line rendered when status !== 'VERIFIED'. */
+  compareText?: string;
 }
 
 /**
@@ -64,8 +71,12 @@ export interface ScoreReport {
   exhibitEvaluations: ExhibitEvaluation[];
   /** Shareable plaintext scorecard formatted for clipboard copy. */
   shareableClipping: string;
-  /** Visual emoji row (e.g. '🟩🟩🟩🟩⬜ (3/6 Telegrams Sent)'). */
+  /** Visual emoji row (e.g. '🟩🟩🟩🟩⬜'). */
   emojiRow?: string;
+  /** Per-line outcome emoji row (e.g. '🎯🎯🎯🎯🎯'). */
+  outcomeRow?: string;
+  /** First blunder line formatted as 'Best blunder — LINE {nn}: "{line text}" → {thought}'. */
+  bestBlunder?: string | null;
 }
 
 /**
@@ -89,6 +100,8 @@ export interface TelegramLine {
   exhibitRedactedStatus: 'SEALED' | 'UNSEALED';
   /** Full executed action object associated with this line. */
   agentAction?: AgentAction;
+  /** Outcome emoji computed on dispatch, rendered ONLY after case closure. */
+  outcome?: LineOutcome;
 }
 
 /**

@@ -49,7 +49,7 @@ describe('Item 2: Case #001 everywhere, no hidden test text, honest share card',
     });
 
     expect(writeTextMock).toHaveBeenCalledWith(
-      'KANJION #001 🇯🇵 — 100% × 1.2x = 120 PTS\n🟩🟩🟩🟩🟩 (5/6 Telegrams Sent)\nhttps://kanjion-game.web.app'
+      'KANJION #001 🇯🇵 — 100% × 1.2x = 120 PTS\n🎯🎯🎯🎯🎯\n🟩🟩🟩🟩🟩\nhttps://kanjion-game.web.app'
     );
   });
 });

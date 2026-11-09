@@ -90,6 +90,14 @@ export const DispatchPad: React.FC<DispatchPadProps> = ({
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                   <span className="text-dossier-ink">
+                    {caseStatus === 'closed' && lineData.outcome && (
+                      <span
+                        data-testid={`line-${lineStr}-outcome`}
+                        className="mr-1.5 select-none"
+                      >
+                        {lineData.outcome}
+                      </span>
+                    )}
                     <strong className="font-black mr-1.5">LINE {lineStr}:</strong> &quot;{lineData.text}&quot;
                   </span>
                   <span className="text-emerald-900 font-bold text-xs">

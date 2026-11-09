@@ -182,6 +182,7 @@ export const CASE_001_EXHIBITS: ExhibitDefinition[] = CASE_001_PUZZLE.exhibits.m
   title: ex.title,
   weight: ex.weight,
   criteria: ex.criteria,
+  compare: ex.compare,
   evaluate: (state: Record<string, FieldValue>) => {
     const res = evaluateExhibitDef(ex, state, idx);
     return {

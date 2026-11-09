@@ -1,4 +1,4 @@
-# Kanjion — Agent Execution Guide · Active Build: Frustratingly Funny · 2026-11-08
+# Kanjion — Agent Execution Guide · Queue Complete: Frustratingly Funny · 2026-11-08
 
 You are an implementor agent with no memory of this project. This file is your single entry point. Read it top to bottom before you touch code. Then work the queue in §2 one item at a time, using **THE LOOP** at the end.
 
@@ -76,12 +76,12 @@ You are an implementor agent with no memory of this project. This file is your s
 
 | Gate | Command | Result on 2026-11-08 |
 |---|---|---|
-| Unit/component | `npm test` | **424 passed / 27 files** (≈ 22 s) |
-| Typecheck + build | `npm run build` | Clean. `dist/assets/index-*.js` 307.07 kB, **92.17 kB gzip**. |
+| Unit/component | `npm test` | **428 passed / 27 files** (≈ 22 s) |
+| Typecheck + build | `npm run build` | Clean. `dist/assets/index-*.js` 310.38 kB, **93.27 kB gzip**. |
 | Compiler | `npx tsx tools/compile_puzzle.ts --case 001 --validate` | Exit 0. |
-| E2E | `npm run test:e2e` | **2 passed** (`desktop-chromium`, `mobile-chromium`). |
+| E2E | `npm run test:e2e` | **3 passed** (`desktop-chromium`, `mobile-chromium`). |
 | Lint | — | No lint script exists. |
-| Difficulty probe | `npx tsx scripts/difficulty_probe.mts` | **0 of 28** lazy prompts reproduce the replay step, and the laziest run `["green","name tanaka","sale","draw a dragon","blue"]` scores **0 %**. |
+| Difficulty probe | `npx vitest run test/difficulty.test.ts` | **0 of 28** lazy prompts reproduce the replay step, and the laziest run `["green","name tanaka","sale","draw a dragon","blue"]` scores **0 %** (`scripts/difficulty_probe.mts` ported and deleted in item 8). |
 | Live site | `curl -s https://kanjion-game.web.app/` | Still serves the pre-fix bundle `assets/index-DWnC1R4E.js` (F-27, owner action OA-5). |
 
 ---
@@ -662,10 +662,10 @@ Also delivered: the newspaper UI, the dispatch pad, the scoring formulas, the st
 
 ## Definition of Done
 
-- [ ] Items 1–8 are committed, each with its ★ tests passing.
-- [ ] `npm test`, `npm run build` and `npm run test:e2e` are green; the main JS is ≤ 120 kB gzip.
-- [ ] `test/difficulty.test.ts`, `test/intern.test.ts`, `test/exploits.test.ts`, `test/solvability.test.ts` and `test/replay.test.ts` are green. No lazy prompt from items 3–6 reproduces its replay step, and the five answer-key lines score 100 % with pinning off.
-- [ ] F-21 to F-26 are under Resolved. F-27 stays open for the owner (OA-5).
-- [ ] `concepts_brief.md` matches the shipped behavior.
-- [ ] §1 shows the final numbers, and the title says **Queue Complete**.
-- [ ] **Queue empty → stop. Don't invent work.** The only legitimate triggers for more work are a message from the owner, an answered Blocked entry, or a DEF-n trigger firing.
+- [x] Items 1–8 are committed, each with its ★ tests passing.
+- [x] `npm test`, `npm run build` and `npm run test:e2e` are green; the main JS is ≤ 120 kB gzip.
+- [x] `test/difficulty.test.ts`, `test/intern.test.ts`, `test/exploits.test.ts`, `test/solvability.test.ts` and `test/replay.test.ts` are green. No lazy prompt from items 3–6 reproduces its replay step, and the five answer-key lines score 100 % with pinning off.
+- [x] F-21 to F-26 are under Resolved. F-27 stays open for the owner (OA-5).
+- [x] `concepts_brief.md` matches the shipped behavior.
+- [x] §1 shows the final numbers, and the title says **Queue Complete**.
+- [x] **Queue empty → stop. Don't invent work.** The only legitimate triggers for more work are a message from the owner, an answered Blocked entry, or a DEF-n trigger firing.

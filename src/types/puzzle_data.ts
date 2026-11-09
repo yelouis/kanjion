@@ -24,10 +24,16 @@ export type Predicate =
   | { field: string; eq?: FieldValue; nonEmpty?: true }
   | { all: Predicate[] }
   | { any: Predicate[] };
+export interface ExhibitCompareItem {
+  field: string;
+  format?: 'yen' | 'stroke' | 'bool';
+  values?: Record<string, string>;
+}
 export interface ExhibitDef {
   id: 'A' | 'B' | 'C' | 'D' | 'E';
   title: string; weight: number; criteria: string;
   verified: Predicate; contaminated?: Predicate; contaminatedNote?: string;
+  compare?: ExhibitCompareItem[];
 }
 export interface ReplayStep { pageId: string; key: string; action: ActionKind; text?: string; stroke?: string }
 export interface PuzzleData {

@@ -187,7 +187,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       expect(container.querySelector('#exhibit-e-stamp')).toHaveTextContent('[MISSED ✗ +0%]');
 
       // Verify Shareable Wordle emoji row
-      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩⬜⬜ (3/6 Telegrams Sent)');
+      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🎯🎯🎯🟩🟩🟩⬜⬜');
     });
 
     it('empirically verifies golden path progression in top-level <App /> starting at Line 01', async () => {
@@ -221,7 +221,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       });
 
       expect(container.querySelector('#final-score-banner')).toHaveTextContent('100% × 1.2x = 120 PTS');
-      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩🟩🟩 (5/6 Telegrams Sent)');
+      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🎯🎯🎯🎯🎯🟩🟩🟩🟩🟩');
     });
   });
 
@@ -328,7 +328,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       // Closeness is 25 (A) + 20 (B) + 20 (C) + 0 (D missed) + 0 (E missed) = 65%
       // 5 lines used, 1 unused -> 1.2x multiplier -> round(65 * 1.2) = 78 PTS
       expect(container.querySelector('#final-score-banner')).toHaveTextContent('65% × 1.2x = 78 PTS');
-      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩⬜⬜ (5/6 Telegrams Sent)');
+      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩⬜⬜');
     });
   });
 
@@ -421,7 +421,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
 
       // Verification: Score is 100% closeness x 1.0x multiplier = 100 PTS
       expect(container.querySelector('#final-score-banner')).toHaveTextContent('100% × 1.0x = 100 PTS');
-      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩🟩🟩 (6/6 Telegrams Sent)');
+      expect(container.querySelector('#share-emoji-row')).toHaveTextContent('🟩🟩🟩🟩🟩');
       expect(container.querySelector('#share-summary-txt')).toHaveTextContent('100% × 1.0x = 100 PTS');
     });
   });
@@ -455,16 +455,19 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
       // 2. Exact Wordle-style formatting verification
       const copiedPayload = vi.mocked(navigator.clipboard.writeText).mock.calls[0][0];
       const lines = copiedPayload.split('\n');
-      expect(lines.length).toBe(3);
+      expect(lines.length).toBe(4);
 
       // Line 1: KANJION #001 🇯🇵 — Closeness% × Mult = Score PTS
       expect(lines[0]).toMatch(/^KANJION #001 🇯🇵 — \d+% × \d+\.\d+x = \d+ PTS$/);
 
-      // Line 2: 5-symbol emoji matrix + (X/6 Telegrams Sent)
-      expect(lines[1]).toMatch(/^[🟩🟥⬜]{5} \(\d\/6 Telegrams Sent\)$/u);
+      // Line 2: outcome emojis per dispatched line
+      expect(lines[1]).toMatch(/^[🎯💥🔙🤡💤]*$/u);
 
-      // Line 3: Canonical forensic URL
-      expect(lines[2]).toBe('https://kanjion-game.web.app');
+      // Line 3: 5-symbol exhibit emoji matrix
+      expect(lines[2]).toMatch(/^[🟩🟥⬜]{5}$/u);
+
+      // Line 4: Canonical forensic URL
+      expect(lines[3]).toBe('https://kanjion-game.web.app');
 
       // 3. Feedback reverts after 2500ms
       act(() => {

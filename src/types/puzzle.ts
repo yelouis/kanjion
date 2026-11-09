@@ -7,7 +7,7 @@
 
 import { GridCoordinate, GridColumn, GridRow, AgentActionType } from './engine';
 import { StampStatus } from './game';
-import { FieldValue } from './puzzle_data';
+import { ExhibitCompareItem, FieldValue } from './puzzle_data';
 
 /**
  * Bounding box coordinates within the fixed 1024x768 stage.
@@ -132,6 +132,8 @@ export interface ExhibitDefinition {
   weight: number;
   /** Descriptive evaluation criteria. */
   criteria: string;
+  /** Optional comparison fields for You vs Replay note when unverified. */
+  compare?: ExhibitCompareItem[];
   /**
    * Deterministic evaluation function checking final state.
    */

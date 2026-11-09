@@ -59,10 +59,12 @@ export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
     finalScore,
     exhibitEvaluations,
     shareableClipping,
+    bestBlunder,
   } = scoreReport;
 
   const effectiveClipping = (officialResult?.shareableClipping ?? shareableClipping) || '';
-  const [shareLine1 = '', shareLine2 = ''] = effectiveClipping.split('\n');
+  const [shareLine1 = '', shareLine2 = '', shareLine3 = ''] = effectiveClipping.split('\n');
+  const hasThirdPreviewLine = Boolean(shareLine3 && !shareLine3.startsWith('http'));
 
   const handleCopy = () => {
     if (onCopyClipping) {
@@ -155,11 +157,30 @@ export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
                     {ex.contaminatedNote}
                   </div>
                 )}
+                {ex.status !== 'VERIFIED' && ex.compareText && (
+                  <div
+                    data-testid={`exhibit-${letterCode.toLowerCase()}-compare`}
+                    className="text-[11px] text-stone-700 mt-1"
+                  >
+                    {ex.compareText}
+                  </div>
+                )}
               </div>
             </div>
           );
         })}
       </div>
+
+      {/* Best blunder quote when any line outcome was 🤡, 🔙 or 💥 */}
+      {bestBlunder && (
+        <div
+          id="best-blunder-banner"
+          data-testid="best-blunder-banner"
+          className="mb-4 p-3 bg-stone-100 border-2 border-dossier-ink text-xs font-mono-clean text-dossier-ink"
+        >
+          {bestBlunder}
+        </div>
+      )}
 
       {/* Answer Key when the player did not pass all 5 exhibits */}
       {closenessScore < 100 && (
@@ -195,7 +216,8 @@ export const ExhibitsPanel: React.FC<ExhibitsPanelProps> = ({
             {shareLine1}
           </div>
           <div className="text-base tracking-widest my-1 select-all" id="share-emoji-row">
-            {shareLine2}
+            <div id="share-outcome-row">{shareLine2}</div>
+            {hasThirdPreviewLine && <div id="share-exhibit-row">{shareLine3}</div>}
           </div>
           <div className="mt-1.5">
             <a

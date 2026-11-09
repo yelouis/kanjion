@@ -452,10 +452,11 @@ describe('Adversarial Challenge 5: Exhibit Stamp Rotation Mathematics & Scoring 
 
     // Verify shareable clipping lines
     const lines = report.shareableClipping.split('\n');
-    expect(lines).toHaveLength(3);
+    expect(lines).toHaveLength(4);
     expect(lines[0]).toMatch(/^KANJION #001 🇯🇵 — \d+% × \d\.\dx = \d+ PTS$/);
-    expect(lines[1]).toMatch(/^[🟩🟥⬜]{5} \(3\/6 Telegrams Sent\)$/u);
-    expect(lines[2]).toBe('https://kanjion-game.web.app');
+    expect(lines[1]).toMatch(/^[🎯💥🔙🤡💤]{3}$/u);
+    expect(lines[2]).toMatch(/^[🟩🟥⬜]{5}$/u);
+    expect(lines[3]).toBe('https://kanjion-game.web.app');
 
     render(
       <ExhibitsPanel

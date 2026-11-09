@@ -950,6 +950,17 @@ export const CASE_001_PUZZLE: PuzzleData = {
       weight: 25,
       criteria: 'Selected Tokaido Shinkansen route from Tokyo to Shin-Osaka on Page 1.',
       verified: { field: 'selectedRoute', eq: 'tokyo_osaka' },
+      compare: [
+        {
+          field: 'selectedRoute',
+          values: {
+            tokyo_osaka: 'Tokaido',
+            tohoku: 'Tohoku',
+            hokuriku: 'Hokuriku',
+            none: 'no route',
+          },
+        },
+      ],
     },
     {
       id: 'B',
@@ -957,6 +968,14 @@ export const CASE_001_PUZZLE: PuzzleData = {
       weight: 20,
       criteria: 'Typed TANAKA into the romaji family-name box (third row, left) on page 02.',
       verified: { field: 'passengerName', eq: 'TANAKA' },
+      compare: [
+        {
+          field: 'passengerName',
+          values: {
+            '': '(blank)',
+          },
+        },
+      ],
     },
     {
       id: 'C',
@@ -970,6 +989,19 @@ export const CASE_001_PUZZLE: PuzzleData = {
           { field: 'fare', eq: 13870 },
         ],
       },
+      compare: [
+        { field: 'trainName' },
+        {
+          field: 'seatClass',
+          values: {
+            ordinary_free: 'free seat',
+            ordinary_reserved: 'reserved',
+            green_car: 'green car',
+            none: 'no seat',
+          },
+        },
+        { field: 'fare', format: 'yen' },
+      ],
     },
     {
       id: 'D',
@@ -977,6 +1009,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
       weight: 15,
       criteria: 'Signed the pad with the same drawing as the replay (a cat).',
       verified: { field: 'signatureStroke', eq: 'SHAPE:cat' },
+      compare: [{ field: 'signatureStroke', format: 'stroke' }],
     },
     {
       id: 'E',
@@ -996,6 +1029,24 @@ export const CASE_001_PUZZLE: PuzzleData = {
         ],
       },
       contaminatedNote: '¥2,400 travel insurance was attached',
+      compare: [
+        {
+          field: 'finalConfirmed',
+          format: 'bool',
+          values: {
+            true: 'confirmed',
+            false: 'not confirmed',
+          },
+        },
+        {
+          field: 'confirmedWithInsurance',
+          format: 'bool',
+          values: {
+            true: '+ ¥2,400 insurance',
+            false: 'no add-ons',
+          },
+        },
+      ],
     },
   ],
   replay: [

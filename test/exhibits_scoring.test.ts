@@ -227,7 +227,7 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
       });
 
       expect(clipping).toBe(
-        'KANJION #001 🇯🇵 — 100% × 1.4x = 140 PTS\n🟩🟩🟩🟩🟩 (4/6 Telegrams Sent)\nhttps://kanjion-game.web.app'
+        'KANJION #001 🇯🇵 — 100% × 1.4x = 140 PTS\n🎯🎯🎯🎯\n🟩🟩🟩🟩🟩\nhttps://kanjion-game.web.app'
       );
     });
   });
@@ -256,6 +256,116 @@ describe('Scoring & Exhibit Evaluation Engine', () => {
       expect(report.exhibitEvaluations.length).toBe(5);
       expect(report.emojiRow).toBe('🟩🟩🟩🟩🟩');
       expect(report.shareableClipping).toContain('100% × 1.4x = 140 PTS');
+    });
+  });
+
+  describe('Item 8: Show the struggle — outcomes, 4-line share card, You vs Replay, Best blunder (F-26; D-14)', () => {
+    it('★ the answer-key run produces outcomes 🎯🎯🎯🎯🎯 and exact 4-line clipboard text', async () => {
+      const { createInitialGameState, gameReducer } = await import('../src/engine/game_reducer');
+      const { resolveLine, decisionToAgentAction } = await import('../src/engine/agent');
+      const { CASE_001_PUZZLE, CASE_001_GENERATED_MANIFEST } = await import('../src/data/puzzles/case_001');
+
+      let state = createInitialGameState();
+      for (const instruction of CASE_001_PUZZLE.answerKey) {
+        const dec = await resolveLine({
+          puzzle: CASE_001_PUZZLE,
+          manifest: CASE_001_GENERATED_MANIFEST,
+          state: state.puzzleState,
+          instruction,
+        });
+        const action = decisionToAgentAction(dec, CASE_001_PUZZLE, CASE_001_GENERATED_MANIFEST);
+        state = gameReducer(state, {
+          type: 'APPLY_AGENT_ACTION',
+          payload: { action, instruction, puzzle: CASE_001_PUZZLE },
+        });
+      }
+
+      const outcomes = state.telegrams
+        .filter((t) => t.submitted)
+        .map((t) => (t as unknown as { outcome?: string }).outcome)
+        .join('');
+      expect(outcomes).toBe('🎯🎯🎯🎯🎯');
+
+      state = gameReducer(state, { type: 'CLOSE_CASE', payload: { puzzle: CASE_001_PUZZLE } });
+      expect(state.scoreReport?.shareableClipping).toBe(
+        'KANJION #001 🇯🇵 — 100% × 1.2x = 120 PTS\n🎯🎯🎯🎯🎯\n🟩🟩🟩🟩🟩\nhttps://kanjion-game.web.app'
+      );
+    });
+
+    it('★ a run starting with "green" on MV-01 produces a first outcome of 🔙 (campaign page) and records Best blunder', async () => {
+      const { createInitialGameState, gameReducer } = await import('../src/engine/game_reducer');
+      const { resolveLine, decisionToAgentAction } = await import('../src/engine/agent');
+      const { CASE_001_PUZZLE, CASE_001_GENERATED_MANIFEST } = await import('../src/data/puzzles/case_001');
+
+      let state = createInitialGameState();
+      for (const instruction of ['green', 'click back', 'Click the blue card on the right']) {
+        const dec = await resolveLine({
+          puzzle: CASE_001_PUZZLE,
+          manifest: CASE_001_GENERATED_MANIFEST,
+          state: state.puzzleState,
+          instruction,
+        });
+        const action = decisionToAgentAction(dec, CASE_001_PUZZLE, CASE_001_GENERATED_MANIFEST);
+        state = gameReducer(state, {
+          type: 'APPLY_AGENT_ACTION',
+          payload: { action, instruction, puzzle: CASE_001_PUZZLE },
+        });
+      }
+
+      const outcomes = state.telegrams
+        .filter((t) => t.submitted)
+        .map((t) => (t as unknown as { outcome?: string }).outcome)
+        .join('');
+      expect(outcomes).toBe('🔙🔙🎯');
+
+      state = gameReducer(state, { type: 'CLOSE_CASE', payload: { puzzle: CASE_001_PUZZLE } });
+      expect((state.scoreReport as unknown as { bestBlunder?: string })?.bestBlunder).toMatch(
+        /^Best blunder — LINE 01: "green" → 💭/
+      );
+    });
+
+    it('★ during play, no outcome emoji appears anywhere in the DOM; after closing, they do, along with You vs Replay for D after "draw a dragon"', async () => {
+      const React = await import('react');
+      const { render, screen, fireEvent, act } = await import('@testing-library/react');
+      const { App } = await import('../src/App');
+
+      const { container } = render(
+        React.createElement(App, {
+          config: { startOnCover: false, animationScale: 0, replayAutoplay: false },
+        })
+      );
+
+      const steps = [
+        'Click the blue card on the right',
+        'Type TANAKA in the romaji box on the left',
+        'Wait for the glow, then click the clover',
+        'draw a dragon',
+      ];
+
+      for (let i = 0; i < steps.length; i++) {
+        const inputEl = container.querySelector('#telegram-input') as HTMLInputElement;
+        fireEvent.change(inputEl, { target: { value: steps[i] } });
+        await act(async () => {
+          fireEvent.click(screen.getByRole('button', { name: new RegExp(`DISPATCH LINE 0${i + 1}`, 'i') }));
+        });
+      }
+
+      // During play, no outcome emoji appears anywhere in the DOM
+      const activeText = container.textContent ?? '';
+      for (const emoji of ['🎯', '💥', '🔙', '🤡', '💤']) {
+        expect(activeText).not.toContain(emoji);
+      }
+
+      // Close case
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /CLOSE CASE FILE/i }));
+      });
+
+      const closedText = container.textContent ?? '';
+      expect(closedText).toContain('🎯');
+      expect(closedText).toContain('🤡');
+      expect(closedText).toContain('You: dragon (attempt) · Replay: cat');
+      expect(closedText).toContain('Best blunder — LINE 04: "draw a dragon" →');
     });
   });
 });

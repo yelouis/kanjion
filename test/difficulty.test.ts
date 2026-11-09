@@ -262,4 +262,79 @@ describe('Item 3–6: Difficulty & Realistic Clutter (F-21, F-24; D-8)', () => {
       expect(next2.fields.finalConfirmed).toBe(true);
     });
   });
+
+  describe('Full difficulty probe battery (ported from scripts/difficulty_probe.mts)', () => {
+    it('★ 0 of 28 lazy prompts reproduce their replay step, and the laziest 5-line run scores 0%', async () => {
+      const { resolveLine } = await import('../src/engine/agent');
+      const { createInitialPuzzleState, evaluateExhibits } = await import('../src/engine/puzzle_engine');
+
+      const states: PuzzleState[] = [];
+      let s = createInitialPuzzleState(CASE_001_PUZZLE);
+      for (const step of CASE_001_PUZZLE.replay) {
+        states.push(s);
+        const page = CASE_001_PUZZLE.pages.find((p) => p.id === step.pageId)!;
+        const el = page.elements.find((e) => e.key === step.key)!;
+        s = applyDecision(CASE_001_PUZZLE, s, {
+          action: step.action,
+          pageId: step.pageId,
+          mark: el.mark,
+          text: step.text,
+          stroke: step.stroke,
+        }).next;
+      }
+
+      const battery: string[][] = [
+        ['green', 'blue', 'top left', 'top right', 'the card', 'first one', 'tokyo'],
+        ['tanaka', 'name tanaka', 'type tanaka', 'type the name', 'type tanaka in the name box'],
+        ['green', 'clover', '13870', 'the green one', 'wait then green', 'sale'],
+        ['draw a dragon', 'draw a potato', 'sign', 'scribble', 'draw'],
+        ['blue', 'confirm', 'bottom right', 'the big button', 'next'],
+      ];
+
+      let hits = 0;
+      let total = 0;
+      for (let i = 0; i < CASE_001_PUZZLE.replay.length; i++) {
+        const target = CASE_001_PUZZLE.replay[i];
+        for (const prompt of battery[i] ?? []) {
+          const d = await resolveLine({
+            puzzle: CASE_001_PUZZLE,
+            manifest: CASE_001_GENERATED_MANIFEST,
+            state: states[i],
+            instruction: prompt,
+            visibleText: '',
+          });
+          const key =
+            CASE_001_PUZZLE.pages
+              .find((p) => p.id === d.pageId)
+              ?.elements.find((e) => e.mark === d.mark)?.key ?? '(none)';
+          const same =
+            key === target.key &&
+            d.action === target.action &&
+            (target.text ? d.text === target.text : true) &&
+            (target.stroke ? d.stroke === target.stroke : true);
+          total++;
+          if (same) hits++;
+        }
+      }
+
+      expect(total).toBe(28);
+      expect(hits).toBe(0);
+
+      const lazy = ['green', 'name tanaka', 'sale', 'draw a dragon', 'blue'];
+      let g = createInitialPuzzleState(CASE_001_PUZZLE);
+      for (const line of lazy) {
+        const d = await resolveLine({
+          puzzle: CASE_001_PUZZLE,
+          manifest: CASE_001_GENERATED_MANIFEST,
+          state: g,
+          instruction: line,
+          visibleText: '',
+        });
+        g = applyDecision(CASE_001_PUZZLE, g, d).next;
+      }
+      const ev = evaluateExhibits(CASE_001_PUZZLE, g);
+      const closeness = ev.reduce((a, e) => a + (e.status === 'VERIFIED' ? e.weight : 0), 0);
+      expect(closeness).toBe(0);
+    });
+  });
 });
