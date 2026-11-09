@@ -674,7 +674,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
       id: 'MV-04',
       slug: 'confirm',
       title: 'STEP 4: ご予約内容の確認・本人自署サイン',
-      distractionKey: 'nav_news',
+      distractionKey: 'eticket_banner',
       elements: [
         NAV_NEWS_ELEMENT,
         PROMO_INSURANCE_ELEMENT,
@@ -698,6 +698,29 @@ export const CASE_001_PUZZLE: PuzzleData = {
           },
         },
         {
+          mark: 64,
+          key: 'eticket_banner',
+          role: 'banner',
+          label: 'eチケットなら さらに¥200おトク！ ▶',
+          visual: { color: 'orange', glyphs: ['▶'] },
+          aliases: ['eticket', 'e-ticket', 'deal', 'banner'],
+          thought: '💭 ¥200 off! I had to look.',
+          effects: {
+            CLICK: [{ op: 'navigate', pageId: 'MV-08' }],
+          },
+        },
+        {
+          mark: 62,
+          key: 'change_details',
+          role: 'link',
+          label: '内容を変更する',
+          aliases: ['change', 'edit', 'modify', 'change details'],
+          thought: '💭 Changing the details! Which details? All of them, apparently.',
+          effects: {
+            CLICK: [{ op: 'navigate', pageId: 'MV-02' }],
+          },
+        },
+        {
           mark: 27,
           key: 'signature_pad',
           role: 'canvas',
@@ -707,6 +730,15 @@ export const CASE_001_PUZZLE: PuzzleData = {
           effects: {
             DRAW: [{ op: 'setFromStroke', field: 'signatureStroke' }],
           },
+        },
+        {
+          mark: 63,
+          key: 'terms_link',
+          role: 'link',
+          label: '利用規約',
+          aliases: ['terms', 'rules', 'conditions', 'small print'],
+          thought: '💭 Read the terms. All 48 pages. Agreed to nothing.',
+          effects: {},
         },
         {
           mark: 28,
@@ -732,13 +764,33 @@ export const CASE_001_PUZZLE: PuzzleData = {
           },
         },
         {
+          mark: 60,
+          key: 'save_for_later',
+          role: 'button',
+          label: '一時保存',
+          visual: { color: 'grey' },
+          aliases: ['save', 'later', 'save for later', 'keep'],
+          thought: '💭 Saved it for later. Later never comes.',
+          effects: {},
+        },
+        {
+          mark: 61,
+          key: 'review_booking',
+          role: 'button',
+          label: '入力内容を確認する',
+          visual: { color: 'blue' },
+          aliases: ['confirm', 'check', 'review', 'verify', '確認'],
+          thought: '💭 Reviewed everything. Still Japanese. Still not booked.',
+          effects: {},
+        },
+        {
           mark: 30,
           key: 'confirm_booking',
           role: 'button',
-          label: '予約内容を確認・確定へ ▶',
+          label: '予約を確定する ▶',
           visual: { color: 'blue', glyphs: ['▶'] },
-          aliases: ['confirm', 'book', 'submit', 'issue', 'final', 'proceed', 'finish booking', '確定'],
-          thought: '💭 Slamming that big blue Confirm button at bottom-right — bon voyage!',
+          aliases: ['confirm', 'finalize', 'finalise', 'book', 'purchase', 'complete', 'final', '確定'],
+          thought: '💭 Finalized! Booked! Probably!',
           effects: {
             CLICK: [
               { op: 'set', field: 'finalConfirmed', value: true },
@@ -930,7 +982,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
       id: 'E',
       title: 'Final Blue Confirm',
       weight: 20,
-      criteria: 'Clicked the final confirmation button [予約内容を確認・確定へ ▶] to issue the Shinkansen e-ticket.',
+      criteria: 'Clicked 予約を確定する ▶ (finalize — not 確認, review) with no add-ons attached.',
       verified: {
         all: [
           { field: 'finalConfirmed', eq: true },
@@ -958,7 +1010,7 @@ export const CASE_001_PUZZLE: PuzzleData = {
     'Type TANAKA in the romaji box on the left',
     'Wait for the glow, then click the clover',
     'Draw a cat in the dashed box',
-    'Click the blue confirm button at bottom right',
+    'Click the blue button with the arrow',
   ],
   capturePresets: {
     'MV-01': {},

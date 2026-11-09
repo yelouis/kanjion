@@ -203,7 +203,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
         'Type TANAKA in the romaji box on the left',
         'Wait for the glow, then click the clover',
         'Draw a cat in the dashed box',
-        'confirm booking',
+        'Click the blue button with the arrow',
       ];
 
       for (let i = 0; i < steps.length; i++) {
@@ -402,7 +402,7 @@ describe('CHALLENGER M5: Empirical Interactive Gameplay & UX Stress Suite', () =
         'Type TANAKA in the romaji box on the left',
         'Wait for the glow, then click the clover',
         'Draw a cat in the dashed box',
-        'confirm booking',
+        'Click the blue button with the arrow',
         'final dispatch confirmation',
       ];
 

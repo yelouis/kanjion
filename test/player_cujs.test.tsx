@@ -80,7 +80,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
       'type TANAKA in the romaji box on the left',
       'wait for the glow, then click the clover',
       'draw a cat in the signature box',
-      'click blue button at bottom right',
+      'click the blue button with the arrow',
     ];
 
     for (const prompt of prompts) {
@@ -270,7 +270,7 @@ describe('Player Critical User Journeys (CUJ Regression Suite)', () => {
       'Type TANAKA in the romaji box on the left',
       'Wait for the glow, then click the clover',
       'Draw a cat in the dashed box',
-      'Click the blue box on the bottom right',
+      'Click the blue button with the arrow',
     ];
 
     for (const prompt of userPrompts) {

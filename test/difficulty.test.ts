@@ -200,4 +200,66 @@ describe('Item 3–6: Difficulty & Realistic Clutter (F-21, F-24; D-8)', () => {
       expect(next2.fields.timedWindowHit).toBe(true);
     });
   });
+
+  describe('Page 04 (MV-04): 確認 vs 確定', () => {
+    const mv04State: PuzzleState = {
+      pageId: 'MV-04',
+      fields: {
+        ...CASE_001_PUZZLE.initialFields,
+        selectedRoute: 'tokyo_osaka',
+        departureTime: '14:30',
+        passengerName: 'TANAKA',
+        trainName: 'Nozomi 24',
+        seatClass: 'green_car',
+        fare: 13870,
+        greenCarSelected: true,
+        timedWindowHit: true,
+        signatureStroke: 'SHAPE:cat',
+      },
+    };
+
+    it('★ lazy prompts on MV-04 do not reproduce replay step 5 (CLICK confirm_booking) and land where stated', () => {
+      // blue -> review_booking
+      const dBlue = resolveOn(mv04State, 'blue');
+      expect(dBlue.decision.action).toBe('CLICK');
+      expect(dBlue.key).toBe('review_booking');
+
+      // confirm -> review_booking
+      const dConfirm = resolveOn(mv04State, 'confirm');
+      expect(dConfirm.decision.action).toBe('CLICK');
+      expect(dConfirm.key).toBe('review_booking');
+
+      // click the blue button -> review_booking
+      const dBlueBtn = resolveOn(mv04State, 'click the blue button');
+      expect(dBlueBtn.decision.action).toBe('CLICK');
+      expect(dBlueBtn.key).toBe('review_booking');
+
+      // bottom right -> review_booking
+      const dBottomRight = resolveOn(mv04State, 'bottom right');
+      expect(dBottomRight.decision.action).toBe('CLICK');
+      expect(dBottomRight.key).toBe('review_booking');
+
+      // next -> eticket_banner (distraction) -> MV-08
+      const dNext = resolveOn(mv04State, 'next');
+      expect(dNext.decision.action).toBe('CLICK');
+      expect(dNext.key).toBe('eticket_banner');
+      expect(applyDecision(CASE_001_PUZZLE, mv04State, dNext.decision).next.pageId).toBe('MV-08');
+    });
+
+    it('★ "Click the blue button with the arrow" and "click the finalize button" reproduce step 5', () => {
+      const d1 = resolveOn(mv04State, 'Click the blue button with the arrow');
+      expect(d1.decision.action).toBe('CLICK');
+      expect(d1.key).toBe('confirm_booking');
+      const next1 = applyDecision(CASE_001_PUZZLE, mv04State, d1.decision).next;
+      expect(next1.pageId).toBe('MV-05');
+      expect(next1.fields.finalConfirmed).toBe(true);
+
+      const d2 = resolveOn(mv04State, 'click the finalize button');
+      expect(d2.decision.action).toBe('CLICK');
+      expect(d2.key).toBe('confirm_booking');
+      const next2 = applyDecision(CASE_001_PUZZLE, mv04State, d2.decision).next;
+      expect(next2.pageId).toBe('MV-05');
+      expect(next2.fields.finalConfirmed).toBe(true);
+    });
+  });
 });

@@ -86,23 +86,23 @@ describe('Data-Driven Fallback Agent & Multi-Signal Scorer', () => {
       expect(decision.mark).toBe(52);
     });
 
-    it('resolves "blue confirm" on MV-04 to mark 30 (Confirmation CTA)', async () => {
+    it('resolves "blue confirm" on MV-04 to mark 61 (review_booking)', async () => {
       const decision = await resolveOnPage('MV-04', 'blue confirm');
       expect(decision.action).toBe('CLICK');
-      expect(decision.mark).toBe(30);
-      expect(decision.thought.length).toBeLessThanOrEqual(80);
+      expect(decision.mark).toBe(61);
+      expect(decision.thought).toMatch(/I found 2 that fit/i);
     });
 
-    it('resolves "press ▶ to proceed" on MV-04 to mark 30', async () => {
-      const decision = await resolveOnPage('MV-04', 'press ▶ to proceed');
+    it('resolves "Click the blue button with the arrow" on MV-04 to mark 30', async () => {
+      const decision = await resolveOnPage('MV-04', 'Click the blue button with the arrow');
       expect(decision.action).toBe('CLICK');
       expect(decision.mark).toBe(30);
     });
 
-    it('resolves "confirm booking" on MV-04 to mark 30', async () => {
+    it('resolves "confirm booking" on MV-04 to mark 61 (review_booking)', async () => {
       const decision = await resolveOnPage('MV-04', 'confirm booking');
       expect(decision.action).toBe('CLICK');
-      expect(decision.mark).toBe(30);
+      expect(decision.mark).toBe(61);
     });
   });
 

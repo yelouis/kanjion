@@ -1101,18 +1101,18 @@ export const Sandbox: React.FC<SandboxProps> = ({
             PAGE 04 (MV-04) & MODAL MV-07 OVER DIMMED MV-04
            ================================================================= */}
         {(pageId === 'MV-04' || pageId === 'MV-07') && (
-          <div className="p-4 flex-1 flex flex-col justify-between relative">
-            <div className={`space-y-3 ${isMv07Modal ? 'opacity-40 pointer-events-none' : ''}`}>
-              <div className="border-b-2 border-emerald-800 pb-2 flex items-center justify-between">
+          <div className="p-3.5 flex-1 flex flex-col justify-between relative">
+            <div className={`space-y-2.5 ${isMv07Modal ? 'opacity-40 pointer-events-none' : ''}`}>
+              <div className="border-b-2 border-emerald-800 pb-1.5 flex items-center justify-between">
                 <div>
                   <h2
                     data-el={isMv07Modal ? undefined : 'page_title'}
-                    className="text-lg font-black text-emerald-950"
+                    className="text-base font-black text-emerald-950"
                   >
                     STEP 4: ご予約内容の確認・本人自署サイン
                   </h2>
-                  <p className="text-xs text-neutral-600 font-medium">
-                    下の署名枠内にサイン（自署ストローク）を記入し、右下の青い「予約内容を確認・確定へ」ボタンをクリックしてください。
+                  <p className="text-[11px] text-neutral-600 font-medium">
+                    下の署名枠内にサインを記入し、内容を確認のうえ予約を確定してください。
                   </p>
                 </div>
                 <button
@@ -1126,45 +1126,76 @@ export const Sandbox: React.FC<SandboxProps> = ({
                 </button>
               </div>
 
+              {/* e-Ticket Discount Banner (Mark 64) */}
+              <button
+                id="btn-eticket-banner"
+                data-el={isMv07Modal ? undefined : 'eticket_banner'}
+                type="button"
+                onClick={() => handleClick(64)}
+                style={{ backgroundColor: '#F08300' }}
+                className="w-full px-3.5 py-1.5 rounded border-2 border-amber-800 text-white font-black text-xs shadow-sm flex items-center justify-between hover:brightness-105"
+              >
+                <span>eチケットなら さらに¥200おトク！ ▶</span>
+                <span className="px-2 py-0.5 bg-white text-amber-900 rounded text-[11px] font-black">
+                  ICカード連携 ▶
+                </span>
+              </button>
+
               {/* Selected Ticket Summary Card */}
-              <div className="grid grid-cols-4 gap-3 bg-emerald-50 border-2 border-emerald-700 p-3 rounded-lg text-xs">
-                <div>
-                  <div className="text-emerald-800 font-bold">乗車区間</div>
-                  <div className="font-black text-neutral-900 mt-0.5">
-                    東海道新幹線 東京 ⇒ 新大阪
-                  </div>
+              <div className="bg-emerald-50 border-2 border-emerald-700 p-2.5 rounded-lg text-xs">
+                <div className="flex items-center justify-between border-b border-emerald-200 pb-1.5 mb-2">
+                  <span className="font-black text-emerald-950 text-xs">
+                    ご予約内容サマリー
+                  </span>
+                  <button
+                    id="link-change-details"
+                    data-el={isMv07Modal ? undefined : 'change_details'}
+                    type="button"
+                    onClick={() => handleClick(62)}
+                    className="text-blue-700 hover:text-blue-900 underline font-bold text-xs"
+                  >
+                    内容を変更する
+                  </button>
                 </div>
-                <div>
-                  <div className="text-emerald-800 font-bold">列車・時刻</div>
-                  <div className="font-black text-blue-950 mt-0.5">
-                    のぞみ 24号 (14:30発 ⇒ 16:57着)
+                <div className="grid grid-cols-4 gap-3">
+                  <div>
+                    <div className="text-emerald-800 font-bold">乗車区間</div>
+                    <div className="font-black text-neutral-900 mt-0.5">
+                      東海道新幹線 東京 ⇒ 新大阪
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <div className="text-emerald-800 font-bold">設備・特割運賃</div>
-                  <div className="font-black text-emerald-900 mt-0.5">
-                    🍀 グリーン車{numericFare === 13870 ? '（特割）' : ''}{formattedFare}
-                    {isInsAttached ? ' ＋保険 ¥2,400' : ''}
+                  <div>
+                    <div className="text-emerald-800 font-bold">列車・時刻</div>
+                    <div className="font-black text-blue-950 mt-0.5">
+                      のぞみ 24号 (14:30発 ⇒ 16:57着)
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <div className="text-emerald-800 font-bold">搭乗者名</div>
-                  <div className="font-mono-clean font-black text-neutral-900 mt-0.5">
-                    {passengerName || '未入力'} 様（大人1名）
+                  <div>
+                    <div className="text-emerald-800 font-bold">設備・特割運賃</div>
+                    <div className="font-black text-emerald-900 mt-0.5">
+                      🍀 グリーン車{numericFare === 13870 ? '（特割）' : ''}{formattedFare}
+                      {isInsAttached ? ' ＋保険 ¥2,400' : ''}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-emerald-800 font-bold">搭乗者名</div>
+                    <div className="font-mono-clean font-black text-neutral-900 mt-0.5">
+                      {passengerName || '未入力'} 様（大人1名）
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* LARGE INTERACTIVE DIGITAL SIGNATURE PAD (#27) */}
-              <div className="p-4 bg-stone-50 border-2 border-neutral-400 rounded-lg space-y-2">
+              <div className="p-3 bg-stone-50 border-2 border-neutral-400 rounded-lg space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <div className="font-black text-sm text-emerald-950 flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-emerald-800 text-white rounded text-xs">
+                  <div className="font-black text-xs text-emerald-950 flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-emerald-800 text-white rounded text-[11px]">
                       必須署名
                     </span>
                     <span>自署・本人確認サイン欄（グリーン車特割 発券認証）</span>
                   </div>
-                  <span className="text-xs font-bold text-neutral-600">
+                  <span className="text-[11px] font-bold text-neutral-600">
                     枠内にサインを描画してください
                   </span>
                 </div>
@@ -1173,7 +1204,7 @@ export const Sandbox: React.FC<SandboxProps> = ({
                   id="signature-canvas"
                   data-el={isMv07Modal ? undefined : 'signature_pad'}
                   onClick={() => handleClick(27)}
-                  className={`h-28 bg-white border-2 rounded-md relative flex items-center justify-center px-6 cursor-crosshair transition-all ${
+                  className={`h-24 bg-white border-2 rounded-md relative flex items-center justify-center px-6 cursor-crosshair transition-all ${
                     effectiveSigProgress > 0
                       ? 'border-emerald-700 ring-4 ring-amber-300 bg-amber-50/40'
                       : 'border-dashed border-neutral-500'
@@ -1192,7 +1223,7 @@ export const Sandbox: React.FC<SandboxProps> = ({
                   )}
                   <svg
                     viewBox="0 0 260 60"
-                    className="w-full h-16 overflow-visible pointer-events-none"
+                    className="w-full h-14 overflow-visible pointer-events-none"
                   >
                     <line
                       x1="15"
@@ -1237,55 +1268,90 @@ export const Sandbox: React.FC<SandboxProps> = ({
                     )}
                   </svg>
                 </div>
+
+                {/* Terms Link under the Pad (Mark 63) */}
+                <div className="flex items-center gap-2 pt-0.5 text-[11px] text-neutral-600">
+                  <button
+                    id="link-terms"
+                    data-el={isMv07Modal ? undefined : 'terms_link'}
+                    type="button"
+                    onClick={() => handleClick(63)}
+                    className="text-blue-700 hover:text-blue-900 underline font-bold"
+                  >
+                    利用規約
+                  </button>
+                  <span>※ ご予約確定前に運送約款および利用規約をご確認ください。</span>
+                </div>
               </div>
             </div>
 
             {/* Bottom Confirmation Bar */}
             <div
-              className={`bg-neutral-100 border-t-2 border-neutral-300 px-4 py-3 flex items-center justify-between rounded-b ${
+              className={`bg-neutral-100 border-t-2 border-neutral-300 px-3 py-2.5 flex items-center justify-between rounded-b ${
                 isMv07Modal ? 'opacity-40 pointer-events-none' : ''
               }`}
             >
-              <label
-                htmlFor="chk-insurance"
-                data-el={isMv07Modal ? undefined : 'insurance_checkbox'}
-                onClick={() => handleClick(28)}
-                className="flex items-center gap-2 text-xs font-bold text-neutral-700 cursor-pointer"
-              >
-                <input
-                  id="chk-insurance"
-                  type="checkbox"
-                  checked={isInsAttached}
-                  onChange={() => {}}
-                  className="w-4 h-4 accent-red-600 pointer-events-none"
-                />
-                <span>旅行キャンセル保険（¥2,400）を追加</span>
-              </label>
-
               <div className="flex items-center gap-3">
+                <label
+                  htmlFor="chk-insurance"
+                  data-el={isMv07Modal ? undefined : 'insurance_checkbox'}
+                  onClick={() => handleClick(28)}
+                  className="flex items-center gap-1.5 text-xs font-bold text-neutral-700 cursor-pointer"
+                >
+                  <input
+                    id="chk-insurance"
+                    type="checkbox"
+                    checked={isInsAttached}
+                    onChange={() => {}}
+                    className="w-4 h-4 accent-red-600 pointer-events-none"
+                  />
+                  <span>旅行キャンセル保険（¥2,400）を追加</span>
+                </label>
+
                 <button
                   id="btn-cancel-booking"
                   data-el={isMv07Modal ? undefined : 'cancel_booking'}
                   type="button"
                   onClick={() => handleClick(29)}
-                  className="px-4 py-2 bg-neutral-300 hover:bg-neutral-400 text-neutral-800 text-xs font-bold border border-neutral-400 rounded"
+                  className="px-3 py-2 bg-neutral-300 hover:bg-neutral-400 text-neutral-800 text-xs font-bold border border-neutral-400 rounded"
                 >
                   予約を取消
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <button
+                  id="btn-save-later"
+                  data-el={isMv07Modal ? undefined : 'save_for_later'}
+                  type="button"
+                  onClick={() => handleClick(60)}
+                  className="px-3.5 py-2 bg-neutral-200 hover:bg-neutral-300 text-neutral-800 text-xs font-bold border border-neutral-400 rounded"
+                >
+                  一時保存
+                </button>
+                <button
+                  id="btn-review-booking"
+                  data-el={isMv07Modal ? undefined : 'review_booking'}
+                  type="button"
+                  onClick={() => handleClick(61)}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black shadow rounded"
+                >
+                  入力内容を確認する
                 </button>
                 <button
                   id="target-confirm-btn"
                   data-el={isMv07Modal ? undefined : 'confirm_booking'}
                   type="button"
                   onClick={() => handleClick(30)}
-                  className={`px-6 py-2 font-black text-sm shadow-md rounded transition-all ${
+                  className={`px-5 py-2 font-black text-xs shadow-md rounded transition-all ${
                     isFinalConfirmed
                       ? 'bg-emerald-800 text-amber-200 ring-4 ring-amber-400 border-2 border-amber-300'
                       : 'bg-blue-600 hover:bg-blue-700 text-white'
                   }`}
                 >
                   {isFinalConfirmed
-                    ? '✓ 確定済 • 予約内容を確認・確定へ ▶'
-                    : '予約内容を確認・確定へ ▶'}
+                    ? '✓ 確定済 • 予約を確定する ▶'
+                    : '予約を確定する ▶'}
                 </button>
               </div>
             </div>

@@ -697,13 +697,13 @@ describe('Tier 5 Adversarial Hardening Suite', () => {
         puzzle: CASE_001_PUZZLE,
         manifest: CASE_001_GENERATED_MANIFEST,
         state: { pageId: state.macroViewId, fields: state.microState },
-        instruction: 'click blue confirm button at bottom right',
+        instruction: 'Click the blue button with the arrow',
       });
       state = gameReducer(state, {
         type: 'APPLY_AGENT_ACTION',
         payload: {
           action: decisionToAgentAction(dec5, CASE_001_PUZZLE, CASE_001_GENERATED_MANIFEST),
-          instruction: 'confirm booking',
+          instruction: 'Click the blue button with the arrow',
         },
       });
       expect(state.microState.finalConfirmed).toBe(true);

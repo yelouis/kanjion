@@ -6,7 +6,7 @@ export const GLYPH_DICTIONARY: Record<string, string[]> = {
   '◯': ['circle', '◯', '○', 'maru', 'まる'],
   '△': ['triangle', '△', 'sankaku', 'さんかく'],
   '×': ['cross', '×', 'batsu', 'ばつ'],
-  '▶': ['arrow', '▶', 'right arrow', '確定へ'],
+  '▶': ['arrow', '▶', 'right arrow', '確定'],
   '◀': ['left arrow', '◀', 'back arrow', '戻る'],
 };
 

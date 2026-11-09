@@ -471,18 +471,18 @@
           "box": {
             "h": 26,
             "w": 111,
-            "x": 897,
-            "y": 183
+            "x": 899,
+            "y": 179
           },
           "key": "back",
           "mark": 14
         },
         {
           "box": {
-            "h": 112,
-            "w": 956,
-            "x": 34,
-            "y": 360
+            "h": 96,
+            "w": 968,
+            "x": 28,
+            "y": 415
           },
           "key": "signature_pad",
           "mark": 27
@@ -490,9 +490,9 @@
         {
           "box": {
             "h": 16,
-            "w": 236,
-            "x": 32,
-            "y": 714
+            "w": 234,
+            "x": 26,
+            "y": 719
           },
           "key": "insurance_checkbox",
           "mark": 28
@@ -500,35 +500,85 @@
         {
           "box": {
             "h": 34,
-            "w": 94,
-            "x": 669,
-            "y": 705
+            "w": 86,
+            "x": 272,
+            "y": 710
           },
           "key": "cancel_booking",
           "mark": 29
         },
         {
           "box": {
-            "h": 36,
-            "w": 217,
-            "x": 775,
-            "y": 704
+            "h": 32,
+            "w": 137,
+            "x": 861,
+            "y": 711
           },
           "key": "confirm_booking",
           "mark": 30
         },
         {
           "box": {
-            "h": 28,
-            "w": 683,
-            "x": 16,
-            "y": 174
+            "h": 34,
+            "w": 78,
+            "x": 623,
+            "y": 710
+          },
+          "key": "save_for_later",
+          "mark": 60
+        },
+        {
+          "box": {
+            "h": 32,
+            "w": 140,
+            "x": 711,
+            "y": 711
+          },
+          "key": "review_booking",
+          "mark": 61
+        },
+        {
+          "box": {
+            "h": 16,
+            "w": 84,
+            "x": 914,
+            "y": 288
+          },
+          "key": "change_details",
+          "mark": 62
+        },
+        {
+          "box": {
+            "h": 17,
+            "w": 44,
+            "x": 28,
+            "y": 519
+          },
+          "key": "terms_link",
+          "mark": 63
+        },
+        {
+          "box": {
+            "h": 36,
+            "w": 996,
+            "x": 14,
+            "y": 230
+          },
+          "key": "eticket_banner",
+          "mark": 64
+        },
+        {
+          "box": {
+            "h": 24,
+            "w": 384,
+            "x": 14,
+            "y": 172
           },
           "key": "page_title",
           "mark": 90
         }
       ],
-      "som": "/puzzles/001/som/MV-04.c3296773.png"
+      "som": "/puzzles/001/som/MV-04.ba5c9cb3.png"
     },
     "MV-05": {
       "elements": [
@@ -598,7 +648,7 @@
           "mark": 90
         }
       ],
-      "som": "/puzzles/001/som/MV-07.b2d55ea0.png"
+      "som": "/puzzles/001/som/MV-07.30251e14.png"
     },
     "MV-08": {
       "elements": [

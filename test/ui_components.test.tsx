@@ -167,7 +167,7 @@ describe('5. ShinkansenSandbox Component', () => {
     const insCheckbox = screen.getByRole('checkbox', { name: /旅行キャンセル保険/i });
     expect(insCheckbox).toBeChecked();
 
-    const confirmBtn = screen.getByRole('button', { name: /予約内容を確認・確定へ/i });
+    const confirmBtn = screen.getByRole('button', { name: /予約を確定する/i });
     expect(confirmBtn).toBeInTheDocument();
   });
 });

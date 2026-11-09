@@ -133,11 +133,11 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       expect(container.querySelector('#active-line-label')).toHaveTextContent('LINE 05 / 06');
 
       // -----------------------------------------------------------------------
-      // 6. Line 05 (MV-04): "confirm booking" -> MV-05
+      // 6. Line 05 (MV-04): "Click the blue button with the arrow" -> MV-05
       // -----------------------------------------------------------------------
       const input5 = container.querySelector('#telegram-input') as HTMLInputElement;
-      fireEvent.change(input5, { target: { value: 'confirm booking' } });
-      expect(container.querySelector('#char-counter')).toHaveTextContent('15/60');
+      fireEvent.change(input5, { target: { value: 'Click the blue button with the arrow' } });
+      expect(container.querySelector('#char-counter')).toHaveTextContent('36/60');
 
       const dispatchBtn5 = screen.getByRole('button', { name: /DISPATCH LINE 05/i });
       await act(async () => {
@@ -149,8 +149,8 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
       expect(container.querySelector('#live-mult-label')).toHaveTextContent('1.2x');
 
       // Verification: Cursor glided to #30 measured box center
-      expect(agentCursor.style.left).toBe('86.33%');
-      expect(agentCursor.style.top).toBe('94.01%');
+      expect(agentCursor.style.left).toBe('90.82%');
+      expect(agentCursor.style.top).toBe('94.66%');
       expect(agentNote).toHaveTextContent(/\[✓ CONFIRMED STEP\]/i);
 
       // -----------------------------------------------------------------------
@@ -299,7 +299,7 @@ describe('Milestone 5: Comprehensive E2E Gameplay Verification Suite', () => {
         'Type TANAKA in the romaji box on the left',
         'Wait for the glow, then click the clover',
         'Draw a cat in the dashed box',
-        'confirm booking',
+        'Click the blue button with the arrow',
         'final review',
       ];
 

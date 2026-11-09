@@ -76,12 +76,12 @@ You are an implementor agent with no memory of this project. This file is your s
 
 | Gate | Command | Result on 2026-11-08 |
 |---|---|---|
-| Unit/component | `npm test` | **419 passed / 27 files** (≈ 22 s) |
-| Typecheck + build | `npm run build` | Clean. `dist/assets/index-*.js` 303.31 kB, **91.08 kB gzip**. |
+| Unit/component | `npm test` | **421 passed / 27 files** (≈ 22 s) |
+| Typecheck + build | `npm run build` | Clean. `dist/assets/index-*.js` 306.39 kB, **91.86 kB gzip**. |
 | Compiler | `npx tsx tools/compile_puzzle.ts --case 001 --validate` | Exit 0. |
 | E2E | `npm run test:e2e` | **2 passed** (`desktop-chromium`, `mobile-chromium`). |
 | Lint | — | No lint script exists. |
-| Difficulty probe | `npx tsx scripts/difficulty_probe.mts` | **2 of 28** lazy prompts reproduce the replay step, and the laziest run `["green","name tanaka","sale","draw a dragon","blue"]` scores **0 %**. |
+| Difficulty probe | `npx tsx scripts/difficulty_probe.mts` | **0 of 28** lazy prompts reproduce the replay step, and the laziest run `["green","name tanaka","sale","draw a dragon","blue"]` scores **0 %**. |
 | Live site | `curl -s https://kanjion-game.web.app/` | Still serves the pre-fix bundle `assets/index-DWnC1R4E.js` (F-27, owner action OA-5). |
 
 ---
